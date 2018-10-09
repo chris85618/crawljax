@@ -49,7 +49,7 @@ public class Plugins {
 	                OnInvariantViolationPlugin.class, OnNewStatePlugin.class,
 	                OnRevisitStatePlugin.class, OnUrlLoadPlugin.class,
 	                PostCrawlingPlugin.class, PreStateCrawlingPlugin.class,
-	                PreCrawlingPlugin.class);
+	                PreCrawlingPlugin.class, AfterRetrievePathPlugin.class);
 
 	private final ImmutableListMultimap<Class<? extends Plugin>, Plugin> plugins;
 
@@ -263,6 +263,38 @@ public class Plugins {
 		}
 	}
 
+	//ch-sh begin
+	public void runOnCloneStatePlugins(CrawlerContext context, StateVertex currentState) {
+		LOGGER.debug("Running OnCloneStatePlugins...");
+		counters.get(OnCloneStatePlugin.class).inc();
+		for (Plugin plugin : plugins.get(OnCloneStatePlugin.class)) {
+			if (plugin instanceof OnCloneStatePlugin) {
+				LOGGER.debug("Calling plugin {}", plugin);
+				try {
+					((OnCloneStatePlugin) plugin).onCloneState(context, currentState);
+				} catch (RuntimeException e) {
+					reportFailingPlugin(plugin, e);
+				}
+			}
+		}
+	}	
+	
+	public void runAfterRetrievePathPlugin(CrawlerContext context, List<String[]> path, StateVertex targetState) {
+		LOGGER.debug("Running AfterRetrievePathPlugins...");
+		counters.get(AfterRetrievePathPlugin.class).inc();
+		for (Plugin plugin : plugins.get(AfterRetrievePathPlugin.class)) {
+			if (plugin instanceof AfterRetrievePathPlugin) {
+				LOGGER.debug("Calling plugin {}", plugin);
+				try {
+					((AfterRetrievePathPlugin) plugin).afterRetrievePath(context, path, targetState);
+				} catch (RuntimeException e) {
+					reportFailingPlugin(plugin, e);
+				}
+			}
+		}
+	}
+	//ch-sh end
+
 	/**
 	 * load and run the PreStateCrawlingPlugins. Method that is called before the current state is
 	 * crawled (before firing events on the current DOM state). Example: filter candidate elements.
@@ -369,26 +401,44 @@ public class Plugins {
 	 * Load and run the DomChangeNotifierPlugin.
 	 */
 	public boolean runDomChangeNotifierPlugins(final CrawlerContext context,
-	        final StateVertex stateBefore, final Eventable event,
+	        final StateVertex stateBefore, final String[] event,
 	        final StateVertex stateAfter) {
 		counters.get(DomChangeNotifierPlugin.class).inc();
 		if (plugins.get(DomChangeNotifierPlugin.class).isEmpty()) {
 			LOGGER.debug("No DomChangeNotifierPlugin found. Performing default DOM comparison...");
 			return defaultDomComparison(stateBefore, stateAfter);
 		} else {
-			DomChangeNotifierPlugin domChange = (DomChangeNotifierPlugin) plugins
-			        .get(DomChangeNotifierPlugin.class).get(0);
-			LOGGER.debug("Calling plugin {}", domChange);
-			try {
-				return domChange.isDomChanged(context, stateBefore.getDom(),
-				        event, stateAfter.getDom());
-			} catch (RuntimeException ex) {
-				LOGGER.error(
-				        "Could not run {} because of error {}. Now running default DOM comparison",
-				        domChange, ex.getMessage(), ex);
-				incrementFailCounterFor(domChange);
-				return defaultDomComparison(stateBefore, stateAfter);
+			// DomChangeNotifierPlugin domChange = (DomChangeNotifierPlugin) plugins
+			//         .get(DomChangeNotifierPlugin.class).get(0);
+			// LOGGER.debug("Calling plugin {}", domChange);
+			// try {
+			// 	return domChange.isDomChanged(context, stateBefore.getDom(),
+			// 	        event, stateAfter.getDom());
+			// } catch (RuntimeException ex) {
+			// 	LOGGER.error(
+			// 	        "Could not run {} because of error {}. Now running default DOM comparison",
+			// 	        domChange, ex.getMessage(), ex);
+			// 	incrementFailCounterFor(domChange);
+			// 	return defaultDomComparison(stateBefore, stateAfter);
+			// }
+			boolean isChanged = false;
+			
+			for (Plugin plugin : plugins.get(DomChangeNotifierPlugin.class)) {
+				if (plugin instanceof DomChangeNotifierPlugin) {
+					DomChangeNotifierPlugin domChange = (DomChangeNotifierPlugin)plugin;
+					LOGGER.debug("Calling plugin {}", domChange);
+					try {
+						if (domChange.isDomChanged(context, stateBefore, event, stateAfter)) isChanged = true;
+					} catch (RuntimeException ex) {
+						 LOGGER.error("Could not run {} because of error {}. Now running default DOM comparison", domChange,
+						 ex.getMessage(), ex);
+						 incrementFailCounterFor(domChange);
+						 return defaultDomComparison(stateBefore, stateAfter);
+					}
+				}
 			}
+			
+			return isChanged;
 		}
 
 	}

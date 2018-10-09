@@ -8,6 +8,7 @@ package com.crawljax.core.plugin;
 
 import com.crawljax.core.CrawlerContext;
 import com.crawljax.core.state.Eventable;
+import com.crawljax.core.state.StateVertex;
 
 /**
  * This plugins lets you override the default state comparison that Crawljax uses.
@@ -34,6 +35,7 @@ public interface DomChangeNotifierPlugin extends Plugin {
 	 * @deprecated See class documentation. This method will be removed in Crawljax 4.x
 	 */
 	@Deprecated
-	boolean isDomChanged(CrawlerContext context, String domBefore, Eventable e, String domAfter);
+	// boolean isDomChanged(CrawlerContext context, String domBefore, Eventable e, String domAfter);
+	boolean isDomChanged(CrawlerContext context, StateVertex domBefore, String[] e, StateVertex domAfter);
 
 }

@@ -149,6 +149,7 @@ public class StateMachine {
 			return true;
 		} else {
 			changeState(cloneState);
+			plugins.runOnCloneStatePlugins(context, cloneState);
 			return false;
 		}
 	}

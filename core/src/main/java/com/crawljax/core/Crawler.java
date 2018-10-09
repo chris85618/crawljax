@@ -1,6 +1,7 @@
 package com.crawljax.core;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +64,9 @@ public class Crawler {
 	private final Provider<InMemoryStateFlowGraph> graphProvider;
 	private final StateVertexFactory vertexFactory;
 	private final ExitNotifier exitNotifier;
+
+	private final ArrayList<String[]> actualPath = new ArrayList<String[]>();
+	private final String[] actualEventable = new String[2];
 
 	private CrawlPath crawlpath;
 	private StateMachine stateMachine;
@@ -148,15 +152,24 @@ public class Crawler {
 	        throws StateUnreachableException, CrawljaxException {
 		StateVertex curState = context.getSession().getInitialState();
 
-		for (Eventable clickable : path) {
-			checkCrawlConditions(targetState);
-			LOG.debug("Backtracking by executing {} on element: {}", clickable.getEventType(),
-			        clickable);
-			curState = changeState(targetState, clickable);
-			handleInputElements(clickable);
-			tryToFireEvent(targetState, curState, clickable);
-			checkCrawlConditions(targetState);
+		// ch-sh begin
+		actualPath.clear();
+
+		try {
+			for (Eventable clickable : path) {
+				checkCrawlConditions(targetState);
+				LOG.debug("Backtracking by executing {} on element: {}", clickable.getEventType(), clickable);
+				curState = changeState(targetState, clickable);
+				handleInputElements(clickable);
+				tryToFireEvent(targetState, curState, clickable);
+				checkCrawlConditions(targetState);
+			}
+		} catch (CrawljaxException e) {
+			plugins.runAfterRetrievePathPlugin(context, actualPath, curState);
+			throw e;
 		}
+		plugins.runAfterRetrievePathPlugin(context, actualPath, curState);
+		// ch-sh end
 
 		if (!curState.equals(targetState)) {
 			throw new StateUnreachableException(targetState,
@@ -249,6 +262,11 @@ public class Crawler {
 
 		if (isFired) {
 			// Let the controller execute its specified wait operation on the browser thread safe.
+			// ch-sh begin
+			actualPath.add(new String[] { "event", eventToFire.getIdentification().getValue() });
+			actualEventable[0] = "event";
+			actualEventable[1] = eventToFire.getIdentification().getValue();
+			// ch-sh end
 			waitConditionChecker.wait(browser);
 			browser.closeOtherWindows();
 			return true;
@@ -292,6 +310,11 @@ public class Crawler {
 			LOG.info("Found an invisible link with href={}", href);
 			URI url = UrlUtils.extractNewUrl(browser.getCurrentUrl(), href);
 			browser.goToUrl(url);
+			// ch-sh begin
+			actualPath.add(new String[] { "get", url.getPath() });
+			actualEventable[0] = "get";
+			actualEventable[1] = url.getPath();
+			// ch-sh end
 			return true;
 		}
 		return false;
@@ -362,8 +385,9 @@ public class Crawler {
 	}
 
 	private boolean domChanged(final Eventable eventable, StateVertex newState) {
-		return plugins.runDomChangeNotifierPlugins(context, stateMachine.getCurrentState(),
-		        eventable, newState);
+		return plugins.runDomChangeNotifierPlugins(context, stateMachine.getCurrentState(), actualEventable, newState);
+		// return plugins.runDomChangeNotifierPlugins(context, stateMachine.getCurrentState(),
+		//         eventable, newState);
 	}
 
 	private void inspectNewDom(Eventable event, StateVertex newState) {
