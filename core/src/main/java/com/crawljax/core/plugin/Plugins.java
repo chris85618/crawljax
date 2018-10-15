@@ -49,7 +49,9 @@ public class Plugins {
 	                OnInvariantViolationPlugin.class, OnNewStatePlugin.class,
 	                OnRevisitStatePlugin.class, OnUrlLoadPlugin.class,
 	                PostCrawlingPlugin.class, PreStateCrawlingPlugin.class,
-	                PreCrawlingPlugin.class, AfterRetrievePathPlugin.class);
+					PreCrawlingPlugin.class, AfterRetrievePathPlugin.class,
+					LoginPlugin.class, OnAlertPresentedPlugin.class,
+					OnCloneStatePlugin.class);
 
 	private final ImmutableListMultimap<Class<? extends Plugin>, Plugin> plugins;
 
@@ -271,14 +273,43 @@ public class Plugins {
 			if (plugin instanceof OnCloneStatePlugin) {
 				LOGGER.debug("Calling plugin {}", plugin);
 				try {
-					((OnCloneStatePlugin) plugin).onCloneState(context, currentState);
+					((OnCloneStatePlugin) plugin).onCloneState(context, currentState);					
 				} catch (RuntimeException e) {
 					reportFailingPlugin(plugin, e);
 				}
 			}
 		}
 	}	
+
+	public void runLoginPlugin(final EmbeddedBrowser browser) {
+		counters.get(LoginPlugin.class).inc();
+		for (Plugin plugin : plugins.get(LoginPlugin.class)) {
+			if (plugin instanceof LoginPlugin) {
+				LOGGER.debug("Calling plugin {}", plugin);
+				try {
+					((LoginPlugin) plugin).login(browser);
+				} catch (RuntimeException e) {
+					reportFailingPlugin(plugin, e);
+				}
+			}
+		}
+	}
 	
+	public void runOnAlertPresentedPlugin(final StateVertex state, final Eventable event, final String alertText) {
+		counters.get(OnAlertPresentedPlugin.class).inc();
+
+		for (Plugin plugin : plugins.get(OnAlertPresentedPlugin.class)) {
+			if (plugin instanceof OnAlertPresentedPlugin) {
+				LOGGER.debug("Calling plugin {}", plugin);
+				try {
+					((OnAlertPresentedPlugin) plugin).onAlertPresented(state, event, alertText);
+				} catch (RuntimeException e) {
+					reportFailingPlugin(plugin, e);
+				}
+			}
+		}
+	}
+
 	public void runAfterRetrievePathPlugin(CrawlerContext context, List<String[]> path, StateVertex targetState) {
 		LOGGER.debug("Running AfterRetrievePathPlugins...");
 		counters.get(AfterRetrievePathPlugin.class).inc();

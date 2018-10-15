@@ -1,0 +1,45 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.zaproxy.crawljax.plugins</groupId>
+        <artifactId>crawljax-plugins-parent</artifactId>
+        <version>3.8-SNAPSHOT</version>
+    </parent>
+
+    <groupId>ntut.edu.guide.crawljax.plugins</groupId>
+    <artifactId>url-id-inputs-file-retriever</artifactId>
+    <name>URL ID Input File Retriever</name>
+    <description>Not a plugin, Retrieve the url-id inputs file path</description>
+
+    <properties>
+        <crawljax.version>3.8-SNAPSHOT</crawljax.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.zaproxy.crawljax</groupId>
+            <artifactId>crawljax-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                </excludes>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+    </build>
+</project>

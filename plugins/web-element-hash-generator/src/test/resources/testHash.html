@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body class="skin-default page-category page-category-1 page-category-announcements" style="padding-bottom: 358.5px;">
+<nav id="menu" class=" slideout-menu">
+    <section class="menu-profile">
+        <div class="user-icon" style="background-color: #607d8b;">B</div>
+        <i component="user/status" class="fa fa-fw fa-circle status online"></i>
+    </section>
+
+    <section class="menu-section" data-section="navigation">
+        <h3 class="menu-section-title">Navigation</h3>
+        <ul class="menu-section-list">
+            <li class="">
+                <a href="/categories" title="Categories">
+                    <i class="fa fa-fw fa-list"></i>
+
+                    <span class="visible-xs-inline">Categories</span>
+                </a>
+            </li>
+            <li class="">
+                <a href="/unread" title="Unread" id="unread-count">
+                    <i class="fa fa-fw fa-inbox" data-content="0"></i>
+
+                    <span class="visible-xs-inline">Unread</span>
+                </a>
+            </li>
+            <li class="">
+                <a href="/recent" title="Recent">
+                    <i class="fa fa-fw fa-clock-o"></i>
+
+                    <span class="visible-xs-inline">Recent</span>
+                </a>
+            </li>
+            <li class="">
+                <a href="/tags" title="Tags">
+                    <i class="fa fa-fw fa-tags"></i>
+
+                    <span class="visible-xs-inline">Tags</span>
+                </a>
+            </li>
+            <li class="">
+                <a href="/popular" title="Popular">
+                    <i class="fa fa-fw fa-fire"></i>
+
+                    <span class="visible-xs-inline">Popular</span>
+                </a>
+            </li>
+            <li class="">
+                <a href="/users" title="Users">
+                    <i class="fa fa-fw fa-user"></i>
+
+                    <span class="visible-xs-inline">Users</span>
+                </a>
+            </li>
+            <li class="">
+                <a href="/groups" title="Groups">
+                    <i class="fa fa-fw fa-group"></i>
+
+                    <span class="visible-xs-inline">Groups</span>
+                </a>
+            </li>
+
+
+        </ul>
+    </section>
+
+    <section class="menu-section" data-section="profile">
+        <h3 class="menu-section-title">Profile</h3>
+        <ul class="menu-section-list" component="header/usercontrol"><li>
+            <a component="header/profilelink" href="/user/bob">
+                <span component="header/username">bob</span>
+            </a>
+        </li><li role="presentation" class="divider"></li><li>
+            <a href="#" class="user-status" data-status="online">
+                <i class="fa fa-fw fa-circle status online"></i><span> Online</span>
+            </a>
+        </li><li>
+            <a href="#" class="user-status" data-status="away">
+                <i class="fa fa-fw fa-circle status away"></i><span> Away</span>
+            </a>
+        </li><li>
+            <a href="#" class="user-status" data-status="dnd">
+                <i class="fa fa-fw fa-circle status dnd"></i><span> Do not disturb</span>
+            </a>
+        </li><li>
+            <a href="#" class="user-status" data-status="offline">
+                <i class="fa fa-fw fa-circle status offline"></i><span> Invisible</span>
+            </a>
+        </li><li role="presentation" class="divider"></li><li>
+            <a href="/user/bob/edit">
+                <i class="fa fa-fw fa-edit"></i> <span>Edit Profile</span>
+            </a>
+        </li><li>
+            <a href="/user/bob/settings">
+                <i class="fa fa-fw fa-gear"></i> <span>Settings</span>
+            </a>
+        </li><li role="presentation" class="divider"></li><li component="user/logout">
+            <a href="#"><i class="fa fa-fw fa-sign-out"></i><span> Logout</span></a>
+        </li></ul>
+    </section>
+
+    <section class="menu-section" data-section="notifications">
+        <h3 class="menu-section-title">
+            Notifications
+            <span class="counter fa-bell-o" component="notifications/icon" data-content="0"></span>
+        </h3>
+        <ul class="menu-section-list notification-list-mobile" component="notifications/list"></ul>
+        <p class="menu-section-list"><a href="/notifications">See all notifications</a></p>
+    </section>
+
+    <section class="menu-section" data-section="chats">
+        <h3 class="menu-section-title">
+            Chats
+            <i class="counter" component="chat/icon" data-content="0"></i>
+        </h3>
+        <ul class="menu-section-list chat-list" component="chat/list"></ul>
+    </section>
+</nav>
+
+<main id="panel" class=" slideout-panel">
+    <nav class="navbar navbar-default navbar-fixed-top header" id="header-menu" component="navbar">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" id="mobile-menu">
+                    <span component="notifications/icon" class="notification-icon fa fa-fw fa-bell-o" data-content="0"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+
+                <a href="/">
+                    <img alt="" class="hide forum-logo" src="">
+                </a>
+                <a href="/">
+                    <h1 class="navbar-brand forum-title">NodeBB</h1>
+                </a>
+
+                <div component="navbar/title" class="visible-xs hidden">
+                    <span></span>
+                </div>
+            </div>
+
+            <div id="nav-dropdown" class="hidden-xs">
+                <ul id="logged-in-menu" class="nav navbar-nav navbar-right">
+                    <li class="notifications dropdown text-center hidden-xs" component="notifications">
+                        <a href="#" title="Notifications" class="dropdown-toggle" data-toggle="dropdown" id="notif_dropdown">
+                            <i component="notifications/icon" class="fa fa-fw fa-bell-o" data-content="0"></i>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="notif_dropdown">
+                            <li>
+                                <ul component="notifications/list" class="notification-list">
+                                    <li>
+                                        <a href="#"><i class="fa fa-refresh fa-spin"></i> Loading Notifications</a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="notif-dropdown-link"><a href="#" class="mark-all-read">Mark all notifications read</a></li>
+                            <li class="notif-dropdown-link"><a href="/notifications">See all notifications</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="chats dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#" title="Chats" id="chat_dropdown" component="chat/dropdown">
+                            <i component="chat/icon" class="fa fa-comment-o fa-fw" data-content="0"></i> <span class="visible-xs-inline">Chats</span>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="chat_dropdown">
+                            <li>
+                                <ul component="chat/list" class="chat-list chats-list">
+                                    <li>
+                                        <i class="fa fa-refresh fa-spin"></i> Loading Chats
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="notif-dropdown-link"><a href="#" class="mark-all-read" component="chats/mark-all-read">Mark all chats read</a></li>
+                            <li class="notif-dropdown-link"><a href="/user/bob/chats">See all chats</a></li>
+                        </ul>
+                    </li>
+
+                    <li id="user_label" class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="user_dropdown" title="Profile">
+                            <img component="header/userpicture" src="" alt="bob" style="display: none;">
+                            <div component="header/usericon" class="user-icon" style="background-color: #607d8b;">B</div>
+                            <span id="user-header-name" class="visible-xs-inline">bob</span>
+                        </a>
+                        <ul id="user-control-list" component="header/usercontrol" class="dropdown-menu" aria-labelledby="user_dropdown">
+                            <li>
+                                <a component="header/profilelink" href="/user/bob">
+                                    <i component="user/status" class="fa fa-fw fa-circle status online"></i> <span component="header/username">bob</span>
+                                </a>
+                            </li>
+                            <li role="presentation" class="divider"></li>
+                            <li>
+                                <a href="#" class="user-status" data-status="online">
+                                    <i class="fa fa-fw fa-circle status online"></i><span> Online</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="user-status" data-status="away">
+                                    <i class="fa fa-fw fa-circle status away"></i><span> Away</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="user-status" data-status="dnd">
+                                    <i class="fa fa-fw fa-circle status dnd"></i><span> Do not disturb</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="user-status" data-status="offline">
+                                    <i class="fa fa-fw fa-circle status offline"></i><span> Invisible</span>
+                                </a>
+                            </li>
+                            <li role="presentation" class="divider"></li>
+                            <li>
+                                <a href="/user/bob/edit">
+                                    <i class="fa fa-fw fa-edit"></i> <span>Edit Profile</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/user/bob/settings">
+                                    <i class="fa fa-fw fa-gear"></i> <span>Settings</span>
+                                </a>
+                            </li>
+
+                            <li role="presentation" class="divider"></li>
+                            <li component="user/logout">
+                                <a href="#"><i class="fa fa-fw fa-sign-out"></i><span> Logout</span></a>
+                            </li>
+                        </ul>
+                    </li>
+
+                </ul>
+
+
+                <ul class="nav navbar-nav navbar-right hidden-xs">
+                    <li>
+                        <a href="#" id="reconnect" class="hide" title="Connection to NodeBB has been lost, attempting to reconnect...">
+                            <i class="fa fa-check"></i>
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="nav navbar-nav navbar-right pagination-block visible-lg visible-md">
+                    <li class="dropdown">
+                        <i class="fa fa-angle-double-up pointer fa-fw pagetop"></i>
+                        <i class="fa fa-angle-up pointer fa-fw pageup"></i>
+
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                            <span class="pagination-text">0 out of 0</span>
+                        </a>
+
+                        <i class="fa fa-angle-down pointer fa-fw pagedown"></i>
+                        <i class="fa fa-angle-double-down pointer fa-fw pagebottom"></i>
+
+                        <div class="progress-container">
+                            <div class="progress-bar"></div>
+                        </div>
+
+                        <ul class="dropdown-menu" role="menu">
+                            <input type="text" class="form-control" id="indexInput" placeholder="Enter index">
+                        </ul>
+                    </li>
+                </ul>
+
+                <ul id="main-nav" class="nav navbar-nav">
+                    <li class="">
+                        <a href="/categories" title="Categories">
+                            <i class="fa fa-fw fa-list"></i>
+
+                            <span class="visible-xs-inline">Categories</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/unread" title="Unread" id="unread-count">
+                            <i class="fa fa-fw fa-inbox" data-content="0"></i>
+
+                            <span class="visible-xs-inline">Unread</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/recent" title="Recent">
+                            <i class="fa fa-fw fa-clock-o"></i>
+
+                            <span class="visible-xs-inline">Recent</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/tags" title="Tags">
+                            <i class="fa fa-fw fa-tags"></i>
+
+                            <span class="visible-xs-inline">Tags</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/popular" title="Popular">
+                            <i class="fa fa-fw fa-fire"></i>
+
+                            <span class="visible-xs-inline">Popular</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/users" title="Users">
+                            <i class="fa fa-fw fa-user"></i>
+
+                            <span class="visible-xs-inline">Users</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/groups" title="Groups">
+                            <i class="fa fa-fw fa-group"></i>
+
+                            <span class="visible-xs-inline">Groups</span>
+                        </a>
+                    </li>
+
+
+                </ul>
+            </div>
+
+        </div>
+    </nav>
+    <div class="container" id="content"><ol class="breadcrumb">
+        <li itemscope="itemscope" itemtype="http://data-vocabulary.org/Breadcrumb">
+            <a href="/" itemprop="url">
+			<span itemprop="title">
+				Home
+
+			</span>
+            </a>
+        </li>
+        <li component="breadcrumb/current" itemscope="itemscope" itemtype="http://data-vocabulary.org/Breadcrumb" class="active">
+
+			<span itemprop="title">
+				Announcements
+												<a target="_blank" href="/category/1.rss"><i class="fa fa-rss-square"></i></a>
+			</span>
+
+        </li>
+    </ol>
+        <div widget-area="header"></div>
+        <div class="row">
+            <div class="category col-lg-12 col-sm-12" has-widget-class="category col-lg-9 col-sm-12" has-widget-target="sidebar">
+                <div class="subcategory">
+
+
+                    <ul class="categories" itemscope="" itemtype="http://www.schema.org/ItemList">
+
+                    </ul>
+                </div>
+
+
+
+                <div class="clearfix">
+                    <button component="category/post" id="new_topic" class="btn btn-primary">New Topic</button>
+
+                    <span class="pull-right" component="category/controls">
+<div class="btn-group topic-watch-dropdown bottom-sheet" component="topic/watch">
+
+	<button class="btn btn-default dropdown-toggle" data-toggle="dropdown" type="button">
+
+		<span component="category/watching/menu"><i class="fa fa-fw fa-eye"></i><span class="visible-sm-inline visible-md-inline visible-lg-inline">Watching</span></span>
+
+		<span component="category/ignoring/menu" class="hidden"><i class="fa fa-fw fa-eye-slash"></i><span class="visible-sm-inline visible-md-inline visible-lg-inline">Ignoring</span></span>
+
+		<span class="caret"></span>
+	</button>
+
+	<ul class="dropdown-menu dropdown-menu-right">
+		<li><a href="#" component="category/watching"><i component="category/watching/check" class="fa fa-fw fa-check"></i><i class="fa fa-fw fa-eye"></i> Watching<p class="help-text"><small>Show topics in unread</small></p></a></li>
+		<li><a href="#" component="category/ignoring"><i component="category/ignoring/check" class="fa fa-fw "></i><i class="fa fa-fw fa-eye-slash"></i> Ignoring<p class="help-text"><small>Do not show topics in unread</small></p></a></li>
+	</ul>
+</div>
+<div class="btn-group bottom-sheet" component="thread/sort">
+	<button class="btn btn-default dropdown-toggle" data-toggle="dropdown" type="button">
+		<span class="visible-sm-inline visible-md-inline visible-lg-inline">Sort by</span>
+		<span class="visible-xs-inline"><i class="fa fa-fw fa-sort"></i></span>
+		<span class="caret"></span>
+	</button>
+
+	<ul class="dropdown-menu pull-right">
+		<li><a href="#" class="newest_to_oldest" data-sort="newest_to_oldest"><i class="fa fa-fw fa-check"></i> Newest to Oldest</a></li>
+		<li><a href="#" class="oldest_to_newest" data-sort="oldest_to_newest"><i class="fa fa-fw"></i> Oldest to Newest</a></li>
+		<li><a href="#" class="most_posts" data-sort="most_posts"><i class="fa fa-fw"></i> Most posts</a></li>
+	</ul>
+</div>
+
+			</span>
+                </div>
+
+                <hr class="hidden-xs">
+
+                <p class="hidden-xs">Announcements</p>
+
+                <div class="alert alert-warning" id="category-no-topics">
+                    <strong>There are no topics in this category.</strong><br>Why don't you try posting one?
+                </div>
+
+                <ul component="category" class="topic-list" itemscope="" itemtype="http://www.schema.org/ItemList" data-nextstart="20" data-set="">
+                    <meta itemprop="itemListOrder" content="descending">
+
+                </ul>
+
+
+
+            </div>
+            <div widget-area="sidebar" class="col-lg-3 col-sm-12 hidden"></div>
+        </div>
+        <div widget-area="footer"><footer id="footer" class="container footer">
+            <div class="copyright">
+                Copyright © 2016 <a target="_blank" href="https://nodebb.org">NodeBB Forums</a> | <a target="_blank" href="//github.com/NodeBB/NodeBB/graphs/contributors">Contributors</a>
+            </div>
+        </footer></div>
+
+        <div id="move_thread_modal" class="modal" tabindex="-1" role="dialog" aria-labelledby="Move Topic" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                        <h3>Move Topic</h3>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="category-list">
+                        </ul>
+
+                        <p>
+                            Disabled Categories are greyed out
+                        </p>
+                        <div id="move-confirm" class="hide">
+                            <hr>
+                            <div class="alert alert-info">This topic will be moved to the category <strong><span id="confirm-category-name"></span></strong></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal" id="move_thread_cancel">Close</button>
+                        <button type="button" class="btn btn-primary" id="move_thread_commit" disabled="">Move</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <noscript>
+            &lt;div component="pagination" class="text-center pagination-container hidden"&gt;
+            &lt;ul class="pagination hidden-xs"&gt;
+            &lt;li class="previous pull-left disabled"&gt;
+            &lt;a href="?" data-page="1"&gt;&lt;i class="fa fa-chevron-left"&gt;&lt;/i&gt; &lt;/a&gt;
+            &lt;/li&gt;
+
+            &lt;li class="next pull-right disabled"&gt;
+            &lt;a href="?" data-page="1"&gt; &lt;i class="fa fa-chevron-right"&gt;&lt;/i&gt;&lt;/a&gt;
+            &lt;/li&gt;
+            &lt;/ul&gt;
+
+            &lt;ul class="pagination hidden-sm hidden-md hidden-lg"&gt;
+            &lt;li class="first disabled"&gt;
+            &lt;a href="?page=1" data-page="1"&gt;&lt;i class="fa fa-fast-backward"&gt;&lt;/i&gt; &lt;/a&gt;
+            &lt;/li&gt;
+
+            &lt;li class="previous disabled"&gt;
+            &lt;a href="?" data-page="1"&gt;&lt;i class="fa fa-chevron-left"&gt;&lt;/i&gt; &lt;/a&gt;
+            &lt;/li&gt;
+
+            &lt;li component="pagination/select-page" class="page select-page"&gt;
+            &lt;a href="#"&gt;1 / 1&lt;/a&gt;
+            &lt;/li&gt;
+
+            &lt;li class="next disabled"&gt;
+            &lt;a href="?" data-page="1"&gt; &lt;i class="fa fa-chevron-right"&gt;&lt;/i&gt;&lt;/a&gt;
+            &lt;/li&gt;
+
+            &lt;li class="last disabled"&gt;
+            &lt;a href="?page=1" data-page="1"&gt;&lt;i class="fa fa-fast-forward"&gt;&lt;/i&gt; &lt;/a&gt;
+            &lt;/li&gt;
+            &lt;/ul&gt;
+            &lt;/div&gt;
+        </noscript>
+    </div><!-- END container -->
+</main>
+
+
+
+<div class="topic-search hidden">
+    <div class="btn-group">
+        <button type="button" class="btn btn-default count"></button>
+        <button type="button" class="btn btn-default prev"><i class="fa fa-fw fa-angle-up"></i></button>
+        <button type="button" class="btn btn-default next"><i class="fa fa-fw fa-angle-down"></i></button>
+    </div>
+</div>
+
+<div component="toaster/tray" class="alert-window">
+    <div id="reconnect-alert" class="alert alert-dismissable alert-warning clearfix hide" component="toaster/toast">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+        <p>Looks like your connection to NodeBB was lost, please wait while we try to reconnect.</p>
+    </div>
+</div>
+
+<script>
+    require(['forum/footer']);
+</script>
+
+
+<div id="taskbar" class="taskbar navbar-fixed-bottom" data-active="1">
+    <div class="navbar-inner"><ul class="nav navbar-nav pull-right"><li class="taskbar-composer active" data-module="composer" data-uuid="a064773d-2197-4367-aca4-4ed4f4a0804c"><a href="#"><i class="fa fa-plus"></i> <span>New Topic</span></a></li></ul></div>
+</div><div component="composer" class="composer resizable" id="cmp-uuid-a064773d-2197-4367-aca4-4ed4f4a0804c" style="top: 53.3203125%; visibility: visible;">
+
+    <div class="composer-container">
+        <nav class="navbar navbar-fixed-top mobile-navbar visible-xs visible-sm">
+            <div class="pull-left">
+                <button class="btn btn-sm btn-primary composer-discard" data-action="discard" tabindex="-1"><i class="fa fa-times"></i></button>
+            </div>
+            <div class="category-name-container">
+                <span class="category-name">Announcements</span> <i class="fa fa-sort"></i>
+            </div>
+            <div class="pull-right">
+                <button class="btn btn-sm btn-primary composer-submit" data-action="post" tabindex="-1"><i class="fa fa-chevron-right"></i></button>
+            </div>
+
+        </nav>
+        <div class="row title-container">
+            <div class="col-lg-9 col-md-12">
+                <input class="title form-control" type="text" tabindex="1" placeholder="Enter your topic title here..." value="">
+            </div>
+            <div class="category-list-container col-lg-3 col-md-12 hidden-sm hidden-xs">
+                <select tabindex="3" class="form-control category-list"><option value="0">Select a category</option><option value="1">Announcements</option><option value="2">General Discussion</option><option value="4">Comments &amp; Feedback</option><option value="3">Blogs</option></select>
+            </div>
+        </div>
+
+        <div class="category-tag-row">
+            <div class="btn-toolbar formatting-bar">
+                <ul class="formatting-group">
+                    <li tabindex="-1" data-format="bold" title="Bold"><i class="fa fa-bold"></i></li>
+                    <li tabindex="-1" data-format="italic" title="Italic"><i class="fa fa-italic"></i></li>
+                    <li tabindex="-1" data-format="list" title="List"><i class="fa fa-list"></i></li>
+                    <li tabindex="-1" data-format="strikethrough" title="Strikethrough"><i class="fa fa-strikethrough"></i></li>
+                    <li tabindex="-1" data-format="link" title="Link"><i class="fa fa-link"></i></li>
+                    <li tabindex="-1" data-format="picture-o" title="Picture"><i class="fa fa-picture-o"></i></li>
+
+                    <li tabindex="-1" data-format="zen" title="Zen Mode"><i class="fa fa-arrows-alt"></i></li>
+
+                    <!--[if gte IE 9]><!-->
+                    <li class="img-upload-btn" data-format="picture" tabindex="-1" title="Upload Image">
+                        <i class="fa fa-cloud-upload"></i>
+                    </li>
+                    <li class="file-upload-btn hide" data-format="upload" tabindex="-1" title="Upload File">
+                        <i class="fa fa-upload"></i>
+                    </li>
+                    <!--<![endif]-->
+
+
+
+                    <form id="fileForm" method="post" enctype="multipart/form-data">
+                        <!--[if gte IE 9]><!-->
+                        <input type="file" id="files" name="files[]" multiple="" class="gte-ie9 hide">
+                        <!--<![endif]-->
+                        <!--[if lt IE 9]>
+                        <input type="file" id="files" name="files[]" class="lt-ie9 hide" value="Upload"/>
+                        <![endif]-->
+                    </form>
+                </ul>
+
+                <div class="btn-group pull-right action-bar hidden-sm hidden-xs">
+                    <button class="btn btn-default composer-discard" data-action="discard" tabindex="-1"><i class="fa fa-times"></i> Discard</button>
+
+                    <button class="btn btn-primary composer-submit" data-action="post" tabindex="6"><i class="fa fa-check"></i> Submit</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row write-preview-container">
+            <div class="write-container">
+                <div class="help-text">
+                    <span class="help">Compose <i class="fa fa-question-circle"></i></span>
+                    <span class="toggle-preview hide">Show Preview</span>
+                </div>
+                <textarea class="write" tabindex="4" data-mentions="1"></textarea>
+            </div>
+            <div class="hidden-sm hidden-xs preview-container">
+                <div class="help-text">
+                    <span class="toggle-preview">Hide Preview</span>
+                </div>
+                <div class="preview well"></div>
+            </div>
+        </div>
+
+        <div class="tag-row">
+            <div class="tags-container">
+                <div class="bootstrap-tagsinput"><input type="text" placeholder="Enter tags here, between 3 and 15 characters each." tabindex="5" size="50" class="ui-autocomplete-input" autocomplete="off"></div><input class="tags" type="text" placeholder="Enter tags here, between 3 and 15 characters each." tabindex="5" style="display: none;">
+            </div>
+        </div>
+
+        <ul class="category-selector visible-xs visible-sm">
+
+            <li data-cid="1" class="active">Announcements</li><li data-cid="2">General Discussion</li><li data-cid="4">Comments &amp; Feedback</li><li data-cid="3">Blogs</li></ul>
+
+        <div class="imagedrop"><div>Drag and Drop Images Here</div></div>
+
+        <div class="resizer"><div class="trigger text-center"><i class="fa"></i></div></div>
+    </div>
+</div><ul id="ui-id-1" tabindex="0" class="ui-menu ui-widget ui-widget-content ui-autocomplete ui-front" style="display: none;"></ul><div role="status" aria-live="assertive" aria-relevant="additions" class="ui-helper-hidden-accessible"></div></body>
+</html>

@@ -102,7 +102,7 @@ public class BrowserConfiguration {
 		this.browsertype = browsertype;
 		this.numberOfBrowsers = numberOfBrowsers;
 		this.browserBuilder = builder;
-		this.headless = true;
+		this.headless = false;
 	}
 
 	public BrowserType getBrowsertype() {

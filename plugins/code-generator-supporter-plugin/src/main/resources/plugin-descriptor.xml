@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin-descriptor xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				   xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/crawljax/crawljax/master/core/src/main/resources/com/crawljax/core/plugin/descriptor/jaxb/plugin-descriptor.xsd">
+
+	<name>Code Generator Supporter Plugin</name>
+	<description>This plugin would collect data that for code generator.</description>
+	<crawljax-versions>
+		<version>3.6</version>
+		<version>3.7-SNAPSHOT</version>
+		<version>3.8-SNAPSHOT</version>
+	</crawljax-versions>
+	<parameters>
+		<parameter>
+			<id>inputsFileName</id>
+			<display-name>URL ID Inputs File Name</display-name>
+			<type>textbox</type>
+		</parameter>
+	</parameters>
+</plugin-descriptor>

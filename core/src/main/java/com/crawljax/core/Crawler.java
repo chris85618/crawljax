@@ -304,19 +304,28 @@ public class Crawler {
 	private boolean visitAnchorHrefIfPossible(Eventable eventable) {
 		Element element = eventable.getElement();
 		String href = element.getAttributeOrNull("href");
-		if (href == null) {
-			LOG.info("Anchor {} has no href and is invisble so it will be ignored", element);
-		} else {
-			LOG.info("Found an invisible link with href={}", href);
-			URI url = UrlUtils.extractNewUrl(browser.getCurrentUrl(), href);
-			browser.goToUrl(url);
-			// ch-sh begin
-			actualPath.add(new String[] { "get", url.getPath() });
-			actualEventable[0] = "get";
-			actualEventable[1] = url.getPath();
-			// ch-sh end
-			return true;
+		try {
+			if (href == null) {
+				LOG.info("Anchor {} has no href and is invisble so it will be ignored", element);
+			} else {
+				LOG.info("Found an invisible link with href={}", href);
+				URI url = UrlUtils.extractNewUrl(browser.getCurrentUrl(), href);
+				browser.goToUrl(url);
+				// ch-sh begin
+				actualPath.add(new String[] { "get", url.getPath() });
+				actualEventable[0] = "get";
+				actualEventable[1] = url.getPath();
+				// ch-sh end
+				return true;
+			}
+		} catch (IllegalArgumentException exception) {
+			System.out.println("-----******------");
+			System.out.println(exception.getMessage());
+			System.out.println("-----******------");
+			LOG.info(exception.getMessage());
+			return false;
 		}
+		
 		return false;
 	}
 

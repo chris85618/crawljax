@@ -142,7 +142,10 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 			options.addArguments(HEADLESS_ARG);
 		}
 
-		return WebDriverBackedEmbeddedBrowser.withDriver(new FirefoxDriver(options),
+		FirefoxDriver firefoxDriver = new FirefoxDriver(options);
+		firefoxDriver.manage().window().maximize();
+		
+		return WebDriverBackedEmbeddedBrowser.withDriver(firefoxDriver,
 		        filterAttributes, crawlWaitEvent, crawlWaitReload, unexpectedAlertHandler);
 	}
 
@@ -165,7 +168,10 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 			optionsChrome.addArguments(HEADLESS_ARG);
 		}
 
-		return WebDriverBackedEmbeddedBrowser.withDriver(new ChromeDriver(optionsChrome), filterAttributes,
+		ChromeDriver driverChrome = new ChromeDriver(optionsChrome);
+		driverChrome.manage().window().maximize();
+
+		return WebDriverBackedEmbeddedBrowser.withDriver(driverChrome, filterAttributes,
 		        crawlWaitEvent, crawlWaitReload);
 	}
 
@@ -180,8 +186,11 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 			        proxyConf.getPort()));
 		}
 
+		JBrowserDriver jbDriver = new JBrowserDriver(settingsBuilder.build());
+		jbDriver.manage().window().maximize();
+		
 		return WebDriverBackedEmbeddedBrowser.withDriver(
-		        new JBrowserDriver(settingsBuilder.build()),
+		        jbDriver,
 		        filterAttributes, crawlWaitEvent, crawlWaitReload);
 	}
 
@@ -202,7 +211,7 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 		}
 		
 		PhantomJSDriver phantomJsDriver = new PhantomJSDriver(caps);
-
+		phantomJsDriver.manage().window().maximize();
 		return WebDriverBackedEmbeddedBrowser.withDriver(phantomJsDriver, filterAttributes,
 		        crawlWaitEvent, crawlWaitReload);
 	}

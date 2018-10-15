@@ -69,8 +69,16 @@
 		</plugins>
 	</build>
 
-	<modules>
-		<module>crawloverview-plugin</module>
-		<module>test-plugin</module>
-  </modules>
+	<profiles>
+		<profile>
+			<modules>
+				<module>crawloverview-plugin</module>
+				<module>test-plugin</module>
+				<module>code-generator-supporter-plugin</module>
+				<module>url-id-inputs-file-retriever</module>
+				<module>support-input-generator</module>
+				<module>web-element-hash-generator</module>
+			</modules>
+		</profile>
+	</profiles>
 </project>
