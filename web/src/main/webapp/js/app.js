@@ -133,7 +133,7 @@ app.run(['$rootScope', '$state', '$stateParams', '$http', 'configHttp', 'pluginH
 	
 	$rootScope.browsers = [{name: "Mozilla Firefox", value: "FIREFOX"}, 
 	                       {name: "Google Chrome", value: "CHROME"}, 
-	                       {name: "Internet Explorer", value: "INTERNET EXPLORER"}, 
+	                       {name: "Internet Explorer", value: "INTERNET_EXPLORER"}, 
 	                       {name: "PhantomJS", value:"PHANTOMJS"}];
 	
 	$rootScope.clickConditions = [

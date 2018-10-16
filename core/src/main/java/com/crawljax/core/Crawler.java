@@ -319,9 +319,6 @@ public class Crawler {
 				return true;
 			}
 		} catch (IllegalArgumentException exception) {
-			System.out.println("-----******------");
-			System.out.println(exception.getMessage());
-			System.out.println("-----******------");
 			LOG.info(exception.getMessage());
 			return false;
 		}
