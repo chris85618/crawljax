@@ -129,11 +129,11 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 			}
 
 			options.addPreference("network.proxy.http", configuration.getProxyConfiguration()
-			        .getHostname());
+				.getHostname());
 			options.addPreference("network.proxy.http_port", configuration
-			        .getProxyConfiguration().getPort());
+				.getProxyConfiguration().getPort());
 			options.addPreference("network.proxy.type", configuration.getProxyConfiguration()
-			        .getType().toInt());
+				.getType().toInt());
 			/* use proxy for everything, including localhost */
 			options.addPreference("network.proxy.no_proxies_on", "");
 		}

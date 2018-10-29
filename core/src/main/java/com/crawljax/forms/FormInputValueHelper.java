@@ -215,21 +215,30 @@ public final class FormInputValueHelper {
 	 */
 	private Identification getIdentification(Node element) throws Exception {
 		NamedNodeMap attributes = element.getAttributes();
+		Identification item = null;
+		Identification target = null;
+
 		if (attributes.getNamedItem("id") != null) {
-			return new Identification(Identification.How.id, attributes
-					.getNamedItem("id").getNodeValue());
-		} else if (attributes.getNamedItem("name") != null) {
-			return new Identification(Identification.How.name, attributes
-					.getNamedItem("name").getNodeValue());
+			String id = attributes.getNamedItem("id").getNodeValue();
+			if (fieldValues.containsKey(fieldMatches(id)))
+				target = new Identification(Identification.How.id, id);
+			item = new Identification(Identification.How.id, id);
+		}
+
+		if (attributes.getNamedItem("name") != null) {
+			String name = attributes.getNamedItem("name").getNodeValue();
+			if (fieldValues.containsKey(fieldMatches(name)))
+				target = new Identification(Identification.How.name, name);
+			item = new Identification(Identification.How.name, name);		
 		}
 
 		// try to find the xpath
 		String xpathExpr = XPathHelper.getXPathExpression(element);
 		if (xpathExpr != null && !xpathExpr.equals("")) {
-			return new Identification(Identification.How.xpath, xpathExpr);
+			item = new Identification(Identification.How.xpath, xpathExpr);
 		}
 
-		return null;
+		return (target != null) ? target : item;
 	}
 
 	/**
@@ -276,7 +285,7 @@ public final class FormInputValueHelper {
 		input.setType(getElementType(element));
 		input.setIdentification(identification);
 		Set<InputValue> values = new HashSet<InputValue>();
-
+		
 		if (id != null && fieldValues.containsKey(id)) {
 			// TODO: make multiple selection for list available
 			// add defined value to element

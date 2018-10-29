@@ -48,7 +48,7 @@ public class FormHandler {
 	}
 
 	private static final String[] ALLOWED_INPUT_TYPES =
-	{ "text", "radio", "checkbox", "password" };
+	{ "text", "radio", "checkbox", "password", "email" };
 
 	/**
 	 * Fills in the element with the InputValues for input
@@ -62,6 +62,7 @@ public class FormHandler {
 		try {
 			if (input.getType().toLowerCase().startsWith("text")
 			        || input.getType().equalsIgnoreCase("password")
+			        || input.getType().equalsIgnoreCase("email")
 			        || input.getType().equalsIgnoreCase("hidden")) {
 				handleText(input);
 			} else if ("checkbox".equals(input.getType())) {

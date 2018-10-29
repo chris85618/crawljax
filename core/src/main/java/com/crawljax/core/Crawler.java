@@ -151,7 +151,7 @@ public class Crawler {
 	private void follow(CrawlPath path, StateVertex targetState)
 	        throws StateUnreachableException, CrawljaxException {
 		StateVertex curState = context.getSession().getInitialState();
-
+		
 		// ch-sh begin
 		actualPath.clear();
 
