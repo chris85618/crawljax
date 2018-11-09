@@ -69,11 +69,12 @@ public class CodeGeneratorSupporterPlugin
 	@Override
 	public boolean isDomChanged(CrawlerContext context, StateVertex domBefore, String[] e, StateVertex domAfter) {
 		JsonObject object = new JsonObject();
-		object.addProperty("type", e[0]);
-		object.addProperty("identify", e[1]);
+		object.addProperty("CurrentState", e[0]);
+		object.addProperty("type", e[1]);
+		object.addProperty("identify", e[2]);
 		crawlJaxExtendParameter.getAsJsonArray("crawlPath").add(object);
 
-		return !domAfter.equals(domBefore);
+		return !domAfter.getDom().equals(domBefore.getDom());
 	}
 
 	@Override
@@ -178,8 +179,8 @@ public class CodeGeneratorSupporterPlugin
 
 	@Override
 	public void onFireEventFailed(CrawlerContext context, Eventable eventable, List<Eventable> pathToFailure) {
-		LOGGER.error("{} fail to click", eventable.toString());
-		LOGGER.error("path : {}", pathToFailure.toString());
+		// LOGGER.error("{} fail to click", eventable.toString());
+		// LOGGER.error("path : {}", pathToFailure.toString());
 	}
 
 	@Override

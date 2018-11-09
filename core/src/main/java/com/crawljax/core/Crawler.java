@@ -66,7 +66,7 @@ public class Crawler {
 	private final ExitNotifier exitNotifier;
 
 	private final ArrayList<String[]> actualPath = new ArrayList<String[]>();
-	private final String[] actualEventable = new String[2];
+	private final String[] actualEventable = new String[3];
 
 	private CrawlPath crawlpath;
 	private StateMachine stateMachine;
@@ -264,8 +264,9 @@ public class Crawler {
 			// Let the controller execute its specified wait operation on the browser thread safe.
 			// ch-sh begin
 			actualPath.add(new String[] { "event", eventToFire.getIdentification().getValue() });
-			actualEventable[0] = "event";
-			actualEventable[1] = eventToFire.getIdentification().getValue();
+			actualEventable[0] = stateMachine.getCurrentState().getName();
+			actualEventable[1] = "event";
+			actualEventable[2] = eventToFire.getIdentification().getValue();
 			// ch-sh end
 			waitConditionChecker.wait(browser);
 			browser.closeOtherWindows();
