@@ -67,14 +67,14 @@ public class CodeGeneratorSupporterPlugin
 	}
 
 	@Override
-	public boolean isDomChanged(CrawlerContext context, StateVertex domBefore, String[] e, StateVertex domAfter) {
+	public boolean isDomChanged(CrawlerContext context, String domBefore, String[] e, String domAfter) {
 		JsonObject object = new JsonObject();
 		object.addProperty("CurrentState", e[0]);
 		object.addProperty("type", e[1]);
 		object.addProperty("identify", e[2]);
 		crawlJaxExtendParameter.getAsJsonArray("crawlPath").add(object);
-
-		return !domAfter.getDom().equals(domBefore.getDom());
+				
+		return !domAfter.equals(domBefore);
 	}
 
 	@Override

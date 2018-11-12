@@ -459,7 +459,15 @@ public class Plugins {
 					DomChangeNotifierPlugin domChange = (DomChangeNotifierPlugin)plugin;
 					LOGGER.debug("Calling plugin {}", domChange);
 					try {
-						if (domChange.isDomChanged(context, stateBefore, event, stateAfter)) isChanged = true;
+						System.out.println("====runDomChangeNotifierPlugins===");
+						System.out.println("stateBefore: " + stateBefore.getName());
+						// System.out.println("stateBefore Dom: " + stateBefore.getDom());
+						System.out.println("stateAfter: " + stateAfter.getName());
+						// System.out.println("stateAfter Dom: " + stateAfter.getDom());
+						System.out.println("is change (none strip): " + !stateBefore.getDom().equals(stateAfter.getDom()));
+						System.out.println("is change (strip): " + !stateBefore.getStrippedDom().equals(stateAfter.getStrippedDom()));
+						System.out.println("====runDomChangeNotifierPlugins===");
+						if (domChange.isDomChanged(context, stateBefore.getDom(), event, stateAfter.getDom())) isChanged = true;
 					} catch (RuntimeException ex) {
 						 LOGGER.error("Could not run {} because of error {}. Now running default DOM comparison", domChange,
 						 ex.getMessage(), ex);

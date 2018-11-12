@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin-descriptor xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				   xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/crawljax/crawljax/master/core/src/main/resources/com/crawljax/core/plugin/descriptor/jaxb/plugin-descriptor.xsd">
+
+	<name>Manager Candidate Element Plugin</name>
+	<description>A pluin that can reorder or disable candidate-element which will trigger by crawljax.</description>
+	<crawljax-versions>
+		<version>3.6</version>
+		<version>3.7-SNAPSHOT</version>
+	</crawljax-versions>
+	<parameters>
+		<parameter>
+			<id>inputsFileName</id>
+			<display-name>URL ID Inputs File Name</display-name>
+			<type>textbox</type>
+		</parameter>
+	</parameters>
+</plugin-descriptor>

@@ -21,6 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.sound.midi.Soundbank;
+
 import com.crawljax.core.CrawljaxException;
 import com.crawljax.core.configuration.AcceptAllFramesChecker;
 import com.crawljax.core.configuration.DefaultUnexpectedAlertHandler;
@@ -810,7 +812,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 			for (String handle : browser.getWindowHandles()) {
 				if (!handle.equals(browser.getWindowHandle())) {
 					browser.switchTo().window(handle);
-					LOGGER.debug("Closing other window with title \"{}\"", browser.getTitle());
+					// LOGGER.debug("Closing other window with title \"{}\"", browser.getTitle());
 					browser.close();
 					browser.switchTo().window(current);
 				}

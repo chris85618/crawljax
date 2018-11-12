@@ -69,16 +69,16 @@
 		</plugins>
 	</build>
 
-	<profiles>
-		<profile>
+	<!-- <profiles>
+		<profile> -->
 			<modules>
 				<module>crawloverview-plugin</module>
 				<module>test-plugin</module>
 				<module>code-generator-supporter-plugin</module>
-				<module>url-id-inputs-file-retriever</module>
+				<!-- <module>url-id-inputs-file-retriever</module>
 				<module>support-input-generator</module>
-				<module>web-element-hash-generator</module>
+				<module>web-element-hash-generator</module> -->
 			</modules>
-		</profile>
-	</profiles>
+		<!-- </profile>
+	</profiles> -->
 </project>

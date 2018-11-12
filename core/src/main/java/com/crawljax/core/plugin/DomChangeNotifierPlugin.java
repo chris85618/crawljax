@@ -36,6 +36,6 @@ public interface DomChangeNotifierPlugin extends Plugin {
 	 */
 	@Deprecated
 	// boolean isDomChanged(CrawlerContext context, String domBefore, Eventable e, String domAfter);
-	boolean isDomChanged(CrawlerContext context, StateVertex domBefore, String[] e, StateVertex domAfter);
+	boolean isDomChanged(CrawlerContext context, String domBefore, String[] e, String domAfter);
 
 }

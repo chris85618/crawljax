@@ -91,8 +91,8 @@ public class PluginsWithCrawlerTest {
 		builder.addPlugin(new DomChangeNotifierPlugin() {
 
 			@Override
-			public boolean isDomChanged(CrawlerContext context, StateVertex domBefore, String[] e,
-					StateVertex domAfter) {
+			public boolean isDomChanged(CrawlerContext context, String domBefore, String[] e,
+			String domAfter) {
 
 				plugins.add(DomChangeNotifierPlugin.class);
 				return !domAfter.equals(domBefore);
