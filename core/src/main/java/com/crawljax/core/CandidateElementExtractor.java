@@ -371,8 +371,9 @@ public class CandidateElementExtractor {
 			candidateElements.add(new CandidateElement(sourceElement, new Identification(
 			        Identification.How.xpath, xpath), relatedFrame));
 		}
-
+		// System.out.println("======================= candidateElement =======================");
 		for (CandidateElement candidateElement : candidateElements) {
+			// System.out.println("candidateElement: " + candidateElement);
 			if (!clickOnce || checkedElements.markChecked(candidateElement)) {
 				LOG.debug("Found new candidate element: {} with eventableCondition {}",
 				        candidateElement.getUniqueString(), eventableCondition);
@@ -385,6 +386,7 @@ public class CandidateElementExtractor {
 				 */
 			}
 		}
+		// System.out.println("======================= candidateElement =======================");
 	}
 
 	/**

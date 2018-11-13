@@ -41,12 +41,14 @@ class OutputBuilder {
 	static final String STATES_FOLDER_NAME = "states";
 	static final String JSON_OUTPUT_NAME = "result.json";
 	static final String DOMS_OUTPUT_NAME = "doms";
+	static final String STRIPDOMS_OUTPUT_NAME = "stripDoms";
 
 	private final File outputDir;
 	private final File states;
 	private final File screenshots;
 	private final File indexFile;
 	private final File doms;
+	private final File stripDoms;
 	private final VelocityEngine ve;
 
 	/**
@@ -67,6 +69,10 @@ class OutputBuilder {
 		doms = new File(outputDir, DOMS_OUTPUT_NAME);
 		created = doms.mkdir();
 		checkArgument(created, "Could not create doms dir");
+		stripDoms = new File(outputDir, STRIPDOMS_OUTPUT_NAME);
+		created = stripDoms.mkdir();
+		checkArgument(created, "Could not create stripDoms dir");
+
 
 		indexFile = new File(outputDir, "index.html");
 		ve = new VelocityEngine();
@@ -216,10 +222,12 @@ class OutputBuilder {
 	 * @param dom
 	 *            the DOM as string
 	 */
-	void persistDom(String name, @Nullable String dom) {
+	void persistDom(String name, @Nullable String dom, @Nullable String stripDom) {
 		try {
 			Files.asCharSink(new File(doms, name + ".html"), Charsets.UTF_8)
-			        .write(Strings.nullToEmpty(dom));
+				.write(Strings.nullToEmpty(dom));
+			Files.asCharSink(new File(stripDoms, name + ".html"), Charsets.UTF_8)
+				.write(Strings.nullToEmpty(stripDom));
 		} catch (IOException e) {
 			LOG.warn("Could not save dom state for {}", name);
 			LOG.debug("Could not save dom state", e);

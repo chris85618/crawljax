@@ -51,13 +51,9 @@ class StateWriter {
 			failedEvents = Joiner.on(", ").join(state.getFailedEvents());
 		}
 		context.put("failedEvents", failedEvents);
-		// System.out.println("====== StateWriter =====");
 		String dom = outBuilder.getDom(state.getName());
 		dom = StringEscapeUtils.escapeHtml4(dom);
 		context.put("dom", dom);
-		// System.out.println("dom : " + dom);
-		// System.out.println("state : " + state.getName());
-		// System.out.println("====== StateWriter =====");
 
 		// writing
 		String name = state.getName();

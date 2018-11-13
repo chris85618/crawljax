@@ -36,13 +36,14 @@ public class OutputBuilderTest {
 	@Test
 	public void whenDomPersistedTheLoadFunctionReturnsTheSameDom() {
 		String dom = "Some DOM string";
-		builder.persistDom("test-state", dom);
+		String stripDom = "strip";
+		builder.persistDom("test-state", dom, stripDom);
 		assertThat(builder.getDom("test-state"), is(dom));
 	}
 
 	@Test
 	public void whenNullPersistedTheDomIsPersistedAsEmpty() {
-		builder.persistDom("test-state", null);
+		builder.persistDom("test-state", null, null);
 		assertThat(builder.getDom("test-state"), isEmptyString());
 	}
 
