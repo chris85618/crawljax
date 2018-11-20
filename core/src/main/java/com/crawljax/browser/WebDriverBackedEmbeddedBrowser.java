@@ -40,6 +40,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.io.Files;
 
+import org.openqa.selenium.By;
 import org.openqa.selenium.ElementNotInteractableException;
 import org.openqa.selenium.ElementNotVisibleException;
 import org.openqa.selenium.JavascriptExecutor;
@@ -479,6 +480,16 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 					throw e;
 				} catch (ElementNotInteractableException e) {
 					String message = e.getMessage();
+
+					List<WebElement> sibling = webElement.findElements(By.xpath(".//*"));
+					for (WebElement element : sibling) {
+						// System.out.println("Child Element's " + element);
+						// System.out.println("Child Element's Position from x : " + element.getLocation().x +" pixels.");
+						// System.out.println("Child Element's Position from y : " + element.getLocation().y +" pixels.");
+						// System.out.println("Child Element's size : " + element.getSize());
+						return fireEventWait(element, eventable);
+					}
+
 					if (message != null) {
 						// HtmlUnitDriver throws ElementNotInteractableException instead of
 						// ElementNotVisibleException for elements that are not visible.
@@ -702,6 +713,11 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 			WebElement webElement =
 			        browser.findElement(eventable.getIdentification().getWebDriverBy());
+
+			System.out.println("\nElement : " + webElement);
+			System.out.println("Element's Position from x : " + webElement.getLocation().x +" pixels.");
+			System.out.println("Element's Position from y : " + webElement.getLocation().y +" pixels.");
+			System.out.println("Element's size : " + webElement.getSize());
 
 			if (webElement != null) {
 				result = fireEventWait(webElement, eventable);

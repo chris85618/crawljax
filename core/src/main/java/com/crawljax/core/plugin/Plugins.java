@@ -466,7 +466,7 @@ public class Plugins {
 						// System.out.println("stateAfter Dom: " + stateAfter.getDom());
 						System.out.println("is change (none strip): " + !stateBefore.getDom().equals(stateAfter.getDom()));
 						System.out.println("is change (strip): " + !stateBefore.getStrippedDom().equals(stateAfter.getStrippedDom()));
-						System.out.println("====runDomChangeNotifierPlugins===");
+						System.out.println("====runDomChangeNotifierPlugins===\n");
 						if (domChange.isDomChanged(context, stateBefore.getDom(), event, stateAfter.getDom())) isChanged = true;
 					} catch (RuntimeException ex) {
 						 LOGGER.error("Could not run {} because of error {}. Now running default DOM comparison", domChange,
