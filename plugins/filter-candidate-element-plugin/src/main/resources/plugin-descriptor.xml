@@ -7,6 +7,7 @@
 	<crawljax-versions>
 		<version>3.6</version>
 		<version>3.7-SNAPSHOT</version>
+		<version>3.8-SNAPSHOT</version>
 	</crawljax-versions>
 	<parameters>
 		<parameter>

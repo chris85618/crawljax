@@ -19,3 +19,10 @@ output/
 
 # Mac
 .DS_Store
+
+#VScode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
