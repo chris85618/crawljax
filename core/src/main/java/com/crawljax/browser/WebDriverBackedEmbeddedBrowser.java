@@ -477,35 +477,45 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 				try {
 					webElement.click();
 				} catch (ElementNotVisibleException e) {
+					// System.out.println(" ------ ElementNotVisibleException 1 ------ ");
 					throw e;
 				} catch (ElementNotInteractableException e) {
+					// System.out.println(" ------ ElementNotInteractableException 2 ------ ");
 					String message = e.getMessage();
-
-					List<WebElement> sibling = webElement.findElements(By.xpath(".//*"));
-					for (WebElement element : sibling) {
-						// System.out.println("Child Element's " + element);
-						// System.out.println("Child Element's Position from x : " + element.getLocation().x +" pixels.");
-						// System.out.println("Child Element's Position from y : " + element.getLocation().y +" pixels.");
-						// System.out.println("Child Element's size : " + element.getSize());
-						return fireEventWait(element, eventable);
-					}
+					// System.out.println("+ ElementNotInteractableException message = " + message);
 
 					if (message != null) {
 						// HtmlUnitDriver throws ElementNotInteractableException instead of
 						// ElementNotVisibleException for elements that are not visible.
 						if (message.contains("visible")) {
+							// System.out.println("ElementNotInteractableException => visible");
 							throw new ElementNotVisibleException(message, e);
+						}
+
+						// Try to let FirefoxDriver and InternetExplorerDriver click on the Child-Element to crawl more states.
+						if (message.contains("FirefoxDriver") || message.contains("InternetExplorerDriver")) {
+							System.out.println("+ - + - + - Try to let FirefoxDriver and InternetExplorerDriver - + - + - +");
+							List<WebElement> sibling = webElement.findElements(By.xpath(".//*"));
+							for (WebElement element : sibling) {
+								System.out.println("Child Element's " + element);
+								System.out.println("Child Element's Position from x : " + element.getLocation().x +" pixels.");
+								System.out.println("Child Element's Position from y : " + element.getLocation().y +" pixels.");
+								System.out.println("Child Element's size : " + element.getSize());
+								return fireEventWait(element, eventable);
+							}
 						}
 
 						// FirefoxDriver no longer throws ElementNotVisibleException for
 						// elements that are not visible, while this might catch other
 						// non-interactable cases it allows to access the hidden elements.
 						if (message.contains("FirefoxDriver")) {
+							// System.out.println("ElementNotInteractableException => FirefoxDriver");
 							throw new ElementNotVisibleException(message, e);
 						}
 					}
 					return false;
 				} catch (WebDriverException e) {
+					// System.out.println(" ------ WebDriverException 3 ------ ");
 					throwIfConnectionException(e);
 					return false;
 				}
@@ -640,6 +650,21 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 		// In new Firefox versions (>= 59) Marionette adds an empty style attribute to clicked
 		// elements which incorrectly causes new crawling states.
 		filteredHtml = filteredHtml.replaceAll("(?i)\\sstyle=\"\"", "");
+
+
+
+		// System.out.println("========== o start ============");
+		// System.out.println(filteredHtml);
+		// System.out.println("========== o end ============\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+
+
+		filteredHtml = filteredHtml.replaceAll("(?i)assets\\d", "assets");
+		// filteredHtml = filteredHtml.replaceAll("(?i)<div\\sid=\"content\">(.|\\n)+<br\\sclass=\"clear\"><\\/div><\\/div>", "");
+		filteredHtml = filteredHtml.replaceAll("(?si)<div\\sid=\"content\">.*<br\\sclass=\"clear\">(\\s)*<\\/div>(\\s)*<\\/div>", "");
+		// System.out.println("========== filteredHtml start ============");
+		// System.out.println(filteredHtml);
+		// System.out.println("========== filteredHtml end ============");
+		// System.exit(0);
 
 		return filteredHtml;
 	}
