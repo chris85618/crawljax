@@ -69,17 +69,13 @@
 		</plugins>
 	</build>
 
-	<!-- <profiles>
-		<profile> -->
-			<modules>
-				<module>crawloverview-plugin</module>
-				<module>test-plugin</module>
-				<module>code-generator-supporter-plugin</module>
-				<module>filter-candidate-element-plugin</module>
-				<module>url-id-inputs-file-retriever</module>
-				<module>support-inputs-manager</module>
-				<module>web-element-hash-generator</module>
-			</modules>
-		<!-- </profile>
-	</profiles> -->
+	<modules>
+		<module>crawloverview-plugin</module>
+		<module>test-plugin</module>
+		<module>code-generator-supporter-plugin</module>
+		<module>filter-candidate-element-plugin</module>
+		<module>url-id-inputs-file-retriever</module>
+		<module>support-inputs-manager</module>
+		<module>web-element-hash-generator</module>
+	</modules>
 </project>
