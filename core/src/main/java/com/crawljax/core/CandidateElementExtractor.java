@@ -125,7 +125,6 @@ public class CandidateElementExtractor {
 			return ImmutableList.of();
 		}
 		LOG.debug("Looking in state: {} for candidate elements", currentState.getName());
-		// System.out.println("Looking in state: " + currentState.getName() + " for candidate elements");
 
 		try {
 			Document dom = DomUtils.asDocument(browser.getStrippedDomWithoutIframeContent());
@@ -139,28 +138,22 @@ public class CandidateElementExtractor {
 		}
 		currentState.setElementsFound(results);
 		LOG.debug("Found {} new candidate elements to analyze!", results.size());
-		// System.out.println("Found " + results.size() + " new candidate elements to analyze!");
 		return ImmutableList.copyOf(results);
 	}
 
 	private void extractElements(Document dom, List<CandidateElement> results,
 	        String relatedFrame) {
 		LOG.debug("Extracting elements for related frame '{}'", relatedFrame);
-		// System.out.println("Extracting elements for related frame " + relatedFrame);
 		for (CrawlElement tag : includedCrawlElements) {
 			LOG.debug("Extracting TAG: {}", tag);
-			System.out.println("Extracting TAG: " + tag);
 
 			NodeList frameNodes = dom.getElementsByTagName("FRAME");
 			addFramesCandidates(dom, results, relatedFrame, frameNodes);
-			System.out.println("1. FRAME => size : " + results.size());
 
 			NodeList iFrameNodes = dom.getElementsByTagName("IFRAME");
 			addFramesCandidates(dom, results, relatedFrame, iFrameNodes);
-			System.out.println("2. IFRAME => size : " + results.size());
 
 			evaluateElements(dom, tag, results, relatedFrame);
-			System.out.println("3. other => size : " + results.size());
 		}
 	}
 
@@ -224,7 +217,6 @@ public class CandidateElementExtractor {
 	private void evaluateElements(Document dom, CrawlElement crawl,
 	        List<CandidateElement> results, String relatedFrame) {
 		try {
-			System.out.println("try evaluateElements");
 			List<Element> nodeListForCrawlElement =
 			        getNodeListForTagElement(dom, crawl,
 			                checkedElements.getEventableConditionChecker());
@@ -258,9 +250,6 @@ public class CandidateElementExtractor {
 
 		NodeList nodeList = dom.getElementsByTagName(crawlElement.getTagName());
 
-		//
-		// System.out.println("\n++++++ nodeList.getLength() = " + nodeList.getLength());
-
 		for (int k = 0; k < nodeList.getLength(); k++) {
 
 			Element element = (Element) nodeList.item(k);
@@ -275,17 +264,11 @@ public class CandidateElementExtractor {
 			 */
 			String id = element.getNodeName() + ": " + DomUtils.getAllElementAttributes(element);
 
-			// System.out.println("\n+++debug+++ element = " + DomUtils.getElementString(element));
 			if (matchesXpath && !checkedElements.isChecked(id)
 			        && !isExcluded(dom, element, eventableConditionChecker)) {
-				// System.out.println("- 1 -");
 				addElement(element, result, crawlElement);
 			} else {
 				LOG.debug("Element {} was not added", element);
-				// System.out.println("\n++++++ Element " + element + " was not added");
-				// System.out.println("-- matchesXpath = " + matchesXpath);
-				// System.out.println("-- !checkedElements.isChecked(id) = " + !checkedElements.isChecked(id));
-				// System.out.println("-- !isExcluded(dom, element, eventableConditionChecker) = " + !isExcluded(dom, element, eventableConditionChecker));
 			}
 		}
 		return result.build();
@@ -325,26 +308,16 @@ public class CandidateElementExtractor {
 	}
 
 	private void addElement(Element element, Builder<Element> builder, CrawlElement crawlElement) {
-		// System.out.println("A.equalsIgnoreCase(crawlElement.getTagName()) = "+ "A".equalsIgnoreCase(crawlElement.getTagName()));
-		// System.out.println("hrefShouldBeIgnored(element) = "+ hrefShouldBeIgnored(element));
 		if ("A".equalsIgnoreCase(crawlElement.getTagName()) && hrefShouldBeIgnored(element)) {
-			// System.out.println("- 2 -");
 			return;
 		}
-		// System.out.println("- 3 -");
 		builder.add(element);
-		// System.out.println("- 4 -");
 		LOG.debug("Adding element {}", element);
-		// System.out.println("Adding element " + element);
 		checkedElements.increaseElementsCounter();
-		// System.out.println("- 5 -\n");
 	}
 
 	private boolean hrefShouldBeIgnored(Element element) {
 		String href = Strings.nullToEmpty(element.getAttribute("href"));
-		// System.out.println("isFileForDownloading(href) = " + isFileForDownloading(href));
-		// System.out.println("href.startsWith(\"mailto:\") = " + href.startsWith("mailto:"));
-		// System.out.println("(!followExternalLinks && isExternal(href)) = " + (!followExternalLinks && isExternal(href)));
 		return isFileForDownloading(href)
 		        || href.startsWith("mailto:")
 			|| (!followExternalLinks && isExternal(href));
@@ -354,8 +327,6 @@ public class CandidateElementExtractor {
 		if (href.startsWith("http")) {
 			try {
 				URI uri = URI.create(href);
-				// System.out.println(" - uri = " + uri);
-				// System.out.println(" - !uri.getHost().equalsIgnoreCase(siteHostName) = " + !uri.getHost().equalsIgnoreCase(siteHostName));
 				return !uri.getHost().equalsIgnoreCase(siteHostName);
 			} catch (IllegalArgumentException e) {
 				LOG.info("Unreadable externa link {}", href);
@@ -390,7 +361,6 @@ public class CandidateElementExtractor {
 		// get multiple candidate elements when there are input
 		// fields connected to this element
 
-		// System.out.println("\n++++++ sourceElement = " + sourceElement);
 
 		List<CandidateElement> candidateElements = new ArrayList<CandidateElement>();
 		if (eventableCondition != null && eventableCondition.getLinkedInputFields() != null
@@ -399,20 +369,15 @@ public class CandidateElementExtractor {
 			// value combination
 			candidateElements =
 				formHandler.getCandidateElementsForInputs(sourceElement, eventableCondition);
-			// System.out.println("evaluateElement 1");
 		} else {
 			// just add default element
 			candidateElements.add(new CandidateElement(sourceElement, new Identification(
 				Identification.How.xpath, xpath), relatedFrame));
-			// System.out.println("evaluateElement 2");
 		}
-		// System.out.println("======================= candidateElement =======================");
 		for (CandidateElement candidateElement : candidateElements) {
-			// System.out.println("candidateElement: " + candidateElement);
 			if (!clickOnce || checkedElements.markChecked(candidateElement)) {
 				LOG.debug("Found new candidate element: {} with eventableCondition {}",
 					candidateElement.getUniqueString(), eventableCondition);
-				// System.out.println("Found new candidate element: "+ candidateElement.getUniqueString() +" with eventableCondition " + eventableCondition);
 				candidateElement.setEventableCondition(eventableCondition);
 				results.add(candidateElement);
 				/**
@@ -422,7 +387,6 @@ public class CandidateElementExtractor {
 				 */
 			}
 		}
-		// System.out.println("======================= candidateElement =======================");
 	}
 
 	/**

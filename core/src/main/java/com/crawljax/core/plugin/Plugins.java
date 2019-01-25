@@ -452,32 +452,6 @@ public class Plugins {
 				incrementFailCounterFor(domChange);
 				return defaultDomComparison(stateBefore, stateAfter);
 			}
-			// boolean isChanged = false;
-			
-			// for (Plugin plugin : plugins.get(DomChangeNotifierPlugin.class)) {
-			// 	if (plugin instanceof DomChangeNotifierPlugin) {
-			// 		DomChangeNotifierPlugin domChange = (DomChangeNotifierPlugin)plugin;
-			// 		LOGGER.debug("Calling plugin {}", domChange);
-			// 		try {
-			// 			System.out.println("====runDomChangeNotifierPlugins===");
-			// 			System.out.println("stateBefore: " + stateBefore.getName());
-			// 			// System.out.println("stateBefore Dom: " + stateBefore.getDom());
-			// 			System.out.println("stateAfter: " + stateAfter.getName());
-			// 			// System.out.println("stateAfter Dom: " + stateAfter.getDom());
-			// 			System.out.println("is change (none strip): " + !stateBefore.getDom().equals(stateAfter.getDom()));
-			// 			System.out.println("is change (strip): " + !stateBefore.getStrippedDom().equals(stateAfter.getStrippedDom()));
-			// 			System.out.println("====runDomChangeNotifierPlugins===\n");
-			// 			if (domChange.isDomChanged(context, stateBefore.getDom(), event, stateAfter.getDom())) isChanged = true;
-			// 		} catch (RuntimeException ex) {
-			// 			 LOGGER.error("Could not run {} because of error {}. Now running default DOM comparison", domChange,
-			// 			 ex.getMessage(), ex);
-			// 			 incrementFailCounterFor(domChange);
-			// 			 return defaultDomComparison(stateBefore, stateAfter);
-			// 		}
-			// 	}
-			// }
-			
-			// return isChanged;
 		}
 
 	}
