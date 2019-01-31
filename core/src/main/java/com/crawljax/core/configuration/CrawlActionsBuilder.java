@@ -112,8 +112,9 @@ public class CrawlActionsBuilder {
 	public void clickDefaultElements() {
 		click("a");
 		click("button");
-		click("input").withAttribute("type", "submit");
-		click("input").withAttribute("type", "button");
+		click("input");
+		// click("input").withAttribute("type", "submit");
+		// click("input").withAttribute("type", "button");
 	}
 
 	private void checkNotRead() {
