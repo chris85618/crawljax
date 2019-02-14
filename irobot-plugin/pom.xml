@@ -28,6 +28,12 @@
 			<artifactId>crawljax-core</artifactId>
 			<version>${project.parent.version}</version>
 		</dependency>
+
+    <dependency>
+      <groupId>org.zaproxy.crawljax.plugins</groupId>
+      <artifactId>crawloverview-plugin</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
