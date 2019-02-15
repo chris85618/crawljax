@@ -51,7 +51,9 @@ public class Plugins {
 	                PostCrawlingPlugin.class, PreStateCrawlingPlugin.class,
 					PreCrawlingPlugin.class, AfterRetrievePathPlugin.class,
 					LoginPlugin.class, OnAlertPresentedPlugin.class,
-					OnCloneStatePlugin.class);
+					OnCloneStatePlugin.class
+					, AfterReceiveRobotActionPlugin.class
+					);
 
 	private final ImmutableListMultimap<Class<? extends Plugin>, Plugin> plugins;
 
@@ -266,14 +268,15 @@ public class Plugins {
 	}
 
 	//ch-sh begin
-	public void runOnCloneStatePlugins(CrawlerContext context, StateVertex currentState) {
+	public void runOnCloneStatePlugins(CrawlerContext context, 
+					ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
 		LOGGER.debug("Running OnCloneStatePlugins...");
 		counters.get(OnCloneStatePlugin.class).inc();
 		for (Plugin plugin : plugins.get(OnCloneStatePlugin.class)) {
 			if (plugin instanceof OnCloneStatePlugin) {
 				LOGGER.debug("Calling plugin {}", plugin);
 				try {
-					((OnCloneStatePlugin) plugin).onCloneState(context, currentState);					
+					((OnCloneStatePlugin) plugin).onCloneState(context, candidateElements, currentState);					
 				} catch (RuntimeException e) {
 					reportFailingPlugin(plugin, e);
 				}
@@ -453,8 +456,33 @@ public class Plugins {
 				return defaultDomComparison(stateBefore, stateAfter);
 			}
 		}
-
 	}
+
+
+	/**
+	 * Load and run the DomChangeNotifierPlugin.
+	 */
+	public boolean runAfterReceiveRobotActionPlugins() {
+		counters.get(AfterReceiveRobotActionPlugin.class).inc();
+		if (plugins.get(AfterReceiveRobotActionPlugin.class).isEmpty()) {
+			LOGGER.debug("No AfterReceiveRobotActionPlugin found. Performing default crawing...");
+			return false;
+		} else {
+			AfterReceiveRobotActionPlugin restartSignal = (AfterReceiveRobotActionPlugin) plugins
+			        .get(AfterReceiveRobotActionPlugin.class).get(0);
+			LOGGER.debug("Calling plugin {}", restartSignal);
+			try {
+				return restartSignal.isRestartOrNot();
+			} catch (RuntimeException ex) {
+				LOGGER.error(
+				        "Could not run {} because of error {}. Now return default procedure...",
+				        restartSignal, ex.getMessage(), ex);
+				incrementFailCounterFor(restartSignal);
+				return false;
+			}
+		}
+	}
+	
 
 	private boolean defaultDomComparison(final StateVertex stateBefore,
 	        final StateVertex stateAfter) {
