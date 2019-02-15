@@ -64,6 +64,7 @@ public class Crawler {
 	private final Provider<InMemoryStateFlowGraph> graphProvider;
 	private final StateVertexFactory vertexFactory;
 	private final ExitNotifier exitNotifier;
+	private final boolean isDQNLearningMode;
 
 	private final ArrayList<String[]> actualPath = new ArrayList<String[]>();
 	private final String[] actualEventable = new String[3];
@@ -94,6 +95,7 @@ public class Crawler {
 		this.waitConditionChecker = waitConditionChecker;
 		this.candidateExtractor = elementExtractor.newExtractor(browser);
 		this.formHandler = formHandlerFactory.newFormHandler(browser);
+		this.isDQNLearningMode = config.getDQNLearningMode();
 	}
 
 	/**
@@ -131,7 +133,9 @@ public class Crawler {
 		reset();
 		ImmutableList<Eventable> eventables = shortestPathTo(crawlTask);
 		try {
-			follow(CrawlPath.copyOf(eventables), crawlTask);
+			// TODO: must make sure there is no need to follow the old path
+			if (!this.isDQNLearningMode)
+				follow(CrawlPath.copyOf(eventables), crawlTask);
 			crawlThroughActions();
 		} catch (StateUnreachableException ex) {
 			LOG.info(ex.getMessage());
@@ -223,13 +227,27 @@ public class Crawler {
 	 */
 	private void handleInputElements(Eventable eventable) {
 		CopyOnWriteArrayList<FormInput> formInputs = eventable.getRelatedFormInputs();
+		// TODO: DQN learning mode do not set the
+		// 		default value in inputs from the current page
 
+		if (!this.isDQNLearningMode)
+			addOtherInputs(formInputs);
+		
+		formHandler.handleFormElements(formInputs);
+	}
+
+	/**
+	 * Add inputs which not declare in configuration
+	 * 
+	 * @param formInputs 
+	 * 			The list which contain Relate Form Input
+	 */
+	private void addOtherInputs(CopyOnWriteArrayList<FormInput> formInputs) {
 		for (FormInput formInput : formHandler.getFormInputs()) {
 			if (!formInputs.contains(formInput)) {
 				formInputs.add(formInput);
 			}
 		}
-		formHandler.handleFormElements(formInputs);
 	}
 
 	/**
@@ -341,8 +359,8 @@ public class Crawler {
 	 */
 	private void crawlThroughActions() {
 		boolean interrupted = false;
-		CandidateCrawlAction action =
-		        candidateActionCache.pollActionOrNull(stateMachine.getCurrentState());
+		CandidateCrawlAction action = getNextAction();
+
 		while (action != null && !exitNotifier.isExitCalled()) {
 			CandidateElement element = action.getCandidateElement();
 			if (element.allConditionsSatisfied(browser)) {
@@ -360,7 +378,7 @@ public class Crawler {
 				        element);
 			}
 			// We have to check if we are still in the same state.
-			action = candidateActionCache.pollActionOrNull(stateMachine.getCurrentState());
+			action = getNextAction();
 			interrupted = Thread.interrupted();
 			if (!interrupted && crawlerNotInScope()) {
 				/*
@@ -370,18 +388,32 @@ public class Crawler {
 				throw new CrawlerLeftDomainException(browser.getCurrentUrl());
 			}
 		}
+		// TODO: there is no action need to report to robot
 		if (interrupted) {
 			LOG.info("Interrupted while firing actions. Putting back the actions on the todo list");
 			if (action != null) {
-				candidateActionCache.addActions(ImmutableList.of(action),
-				        stateMachine.getCurrentState());
+				putActionBackToCache(action);
 			}
 			Thread.currentThread().interrupt();
 		}
 	}
 
+	private CandidateCrawlAction getNextAction() {
+		if (this.isDQNLearningMode)
+			return candidateActionCache.peekActionOrNull(stateMachine.getCurrentState());
+
+		return candidateActionCache.pollActionOrNull(stateMachine.getCurrentState());
+	}
+
+	private void putActionBackToCache(CandidateCrawlAction action) {
+		LOG.debug("Put action {} back to state {}", action.toString(), stateMachine.getCurrentState());
+		candidateActionCache.addActions(ImmutableList.of(action), stateMachine.getCurrentState());
+	}
+
 	private void inspectNewState(Eventable event) {
 		if (crawlerNotInScope()) {
+			// TODO: need to discuss there is need to send signal to robot
+			//       that the crawler left domain
 			LOG.debug("The browser left the domain/scope. Going back one state...");
 			goBackOneState();
 		} else {
@@ -390,14 +422,35 @@ public class Crawler {
 				inspectNewDom(event, newState);
 			} else {
 				LOG.debug("Dom unchanged");
+				if(this.isDQNLearningMode)
+					recontructActionInCache();
 			}
 		}
+	}
+
+	private void recontructActionInCache() {
+		LOG.debug("Put the target action on the top of action list which in the cache");
+		StateVertex state = stateMachine.getCurrentState();
+		ImmutableList<CandidateElement> extract = candidateExtractor.extract(state);
+		plugins.runOnCloneStatePlugins(context, extract, state);
+		candidateActionCache.setActions(extract, state);
+		restartOrNot();
 	}
 
 	private boolean domChanged(final Eventable eventable, StateVertex newState) {
 		return plugins.runDomChangeNotifierPlugins(context, stateMachine.getCurrentState(), actualEventable, newState);
 		// return plugins.runDomChangeNotifierPlugins(context, stateMachine.getCurrentState(),
 		//         eventable, newState);
+	}
+
+	private void restartOrNot() {
+		// This will get the restart signal form robot 
+		if (restartSignal())
+			reset();
+	}
+
+	private boolean restartSignal() {
+		return plugins.runAfterReceiveRobotActionPlugins();
 	}
 
 	private void inspectNewDom(Eventable event, StateVertex newState) {
@@ -418,6 +471,9 @@ public class Crawler {
 		} else {
 			LOG.debug("New DOM is a clone state. Continuing in that state.");
 			context.getSession().addCrawlPath(crawlpath.immutableCopy());
+
+			if(this.isDQNLearningMode)
+				recontructActionInCache();
 		}
 	}
 
