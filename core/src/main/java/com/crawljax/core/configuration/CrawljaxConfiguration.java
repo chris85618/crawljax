@@ -208,6 +208,23 @@ public class CrawljaxConfiguration {
 			return this;
 		}
 
+		/**
+		 * Switch to the DQN learning mode.
+		 * It will disable 
+		 * 		1. Crawler.follow, no need to follow or back to last state
+		 * 		2. Crawler.handleInputElement, no need to set the default value in the input
+		 * 										just fillin the value which the robot gave.
+		 * 
+		 * @param isLearningMode
+		 *            Only for DQN Leaning, other learning mode need to refactor the Crawljax core code.
+		 * @return The builder for method chaining.
+		 */
+		public CrawljaxConfigurationBuilder setDQNLearningMode(boolean isLearningMode) {
+			Preconditions.checkNotNull(isLearningMode);
+			config.DQNLearningMode = isLearningMode;
+			return this;
+		} 
+
 		private void checkOutputDirWritable() {
 			if (!config.output.exists()) {
 				Preconditions.checkState(config.output.mkdirs(),
@@ -267,6 +284,7 @@ public class CrawljaxConfiguration {
 	private long maximumRuntime = TimeUnit.HOURS.toMillis(1);;
 	private int maximumDepth = 2;
 	private File output = new File("out");
+	private boolean DQNLearningMode = false;
 
 	private StateVertexFactory stateVertexFactory;
 
@@ -315,6 +333,10 @@ public class CrawljaxConfiguration {
 
 	public File getOutputDir() {
 		return output;
+	}
+
+	public boolean getDQNLearningMode() {
+		return DQNLearningMode;
 	}
 
 	public StateVertexFactory getStateVertexFactory() {
