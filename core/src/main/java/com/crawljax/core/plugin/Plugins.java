@@ -268,15 +268,14 @@ public class Plugins {
 	}
 
 	//ch-sh begin
-	public void runOnCloneStatePlugins(CrawlerContext context, 
-					ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
+	public void runOnCloneStatePlugins(CrawlerContext context, StateVertex currentState) {
 		LOGGER.debug("Running OnCloneStatePlugins...");
 		counters.get(OnCloneStatePlugin.class).inc();
 		for (Plugin plugin : plugins.get(OnCloneStatePlugin.class)) {
 			if (plugin instanceof OnCloneStatePlugin) {
 				LOGGER.debug("Calling plugin {}", plugin);
 				try {
-					((OnCloneStatePlugin) plugin).onCloneState(context, candidateElements, currentState);					
+					((OnCloneStatePlugin) plugin).onCloneState(context, currentState);					
 				} catch (RuntimeException e) {
 					reportFailingPlugin(plugin, e);
 				}
