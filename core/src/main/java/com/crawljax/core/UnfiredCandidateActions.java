@@ -94,8 +94,32 @@ public class UnfiredCandidateActions {
 		} finally {
 			lock.unlock();
 		}
-
 	}
+
+	/**
+	 *  For DQN Learning Method
+	 * 
+	 * @param state
+	 * 			  The state you want to poll an {@link CandidateCrawlAction} for.
+	 * @return The target action or <code>null</code> if none available.
+	 */
+	CandidateCrawlAction peekActionOrNull(StateVertex state) {
+		LOG.debug("Learning Mode...");
+		LOG.debug("Peeking action for state {}", state.getName());
+		Lock lock = locks.get(state.getId());
+		try {
+			lock.lock();
+			Queue<CandidateCrawlAction> queue = cache.get(state.getId());
+			if (queue == null) {
+				return null;
+			} else {
+				CandidateCrawlAction action = queue.peek();
+				return action;
+			}
+		} finally {
+			lock.unlock();
+		}
+	} 
 
 	private void removeStateFromQueue(int id) {
 		consumersWriteLock.lock();
@@ -154,6 +178,54 @@ public class UnfiredCandidateActions {
 			lock.unlock();
 		}
 
+	}
+
+	/**
+	 * @param extract
+	 *            The actions you want to add to a state.
+	 * @param currentState
+	 *            The state you are in.
+	 */
+	public void setActions(ImmutableList<CandidateElement> extract, StateVertex currentState) {
+		LOG.debug("In Leaning Mode...");
+		LOG.info("This part is for learning part, will reconstruct the order in cache.");
+		List<CandidateCrawlAction> actions = new ArrayList<>(extract.size());
+		for (CandidateElement candidateElement : extract) {
+			actions.add(new CandidateCrawlAction(candidateElement, EventType.click));
+		}
+		setActions(actions, currentState);
+	}
+
+	/**
+	 *  For DQN Learning Method
+	 *  This will reconstruct the order in cache, 
+	 * 			because when in clone state, robot can't change the order in cache
+	 * 
+	 *  @param actions
+	 * 				The action list that is reconstructed
+	 *  @param state
+	 * 				The state that want to replace
+	 */
+	void setActions(Collection<CandidateCrawlAction> actions, StateVertex state) {
+		if (actions.isEmpty()) {
+			LOG.debug("Received empty actions list. Ignoring...");
+			return;
+		}
+		Lock lock = locks.get(state.getId());
+		try {
+			lock.lock();
+			LOG.debug("Setting {} crawl actions for state {}", actions.size(), state.getId());
+			if (cache.containsKey(state.getId())) {
+				cache.get(state.getId()).clear();
+				cache.get(state.getId()).addAll(actions);
+			} else {
+				LOG.debug("Can't find state {} in cache, igonre it...", state.getId());
+			}
+			
+			LOG.info("There are {} states with unfired actions", statesWithCandidates.size());
+		} finally {
+			lock.unlock();
+		}
 	}
 
 	/**
