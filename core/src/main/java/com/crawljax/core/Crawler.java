@@ -423,16 +423,16 @@ public class Crawler {
 			} else {
 				LOG.debug("Dom unchanged");
 				if(this.isDQNLearningMode)
-					recontructActionInCache();
+					recontructActionsInCache();
 			}
 		}
 	}
 
-	private void recontructActionInCache() {
+	private void recontructActionsInCache() {
 		LOG.debug("Put the target action on the top of action list which in the cache");
 		StateVertex state = stateMachine.getCurrentState();
 		ImmutableList<CandidateElement> extract = candidateExtractor.extract(state);
-		plugins.runOnCloneStatePlugins(context, extract, state);
+		plugins.runPreStateCrawlingPlugins(context, extract, state);
 		candidateActionCache.setActions(extract, state);
 		restartOrNot();
 	}
@@ -473,7 +473,7 @@ public class Crawler {
 			context.getSession().addCrawlPath(crawlpath.immutableCopy());
 
 			if(this.isDQNLearningMode)
-				recontructActionInCache();
+				recontructActionsInCache();
 		}
 	}
 
