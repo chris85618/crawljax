@@ -51,9 +51,8 @@ public class Plugins {
 	                PostCrawlingPlugin.class, PreStateCrawlingPlugin.class,
 					PreCrawlingPlugin.class, AfterRetrievePathPlugin.class,
 					LoginPlugin.class, OnAlertPresentedPlugin.class,
-					OnCloneStatePlugin.class
-					, AfterReceiveRobotActionPlugin.class
-					);
+					OnCloneStatePlugin.class, AfterReceiveRobotActionPlugin.class,
+					OnNewFoundStatePlugin.class);
 
 	private final ImmutableListMultimap<Class<? extends Plugin>, Plugin> plugins;
 
@@ -481,7 +480,27 @@ public class Plugins {
 			}
 		}
 	}
-	
+
+	public String runOnNewFoundStatePlugins(String dom, Eventable event) {
+		counters.get(OnNewFoundStatePlugin.class).inc();
+		if (plugins.get(OnNewFoundStatePlugin.class).isEmpty()) {
+			LOGGER.debug("No OnNewFoundStatePlugin found. Performing default crawing...");
+			return "";
+		} else {
+			OnNewFoundStatePlugin foundNewState = (OnNewFoundStatePlugin) plugins
+			        .get(OnNewFoundStatePlugin.class).get(0);
+			LOGGER.debug("Calling plugin {}", foundNewState);
+			try {
+				return foundNewState.onNewFoundState(dom, event);
+			} catch (RuntimeException ex) {
+				LOGGER.error(
+				        "Could not run {} because of error {}. Now return default procedure...",
+				        foundNewState, ex.getMessage(), ex);
+				incrementFailCounterFor(foundNewState);
+				return "";
+			}
+		}
+	}
 
 	private boolean defaultDomComparison(final StateVertex stateBefore,
 	        final StateVertex stateAfter) {

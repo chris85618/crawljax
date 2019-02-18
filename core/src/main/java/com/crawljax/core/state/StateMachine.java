@@ -53,6 +53,25 @@ public class StateMachine {
 	}
 
 	/**
+	 *  This is for DQN Learning method, 
+	 * 	because when the robot execute the input action,
+	 * 	but the <input> element can not show the value which robot gave
+	 * 	so need to add some varible into input node
+	 * @param browser
+	 * @param event
+	 * @return
+	 */
+	public StateVertex newStateFor(EmbeddedBrowser browser, Eventable event) {
+		LOGGER.debug("In Learning mode, new state.");
+		String strippedDom = plugins.runOnNewFoundStatePlugins(browser.getStrippedDom(), event);
+		String comparatorStrippedDom = plugins.runOnNewFoundStatePlugins(stateComparator.getStrippedDom(browser), event);
+		return stateFlowGraph.newStateFor(
+		        browser.getCurrentUrl(),
+		        strippedDom,
+		        comparatorStrippedDom);
+	}
+
+	/**
 	 * Change the currentState to the nextState if possible. The next state should already be
 	 * present in the graph.
 	 * 

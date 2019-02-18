@@ -417,7 +417,11 @@ public class Crawler {
 			LOG.debug("The browser left the domain/scope. Going back one state...");
 			goBackOneState();
 		} else {
-			StateVertex newState = stateMachine.newStateFor(browser);
+			StateVertex newState;
+			if (this.isDQNLearningMode)
+				newState = stateMachine.newStateFor(browser, event);
+			else
+				newState = stateMachine.newStateFor(browser);
 			if (domChanged(event, newState)) {
 				inspectNewDom(event, newState);
 			} else {
