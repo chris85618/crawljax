@@ -8,7 +8,7 @@ import com.google.common.collect.ImmutableList;
 
 /**
  * When Crwaling State is a `Clone State`, will run this plugin
- * 		in {@link StateMachine.java}
+ * 		in {@link com.crawljax.core.state.StateMachine}
  */
 
 public interface OnCloneStatePlugin extends Plugin {
