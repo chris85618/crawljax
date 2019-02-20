@@ -46,12 +46,12 @@
 		<metrics.version>3.0.2</metrics.version>
 	</properties>
 
-	<scm>
+	<!-- <scm>
 		<connection>scm:git:git@github.com:zaproxy/crawljax.git</connection>
 		<developerConnection>scm:git:git@github.com:zaproxy/crawljax.git</developerConnection>
 		<url>https://github.com/zaproxy/crawljax</url>
 		<tag>HEAD</tag>
-	</scm>
+	</scm> -->
 
 	<licenses>
 		<license>
@@ -69,7 +69,7 @@
 		<module>plugins</module>
 		<module>plugin-archetype</module>
     	<module>web</module>
-    	<module>irobot-plugin</module>
+    	<!-- <module>irobot-plugin</module> -->
   	</modules>
 
 	<dependencyManagement>

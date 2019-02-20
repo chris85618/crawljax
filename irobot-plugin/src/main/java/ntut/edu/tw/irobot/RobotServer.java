@@ -1,5 +1,7 @@
 package ntut.edu.tw.irobot;
 
+import ntut.edu.tw.irobot.lock.WaitingLock;
+
 public class RobotServer implements Runnable {
     private WaitingLock lock;
 
@@ -12,7 +14,7 @@ public class RobotServer implements Runnable {
         while (true) {
             try {
                 Thread.sleep(60000);
-                lock.getCrawlerAction();
+                lock.waitForCrawlerResponse();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

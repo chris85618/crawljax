@@ -14,6 +14,7 @@ import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.descriptor.Parameter;
 import com.crawljax.core.CrawljaxRunner;
 import com.crawljax.core.plugin.descriptor.PluginDescriptor;
+import ntut.edu.tw.irobot.lock.WaitingLock;
 
 
 /**
@@ -49,7 +50,7 @@ public class Runner {
 		builder.setMaximumDepth(MAX_DEPTH);
 
 		// Sample Plugin
-		PluginDescriptor descriptor = PluginDescriptor.forPlugin(SamplePlugin.class);
+		PluginDescriptor descriptor = PluginDescriptor.forPlugin(DQNLearningModePlugin.class);
 		Map<String, String> parameters = new HashMap<>();
 		for(Parameter parameter : descriptor.getParameters()) {
 			parameters.put(parameter.getId(), "value");
@@ -57,13 +58,13 @@ public class Runner {
 		WaitingLock locker = new WaitingLock();
 		builder.crawlRules().setInputSpec(getInputSpecification());
 
-		builder.addPlugin(new SamplePlugin(new HostInterfaceImpl(new File("D:\\out"), parameters), locker));
+		builder.addPlugin(new DQNLearningModePlugin(new HostInterfaceImpl(new File("D:\\out"), parameters), locker));
 		executorService.submit(new CrawljaxRunner(builder.build()));
 
 
 		try {
 			Thread.sleep(60000);
-			locker.getCrawlerAction();
+			locker.notify();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
