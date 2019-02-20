@@ -18,4 +18,14 @@ public class iRobotAction implements Action {
     public String getType() {
         return source.getElement().getTagName();
     }
+
+    @Override
+    public Object getSource() {
+        return source;
+    }
+
+    @Override
+    public String toString(){
+        return source.toString();
+    }
 }

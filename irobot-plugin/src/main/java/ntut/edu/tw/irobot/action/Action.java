@@ -15,4 +15,9 @@ public interface Action {
      * @return the type of the action
      */
     String getType();
+
+    /**
+     * @return the source object
+     */
+    Object getSource();
 }
