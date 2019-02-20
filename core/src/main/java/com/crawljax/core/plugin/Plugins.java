@@ -481,23 +481,23 @@ public class Plugins {
 		}
 	}
 
-	public String runOnNewFoundStatePlugins(String dom, Eventable event) {
+	public String runOnNewFoundStatePlugins(String dom) {
 		counters.get(OnNewFoundStatePlugin.class).inc();
 		if (plugins.get(OnNewFoundStatePlugin.class).isEmpty()) {
 			LOGGER.debug("No OnNewFoundStatePlugin found. Performing default crawing...");
-			return "";
+			return dom;
 		} else {
 			OnNewFoundStatePlugin foundNewState = (OnNewFoundStatePlugin) plugins
 			        .get(OnNewFoundStatePlugin.class).get(0);
 			LOGGER.debug("Calling plugin {}", foundNewState);
 			try {
-				return foundNewState.onNewFoundState(dom, event);
+				return foundNewState.onNewFoundState(dom);
 			} catch (RuntimeException ex) {
 				LOGGER.error(
 				        "Could not run {} because of error {}. Now return default procedure...",
 				        foundNewState, ex.getMessage(), ex);
 				incrementFailCounterFor(foundNewState);
-				return "";
+				return dom;
 			}
 		}
 	}
