@@ -1,31 +1,30 @@
-package ntut.edu.tw.irobot;
+package ntut.edu.tw.irobot.lock;
 
-import com.google.common.collect.ImmutableList;
-import ntut.edu.tw.irobot.action.Action;
+import ntut.edu.tw.irobot.interaction.Interactor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WaitingLock {
+public class WaitingLock implements Locker {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaitingLock.class);
-    private ImmutableList<Action> actions;
 
-
-    private boolean locker = false;
+    private Interactor source;
+    private boolean locker;
 
 
     public WaitingLock() {
-
+        this.source = new Interactor();
+        this.locker = false;
     }
 
-    public void setCandidateElements(ImmutableList<Action> candidates) {
-        this.actions = candidates;
-
+    public Interactor getSource() {
+        return this.source;
     }
 
-    public synchronized void getRobotAction(ImmutableList<Action> candidates) {
-        if (!locker) {
+
+
+    public synchronized void waitForRobotCommand() throws RuntimeException {
+        if (locker) {
             try {
-                this.actions = candidates;
                 wait();
             } catch (InterruptedException e) {
                 LOGGER.info("It's seems there is something interrupted waiting thread.");
@@ -33,13 +32,11 @@ public class WaitingLock {
                 e.printStackTrace();
             }
         }
-        LOGGER.info("Get the Action {} successfully", this.actions);
-        locker = false;
-        notify();
+        locker = true;
     }
 
-    public synchronized void getCrawlerAction() throws RuntimeException {
-        if (locker) {
+    public synchronized void waitForCrawlerResponse() throws RuntimeException {
+        if (!locker) {
             try {
                 wait();
             } catch (InterruptedException e) {
@@ -47,7 +44,17 @@ public class WaitingLock {
             }
         }
         LOGGER.debug("Get the crawler actions successfully~~");
-        locker = true;
+        locker = false;
+
+    }
+
+    @Override
+    public void notifySever() {
+
+    }
+
+    @Override
+    public void releaseLock() {
         notify();
     }
 
