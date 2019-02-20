@@ -227,9 +227,9 @@ public class Crawler {
 	 */
 	private void handleInputElements(Eventable eventable) {
 		CopyOnWriteArrayList<FormInput> formInputs = eventable.getRelatedFormInputs();
+
 		// TODO: DQN learning mode do not set the
 		// 		default value in inputs from the current page
-
 		if (!this.isDQNLearningMode)
 			addOtherInputs(formInputs);
 		
@@ -418,10 +418,7 @@ public class Crawler {
 			goBackOneState();
 		} else {
 			StateVertex newState;
-			if (this.isDQNLearningMode)
-				newState = stateMachine.newStateFor(browser, event);
-			else
-				newState = stateMachine.newStateFor(browser);
+			newState = stateMachine.newStateFor(browser);
 			if (domChanged(event, newState)) {
 				inspectNewDom(event, newState);
 			} else {
@@ -437,7 +434,7 @@ public class Crawler {
 		StateVertex state = stateMachine.getCurrentState();
 		ImmutableList<CandidateElement> extract = candidateExtractor.extract(state);
 		plugins.runPreStateCrawlingPlugins(context, extract, state);
-		candidateActionCache.setActions(extract, state);
+		candidateActionCache.setActions(state.getCandidateElements(), state);
 		restartOrNot();
 	}
 
@@ -487,7 +484,7 @@ public class Crawler {
 		ImmutableList<CandidateElement> extract = candidateExtractor.extract(currentState);
 
 		plugins.runPreStateCrawlingPlugins(context, extract, currentState);
-		candidateActionCache.addActions(extract, currentState);
+		candidateActionCache.addActions(currentState.getCandidateElements(), currentState);
 	}
 
 	private void waitForRefreshTagIfAny(final Eventable eventable) {
@@ -558,7 +555,7 @@ public class Crawler {
 
 		plugins.runPreStateCrawlingPlugins(context, extract, index);
 
-		candidateActionCache.addActions(extract, index);
+		candidateActionCache.addActions(index.getCandidateElements(), index);
 
 		return index;
 
