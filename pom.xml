@@ -69,7 +69,7 @@
 		<module>plugins</module>
 		<module>plugin-archetype</module>
     	<module>web</module>
-    	<!-- <module>irobot-plugin</module> -->
+    	 <module>irobot-plugin</module>
   	</modules>
 
 	<dependencyManagement>

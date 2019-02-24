@@ -44,4 +44,9 @@ public interface RobotInteractor {
      *          The signal that the action is execute successful
      */
     public boolean isExecuteSuccess();
+
+    /**
+     * Set the signal to default value
+     */
+    public void setToDefaultSignal();
 }

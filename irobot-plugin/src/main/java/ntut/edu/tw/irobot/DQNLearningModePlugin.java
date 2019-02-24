@@ -1,14 +1,16 @@
 package ntut.edu.tw.irobot;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import com.crawljax.core.*;
+import com.crawljax.core.state.Element;
 import com.crawljax.core.state.Eventable;
+import com.crawljax.forms.FormInput;
+import com.crawljax.forms.InputValue;
 import com.crawljax.util.DomUtils;
 import com.google.common.collect.ImmutableList;
+import com.sun.corba.se.impl.orbutil.concurrent.Mutex;
 import ntut.edu.tw.irobot.lock.WaitingLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,19 +33,19 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	private static final Logger LOGGER = LoggerFactory.getLogger(DQNLearningModePlugin.class);
 
     private HostInterface hostInterface;
-    private WaitingLock locker;
+    private WaitingLock lock;
 	private CrawlerInteractor crawlingData;
-
+	private Mutex loopMutex;
 	public DQNLearningModePlugin(HostInterface hostInterface, WaitingLock waiting) {
 		this.hostInterface = hostInterface;
-        this.locker =  waiting;
+        this.lock =  waiting;
         this.crawlingData = null;
+        this.loopMutex = new Mutex();
 	}
 
 	/**
 	 *	This method will be called from three pace:
 	 *		1. prepare crawling index state
-	 *		2.
 	 *
 	 * This step will wait the robot command and
 	 * 		put the target element to the top of the candidateElements
@@ -58,13 +60,23 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	@Override
 	public void preStateCrawling(CrawlerContext context, ImmutableList<CandidateElement> candidateElements, StateVertex state) {
 		try{
-			crawlingData = locker.getSource();
+			crawlingData = lock.getSource();
 			crawlingData.convertToRobotAction(candidateElements);
 			crawlingData.convertToRobotState(state);
-			// will wait the robot command
-			locker.waitForRobotCommand();
 
-			crawlingData = locker.getSource();
+			// will wait the robot command
+			loopMutex.acquire();
+			try {
+				lock.initReady();
+				if (crawlingData.isRestart())
+					lock.initCrawler();
+				else
+					lock.waitForRobotCommand();
+			} finally {
+				loopMutex.release();
+			}
+
+			crawlingData = lock.getSource();
 			LinkedList<CandidateElement> result = reConstructTheCandidateList(candidateElements);
 			state.setElementsFound(result);
 			LOGGER.info("Setting Target Action successfully...");
@@ -78,6 +90,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 
 	private LinkedList<CandidateElement> reConstructTheCandidateList(ImmutableList<CandidateElement> candidateElements) {
 		List<CandidateElement> reconstructList = new ArrayList<CandidateElement>();
+		CandidateElement newElement;
 
 		for (CandidateElement element : candidateElements)
 			reconstructList.add(element);
@@ -87,12 +100,36 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		for (CandidateElement element : reconstructList) {
 			if (target == element) {
 				reconstructList.remove(element);
-				reconstructList.set(0, target);
+				newElement = generateNewCandidateElement(element);
+				reconstructList.set(0, newElement);
 				break;
 			}
 		}
 
 		return new LinkedList<CandidateElement>(reconstructList);
+	}
+
+	private CandidateElement generateNewCandidateElement(CandidateElement oldElement) {
+		org.w3c.dom.Element cloneElement = (org.w3c.dom.Element) oldElement.getElement().cloneNode(true);
+		String targetXpath = crawlingData.getTargetXpath();
+		CandidateElement newElement = new CandidateElement( cloneElement, targetXpath, generateFormInput(oldElement));
+		return newElement;
+	}
+
+	private List<FormInput> generateFormInput(CandidateElement oldElement) {
+		List<FormInput> formInputs = new ArrayList<FormInput>();
+		FormInput input = new FormInput();
+		input.setType("text");
+		input.setIdentification(oldElement.getIdentification());
+		input.setInputValues(getValueList());
+		formInputs.add(input);
+		return formInputs;
+	}
+
+	private Set<InputValue> getValueList() {
+		Set<InputValue> transformList = new HashSet<InputValue>();
+		transformList.add(new InputValue(crawlingData.getTargetValue(), true));
+		return transformList;
 	}
 
 	/**
