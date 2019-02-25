@@ -24,19 +24,19 @@ public class WorkDirManager {
     }
 
     private File getOutputFolder() {
-        File outputFolder = new File(System.getProperty("user.dir") + File.pathSeparator + "crawler-record");
+        File outputFolder = new File(System.getProperty("user.dir") + File.separatorChar + "crawler-record");
         if (!outputFolder.exists())
             outputFolder.mkdir();
         return outputFolder;
     }
 
     private int getCurrentRecordID() {
-        LOGGER.info("Get the current record ID : {}" + outputFolder.list().length + 1);
+        LOGGER.info("Get the current record ID : {}", outputFolder.list().length + 1);
         return outputFolder.list().length + 1;
     }
 
     private File createRecordFolder() {
-        File recordFolder = new File(outputFolder.getAbsolutePath() + File.pathSeparator + currentRecordID);
+        File recordFolder = new File(outputFolder.getAbsolutePath() + File.separatorChar + currentRecordID);
         if (!recordFolder.exists())
             recordFolder.mkdir();
         return recordFolder;

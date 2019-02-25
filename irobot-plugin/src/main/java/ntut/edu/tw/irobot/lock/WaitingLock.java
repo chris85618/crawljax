@@ -19,6 +19,7 @@ public class WaitingLock {
     public WaitingLock() {
         this.source = new Interactor();
         this.token = false;
+        this.initMutex = new Mutex();
     }
 
     public Interactor getSource() {

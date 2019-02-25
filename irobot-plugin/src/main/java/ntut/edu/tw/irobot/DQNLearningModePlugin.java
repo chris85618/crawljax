@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.*;
 
 import com.crawljax.core.*;
-import com.crawljax.core.state.Element;
 import com.crawljax.core.state.Eventable;
 import com.crawljax.forms.FormInput;
 import com.crawljax.forms.InputValue;

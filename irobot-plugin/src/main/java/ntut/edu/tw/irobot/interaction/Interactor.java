@@ -113,19 +113,19 @@ public class Interactor implements CrawlerInteractor, RobotInteractor{
      */
     @Override
     public void setRestartSignal(boolean restartSignal) {
-        LOGGER.info("Setting the restart signal : {}" + restartSignal);
+        LOGGER.info("Setting the restart signal : {}", restartSignal);
         this.restartSignal = restartSignal;
     }
 
     @Override
     public void setTerminateSignal(boolean terminateSignal) {
-        LOGGER.info("Setting the terminate signal : {}" + terminateSignal);
+        LOGGER.info("Setting the terminate signal : {}", terminateSignal);
         this.terminate = terminateSignal;
     }
 
     @Override
     public boolean isExecuteSuccess() {
-        LOGGER.info("Get the execute failure signal : {}" + executeActionFailure);
+        LOGGER.info("Get the execute failure signal : {}", executeActionFailure);
         return executeActionFailure;
     }
 
@@ -134,25 +134,25 @@ public class Interactor implements CrawlerInteractor, RobotInteractor{
      */
     @Override
     public boolean isRestart() {
-        LOGGER.info("Get the restart signal : {}" + restartSignal);
+        LOGGER.info("Get the restart signal : {}", restartSignal);
         return restartSignal;
     }
 
     @Override
     public String getTargetElementType() {
-        LOGGER.info("Get the target element type : {}" + targetAction.getElement().getTagName());
+        LOGGER.info("Get the target element type : {}", targetAction.getElement().getTagName());
         return targetAction.getElement().getTagName();
     }
 
     @Override
     public String getTargetXpath() {
-        LOGGER.info("Get the target element xpath : {}" + targetAction.getIdentification().getValue());
+        LOGGER.info("Get the target element xpath : {}", targetAction.getIdentification().getValue());
         return targetAction.getIdentification().getValue();
     }
 
     @Override
     public String getTargetValue() {
-        LOGGER.info("Get the target value : {}" + targetValue);
+        LOGGER.info("Get the target value : {}", targetValue);
         return targetValue;
     }
 
@@ -165,7 +165,7 @@ public class Interactor implements CrawlerInteractor, RobotInteractor{
 
     @Override
     public void setExecuteActionFailureSignal(boolean failSignal) {
-        LOGGER.info("Setting the execute failure signal : {}" + failSignal);
+        LOGGER.info("Setting the execute failure signal : {}", failSignal);
         executeActionFailure = failSignal;
     }
 
