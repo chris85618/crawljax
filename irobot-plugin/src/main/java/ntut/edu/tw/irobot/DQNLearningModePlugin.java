@@ -68,8 +68,10 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 			loopMutex.acquire();
 			try {
 				lock.initReady();
-				if (crawlingData.isRestart())
+				if (crawlingData.isRestart()) {
+					crawlingData.setToDefaultSignal();
 					lock.initCrawler();
+				}
 				else
 					lock.waitForRobotCommand();
 			} finally {
@@ -156,8 +158,6 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	@Override
 	public boolean isRestartOrNot() {
 		boolean isRestart = crawlingData.isRestart();
-		if (isRestart)
-			crawlingData.setToDefaultSignal();
 		return isRestart;
 	}
 

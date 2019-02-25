@@ -430,6 +430,7 @@ public class Crawler {
 	}
 
 	private void recontructActionsInCache() {
+		LOG.info("Putting the target action to action list...");
 		LOG.debug("Put the target action on the top of action list which in the cache");
 		StateVertex state = stateMachine.getCurrentState();
 		ImmutableList<CandidateElement> extract = candidateExtractor.extract(state);
