@@ -140,6 +140,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	 * @param eventable
 	 *            the eventable that failed to execute
 	 * @param pathToFailure
+	 * 			  The Path of failure
 	 */
 	@Override
 	public void onFireEventFailed(CrawlerContext context, Eventable eventable, List<Eventable> pathToFailure) {
@@ -161,7 +162,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	}
 
 	/**
-	 * This step will add value attribute in dom, like <input> tag
+	 * This step will add value attribute in dom, like input tag
 	 *
 	 * @param dom
 	 *          The dom capture from current browser

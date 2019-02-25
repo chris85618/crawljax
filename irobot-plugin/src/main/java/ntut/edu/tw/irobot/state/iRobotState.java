@@ -2,7 +2,6 @@ package ntut.edu.tw.irobot.state;
 
 
 import com.crawljax.core.state.StateVertex;
-import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Objects;
@@ -10,9 +9,10 @@ import java.util.Objects;
 
 public class iRobotState implements State {
     private final StateVertex source;
-    private ImmutableList<String> _coverageList = null;
+    private ImmutableList<String> coverageVector = null;
 
     public iRobotState(StateVertex state) {
+        this.coverageVector = ImmutableList.of();
         this.source = state;
     }
 
@@ -38,12 +38,12 @@ public class iRobotState implements State {
 
     @Override
     public void setCoverageVector(ImmutableList<String> coverageVector) {
-        _coverageList = coverageVector;
+        this.coverageVector = coverageVector;
     }
 
     @Override
     public ImmutableList<String> getCoverageVector() {
-        return _coverageList;
+        return coverageVector;
     }
 
     @Override

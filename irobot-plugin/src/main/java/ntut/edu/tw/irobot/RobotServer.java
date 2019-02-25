@@ -4,16 +4,13 @@ import java.util.HashMap;
 
 import com.crawljax.core.CrawljaxRunner;
 import com.crawljax.core.configuration.CrawljaxConfiguration;
-import com.crawljax.core.configuration.InputSpecification;
 import com.crawljax.core.plugin.HostInterfaceImpl;
-import com.crawljax.core.plugin.Plugin;
 import com.crawljax.core.plugin.descriptor.Parameter;
 import com.crawljax.core.plugin.descriptor.PluginDescriptor;
 import com.crawljax.plugins.crawloverview.CrawlOverview;
 import com.google.common.collect.ImmutableList;
 import ntut.edu.tw.irobot.action.Action;
 import ntut.edu.tw.irobot.fs.WorkDirManager;
-import ntut.edu.tw.irobot.interaction.RobotInteractor;
 import ntut.edu.tw.irobot.lock.WaitingLock;
 import ntut.edu.tw.irobot.state.State;
 

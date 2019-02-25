@@ -31,7 +31,8 @@ public interface State {
     int getId();
 
     /**
-     * @return ImmutableList that the current state coverage
+     * @param coverageVector
+     *                  ImmutableList that the current state coverage
      */
     void setCoverageVector(ImmutableList<String> coverageVector);
 
