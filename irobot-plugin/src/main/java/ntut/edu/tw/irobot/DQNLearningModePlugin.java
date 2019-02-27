@@ -57,7 +57,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	 */
 	@Override
 	public void onRestartCrawling(CrawlerContext context, ImmutableList<CandidateElement> candidateElements, StateVertex state) {
-		if (isRestart) {
+		if (isRestart || !isExecuteSuccess) {
 			convertAndWaitRobot(candidateElements, state);
 		}
 	}
@@ -185,6 +185,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	 */
 	@Override
 	public void onFireEventFailed(CrawlerContext context, Eventable eventable, List<Eventable> pathToFailure) {
+		LOGGER.info("Setting Execute action success to false");
 		isExecuteSuccess = false;
 	}
 

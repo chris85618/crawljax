@@ -123,12 +123,15 @@ public class Crawler {
 		plugins.runOnUrlLoadPlugins(context);
 		crawlDepth.set(0);
 
-		if (restartSignal()) {
-			StateVertex oldState = stateMachine.getCurrentState();
-			ImmutableList<CandidateElement> extract = candidateExtractor.extract(oldState);
-			plugins.runOnRestartCrawlingStatePlugin(context, extract, oldState);
-			candidateActionCache.setActions(oldState.getCandidateElements(), oldState);
-		}
+		if (restartSignal())
+			onOldStateProcedure();
+	}
+
+	private void onOldStateProcedure() {
+		StateVertex oldState = stateMachine.getCurrentState();
+		ImmutableList<CandidateElement> extract = candidateExtractor.extract(oldState);
+		plugins.runOnRestartCrawlingStatePlugin(context, extract, oldState);
+		candidateActionCache.setActions(oldState.getCandidateElements(), oldState);
 	}
 
 	/**
@@ -379,6 +382,8 @@ public class Crawler {
 				if (fired) {
 					inspectNewState(event);
 				}
+				else
+					onOldStateProcedure();
 			} else {
 				LOG.info(
 				        "Element {} not clicked because not all crawl conditions where satisfied",
