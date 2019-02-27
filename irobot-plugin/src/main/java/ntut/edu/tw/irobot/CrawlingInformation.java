@@ -16,8 +16,8 @@ import ntut.edu.tw.irobot.state.iRobotState;
 import ntut.edu.tw.irobot.state.State;
 
 
-public class CrawlingData {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CrawlingData.class);
+public class CrawlingInformation {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CrawlingInformation.class);
 
     private State currentState;
     private ImmutableList<Action> actions;
@@ -29,7 +29,7 @@ public class CrawlingData {
     private String targetValue;
 
 
-    public CrawlingData() {
+    public CrawlingInformation() {
         defaultValue();
     }
 
