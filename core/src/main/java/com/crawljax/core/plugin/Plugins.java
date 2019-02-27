@@ -52,7 +52,7 @@ public class Plugins {
 					PreCrawlingPlugin.class, AfterRetrievePathPlugin.class,
 					LoginPlugin.class, OnAlertPresentedPlugin.class,
 					OnCloneStatePlugin.class, AfterReceiveRobotActionPlugin.class,
-					OnNewFoundStatePlugin.class);
+					OnNewFoundStatePlugin.class, OnRestartCrawlingStatePlugin.class);
 
 	private final ImmutableListMultimap<Class<? extends Plugin>, Plugin> plugins;
 
@@ -498,6 +498,29 @@ public class Plugins {
 				        foundNewState, ex.getMessage(), ex);
 				incrementFailCounterFor(foundNewState);
 				return dom;
+			}
+		}
+	}
+
+	/**
+	 * This will be call at reset method in {@link com.crawljax.core.Crawler}
+	 * @param context
+	 * @param candidateElements
+	 * @param state
+	 */
+	public void runOnRestartCrawlingStatePlugin(CrawlerContext context,
+										   ImmutableList<CandidateElement> candidateElements, StateVertex state) {
+		LOGGER.debug("Running OnRestartCrawlingStatePlugins...");
+		counters.get(OnRestartCrawlingStatePlugin.class).inc();
+		for (Plugin plugin : plugins.get(OnRestartCrawlingStatePlugin.class)) {
+			if (plugin instanceof OnRestartCrawlingStatePlugin) {
+				LOGGER.debug("Calling plugin {}", plugin);
+				try {
+					((OnRestartCrawlingStatePlugin) plugin).onRestartCrawling(context,
+							candidateElements, state);
+				} catch (RuntimeException e) {
+					reportFailingPlugin(plugin, e);
+				}
 			}
 		}
 	}

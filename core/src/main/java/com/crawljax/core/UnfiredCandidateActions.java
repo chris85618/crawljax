@@ -172,7 +172,7 @@ public class UnfiredCandidateActions {
 			} finally {
 				consumersWriteLock.unlock();
 			}
-			
+
 			LOG.info("There are {} states with unfired actions", statesWithCandidates.size());
 		} finally {
 			lock.unlock();
@@ -219,9 +219,9 @@ public class UnfiredCandidateActions {
 				cache.get(state.getId()).clear();
 				cache.get(state.getId()).addAll(actions);
 			} else {
-				LOG.debug("Can't find state {} in cache, igonre it...", state.getId());
+				LOG.debug("Can't find state {} in cache, ignore it...", state.getId());
 			}
-			
+
 			LOG.info("There are {} states with unfired actions", statesWithCandidates.size());
 		} finally {
 			lock.unlock();
@@ -263,12 +263,26 @@ public class UnfiredCandidateActions {
 	}
 
 	public void purgeActionsForState(StateVertex crawlTask) {
-		Lock lock = locks.get(crawlTask.getId());
+		removeStateInCache(crawlTask.getId(), crawlTask.getName());
+	}
+
+	/**
+	 * This method is for robot to restart the crawler
+	 */
+	public void retainInitialStateAndRemoveOthers() {
+		for (int crawlTask : statesWithCandidates) {
+			if (crawlTask != 0)
+				removeStateInCache(crawlTask, "which is not the initial state...");
+		}
+	}
+
+	private void removeStateInCache(int id, String name) {
+		Lock lock = locks.get(id);
 		try {
 			lock.lock();
-			LOG.debug("Removing tasks for target state {}", crawlTask.getName());
-			removeStateFromQueue(crawlTask.getId());
-			Queue<CandidateCrawlAction> removed = cache.remove(crawlTask.getId());
+			LOG.debug("Removing tasks for target state {}", name);
+			removeStateFromQueue(id);
+			Queue<CandidateCrawlAction> removed = cache.remove(id);
 			if (removed != null) {
 				unfiredActionsCount.inc(removed.size());
 			}

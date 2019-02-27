@@ -122,6 +122,13 @@ public class Crawler {
 		browser.goToUrl(url);
 		plugins.runOnUrlLoadPlugins(context);
 		crawlDepth.set(0);
+
+		if (restartSignal()) {
+			StateVertex oldState = stateMachine.getCurrentState();
+			ImmutableList<CandidateElement> extract = candidateExtractor.extract(oldState);
+			plugins.runOnRestartCrawlingStatePlugin(context, extract, oldState);
+			candidateActionCache.setActions(oldState.getCandidateElements(), oldState);
+		}
 	}
 
 	/**
@@ -378,7 +385,13 @@ public class Crawler {
 				        element);
 			}
 			// We have to check if we are still in the same state.
-			action = getNextAction();
+
+			if (restartSignal()) {
+				action = null;
+				refreshCache();
+			}
+			else
+				action = getNextAction();
 			interrupted = Thread.interrupted();
 			if (!interrupted && crawlerNotInScope()) {
 				/*
@@ -396,6 +409,11 @@ public class Crawler {
 			}
 			Thread.currentThread().interrupt();
 		}
+	}
+
+	private void refreshCache() {
+		LOG.info("Remove state which is not the initial state...");
+		candidateActionCache.retainInitialStateAndRemoveOthers();
 	}
 
 	private CandidateCrawlAction getNextAction() {
@@ -424,31 +442,24 @@ public class Crawler {
 			} else {
 				LOG.debug("Dom unchanged");
 				if(this.isDQNLearningMode)
-					recontructActionsInCache();
+					reconstructActionsInCache();
 			}
 		}
 	}
 
-	private void recontructActionsInCache() {
+	private void reconstructActionsInCache() {
 		LOG.info("Putting the target action to action list...");
 		LOG.debug("Put the target action on the top of action list which in the cache");
 		StateVertex state = stateMachine.getCurrentState();
 		ImmutableList<CandidateElement> extract = candidateExtractor.extract(state);
 		plugins.runPreStateCrawlingPlugins(context, extract, state);
 		candidateActionCache.setActions(state.getCandidateElements(), state);
-		restartOrNot();
 	}
 
 	private boolean domChanged(final Eventable eventable, StateVertex newState) {
 		return plugins.runDomChangeNotifierPlugins(context, stateMachine.getCurrentState(), actualEventable, newState);
 		// return plugins.runDomChangeNotifierPlugins(context, stateMachine.getCurrentState(),
 		//         eventable, newState);
-	}
-
-	private void restartOrNot() {
-		// This will get the restart signal form robot 
-		if (restartSignal())
-			reset();
 	}
 
 	private boolean restartSignal() {
@@ -475,7 +486,7 @@ public class Crawler {
 			context.getSession().addCrawlPath(crawlpath.immutableCopy());
 
 			if(this.isDQNLearningMode)
-				recontructActionsInCache();
+				reconstructActionsInCache();
 		}
 	}
 
