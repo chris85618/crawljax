@@ -9,6 +9,7 @@ import com.crawljax.core.plugin.descriptor.Parameter;
 import com.crawljax.core.plugin.descriptor.PluginDescriptor;
 import com.crawljax.plugins.crawloverview.CrawlOverview;
 import com.google.common.collect.ImmutableList;
+import com.sun.corba.se.impl.orbutil.concurrent.Mutex;
 import ntut.edu.tw.irobot.action.Action;
 import ntut.edu.tw.irobot.fs.WorkDirManager;
 import ntut.edu.tw.irobot.lock.WaitingLock;
@@ -19,20 +20,29 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import py4j.GatewayServer;
 
 public class RobotServer implements Runnable {
     private WorkDirManager dirManage;
     private WaitingLock lock;
-    private String _url = "";
     private GatewayServer server;
+    private Mutex loopMutex;
+    private String url;
+    private CrawlingInformation data;
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static final Logger LOGGER = LoggerFactory.getLogger(RobotServer.class);
 
 
     public RobotServer() {
         this.lock = new WaitingLock();
         this.dirManage = new WorkDirManager();
-        this.server = new GatewayServer();
+        this.server = new GatewayServer(this);
+        this.url = "";
+        this.loopMutex = new Mutex();
+        this.data = null;
     }
 
     @Override
@@ -45,9 +55,11 @@ public class RobotServer implements Runnable {
      * @param url
      */
     public boolean setUrl(String url) {
-        this._url = url;
+        this.url = url;
         try {
+            lock.getSource().resetData();
             init();
+            data = lock.getSource();
         }catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -59,21 +71,23 @@ public class RobotServer implements Runnable {
      *  Restart to index state
      */
     public void restart() {
+        LOGGER.info("Set the restart signal and initialize crawler response...");
         lock.getSource().setRestartSignal(true);
+        lock.initCrawler();
     }
 
     /**
      * @return the State
      */
     public State getState() {
-        return lock.getSource().getState();
+        return data.getState();
     }
 
     /**
      * @return The Action List
      */
-    public ImmutableList<Action> getActionList() {
-        return lock.getSource().getActions();
+    public ImmutableList<Action> getActions() {
+        return data.getActions();
     }
 
     /**
@@ -87,19 +101,31 @@ public class RobotServer implements Runnable {
      * @return
      *              The boolean which the Action is execute success or not
      */
-    public boolean executeAction(Action action, String value) {
+    public boolean executeAction(Action action, String value) throws InterruptedException {
+        data.resetData();
+
+        LOGGER.info("Execute Action {}, and the value is {}...", action, value);
         lock.getSource().setTargetAction(action, value);
+        try{
+            loopMutex.acquire();
+            lock.waitForCrawlerResponse();
 
-        lock.waitForCrawlerResponse();
+            data = lock.getSource();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            loopMutex.release();
+        }
 
-        return lock.getSource().isExecuteSuccess();
+        return data.isExecuteSuccess();
     }
 
     private void init() {
         File recordFolder = dirManage.getRecordFolder();
 
         // Build Configuration (default firefox)
-        CrawljaxConfiguration.CrawljaxConfigurationBuilder builder = CrawljaxConfiguration.builderFor(this._url);
+        CrawljaxConfiguration.CrawljaxConfigurationBuilder builder = CrawljaxConfiguration.builderFor(this.url);
 
         // the crawling Depth、State、Time is unlimited
         builder.setUnlimitedCrawlDepth();
@@ -112,6 +138,7 @@ public class RobotServer implements Runnable {
 
         // Click Rules
         builder.crawlRules().clickDefaultElements();
+        builder.crawlRules().clickOnce(false);
 
         // set DQN Mode
         builder.setDQNLearningMode(true);

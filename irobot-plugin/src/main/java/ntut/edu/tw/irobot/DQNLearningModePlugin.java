@@ -3,7 +3,9 @@ package ntut.edu.tw.irobot;
 import java.io.IOException;
 import java.util.*;
 
+import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.core.*;
+import com.crawljax.core.plugin.*;
 import com.crawljax.core.state.Eventable;
 import com.crawljax.forms.FormInput;
 import com.crawljax.forms.InputValue;
@@ -15,36 +17,55 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.crawljax.core.state.StateVertex;
-import com.crawljax.core.plugin.HostInterface;
-import ntut.edu.tw.irobot.interaction.CrawlerInteractor;
 
-import com.crawljax.core.plugin.OnFireEventFailedPlugin;
-import com.crawljax.core.plugin.PreStateCrawlingPlugin;
-import com.crawljax.core.plugin.AfterReceiveRobotActionPlugin;
-import com.crawljax.core.plugin.OnNewFoundStatePlugin;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
 import javax.xml.xpath.XPathExpressionException;
 
 
-public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEventFailedPlugin, AfterReceiveRobotActionPlugin, OnNewFoundStatePlugin{
+public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEventFailedPlugin, AfterReceiveRobotActionPlugin, OnNewFoundStatePlugin, OnRestartCrawlingStatePlugin {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DQNLearningModePlugin.class);
 
-    private HostInterface hostInterface;
-    private WaitingLock lock;
-	private CrawlerInteractor crawlingData;
+	private CrawlingInformation crawlingInformation;
+	private HostInterface hostInterface;
+	private WaitingLock lock;
 	private Mutex loopMutex;
+	private boolean isInitial;
+	private boolean isRestart;
+	private boolean isExecuteSuccess;
+	private EmbeddedBrowser browser;
+
 	public DQNLearningModePlugin(HostInterface hostInterface, WaitingLock waiting) {
 		this.hostInterface = hostInterface;
         this.lock =  waiting;
-        this.crawlingData = null;
+        this.crawlingInformation = null;
         this.loopMutex = new Mutex();
+        this.isInitial = true;
+        this.isRestart = false;
+        this.isExecuteSuccess = true;
 	}
 
 	/**
-	 *	This method will be called from three pace:
+	 * This step will be called when the crawler restart
+	 *
+	 * @param context
+	 *            the current session data.
+	 * @param candidateElements
+	 *            the candidates for the current state.
+	 * @param state
+	 */
+	@Override
+	public void onRestartCrawling(CrawlerContext context, ImmutableList<CandidateElement> candidateElements, StateVertex state) {
+		if (isRestart) {
+			convertAndWaitRobot(candidateElements, state);
+		}
+	}
+
+	/**
+	 *	This method will be called from two pace:
 	 *		1. prepare crawling index state
+	 *		2. prepare crawling new state was found
 	 *
 	 * This step will wait the robot command and
 	 * 		put the target element to the top of the candidateElements
@@ -58,26 +79,46 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	 */
 	@Override
 	public void preStateCrawling(CrawlerContext context, ImmutableList<CandidateElement> candidateElements, StateVertex state) {
+		browser = context.getBrowser();
+		convertAndWaitRobot(candidateElements, state);
+
+		for (CandidateElement element : state.getCandidateElements())
+			System.out.println(element.getFormInputs());
+	}
+
+	private void convertAndWaitRobot(ImmutableList<CandidateElement> candidateElements, StateVertex state) {
+		LOGGER.info("In DQN Plugin, convert data and wait the robot command...");
 		try{
-			crawlingData = lock.getSource();
-			crawlingData.convertToRobotAction(candidateElements);
-			crawlingData.convertToRobotState(state);
+			// reset the data
+			crawlingInformation = lock.getSource();
+			crawlingInformation.resetData();
+
+			// setting the data
+			crawlingInformation.convertToRobotAction(candidateElements);
+			crawlingInformation.convertToRobotState(state);
+			crawlingInformation.setExecuteSignal(isExecuteSuccess);
 
 			// will wait the robot command
 			loopMutex.acquire();
 			try {
-				lock.initReady();
-				if (crawlingData.isRestart()) {
-					crawlingData.setToDefaultSignal();
-					lock.initCrawler();
+				if (isRestart || this.isInitial) {
+					isInitial = false;
+					isRestart = false;
+					lock.initReady();
 				}
-				else
-					lock.waitForRobotCommand();
+				lock.waitForRobotCommand();
 			} finally {
+				crawlingInformation = lock.getSource();
+				isExecuteSuccess = true;
+				isRestart = crawlingInformation.isRestart();
 				loopMutex.release();
 			}
 
-			crawlingData = lock.getSource();
+			if (isRestart){
+				LOGGER.info("Get the restart signal, restart crawling...");
+				return;
+			}
+
 			LinkedList<CandidateElement> result = reConstructTheCandidateList(candidateElements);
 			state.setElementsFound(result);
 			LOGGER.info("Setting Target Action successfully...");
@@ -86,22 +127,20 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 			LOGGER.info("Something happened when waiting for the robot respond.");
 			LOGGER.debug(e.getMessage());
 		}
-
 	}
 
 	private LinkedList<CandidateElement> reConstructTheCandidateList(ImmutableList<CandidateElement> candidateElements) {
 		List<CandidateElement> reconstructList = new ArrayList<CandidateElement>();
-		CandidateElement newElement;
 
 		for (CandidateElement element : candidateElements)
 			reconstructList.add(element);
 
-		CandidateElement target = crawlingData.getTargetElment();
+		CandidateElement target = crawlingInformation.getTargetElement();
 		LOGGER.info("Get the target action is {}", target);
 		for (CandidateElement element : reconstructList) {
 			if (target == element) {
 				reconstructList.remove(element);
-				newElement = generateNewCandidateElement(element);
+				CandidateElement newElement = generateNewCandidateElement(element);
 				reconstructList.set(0, newElement);
 				break;
 			}
@@ -112,8 +151,8 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 
 	private CandidateElement generateNewCandidateElement(CandidateElement oldElement) {
 		org.w3c.dom.Element cloneElement = (org.w3c.dom.Element) oldElement.getElement().cloneNode(true);
-		String targetXpath = crawlingData.getTargetXpath();
-		CandidateElement newElement = new CandidateElement( cloneElement, targetXpath, generateFormInput(oldElement));
+		String targetXpath = crawlingInformation.getTargetXpath();
+		CandidateElement newElement = new CandidateElement(cloneElement, targetXpath, generateFormInput(oldElement));
 		return newElement;
 	}
 
@@ -124,12 +163,13 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		input.setIdentification(oldElement.getIdentification());
 		input.setInputValues(getValueList());
 		formInputs.add(input);
+		LOGGER.info("New Form is create : {}", input);
 		return formInputs;
 	}
 
 	private Set<InputValue> getValueList() {
 		Set<InputValue> transformList = new HashSet<InputValue>();
-		transformList.add(new InputValue(crawlingData.getTargetValue(), true));
+		transformList.add(new InputValue(crawlingInformation.getTargetValue(), true));
 		return transformList;
 	}
 
@@ -145,8 +185,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	 */
 	@Override
 	public void onFireEventFailed(CrawlerContext context, Eventable eventable, List<Eventable> pathToFailure) {
-		// feature work
-		crawlingData.setExecuteActionFailureSignal(true);
+		isExecuteSuccess = false;
 	}
 
 	/**
@@ -156,7 +195,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	 */
 	@Override
 	public boolean isRestartOrNot() {
-		boolean isRestart = crawlingData.isRestart();
+		LOGGER.info("Get the restart signal : {}", isRestart);
 		return isRestart;
 	}
 
@@ -170,19 +209,26 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	 */
 	@Override
 	public String onNewFoundState(String dom) {
-		// if event is not input tag, then return original dom
+		// if no target element then return original dom
+		if (isNoTarget())
+			return dom;
+
+		// if event is not input tag then return original dom
 		if (!isInputTag())
 			return dom;
 
-		LOGGER.info("Adding input value ");
+		LOGGER.info("Adding input value...");
 
 		try {
 			Document doc = DomUtils.asDocument(dom);
-			Node target = DomUtils.getElementByXpath(doc, crawlingData.getTargetXpath());
-			LOGGER.info("Found a new state, target action element : {} ", target.getNodeName());
-			if (isTargetNodeValueEqualToRobotGave(target) && crawlingData.getTargetValue() != "")
-				addValueAttributeToNode(target);
+			Node target = DomUtils.getElementByXpath(doc, crawlingInformation.getTargetXpath());
+			LOGGER.info("Target action element in document is {}", target);
 
+			if (isTargetNodeValueEqualToRobotGave())
+				addValueAttributeToNode(target);
+			else {
+				LOGGER.info("Target Element value is not equal to robot gave value....");
+			}
 			return DomUtils.getDocumentToString(doc);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -192,17 +238,26 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		return null;
 	}
 
+	private boolean isNoTarget() {
+		LOGGER.debug("Target element which Robot gave is {}", crawlingInformation.getTargetElement());
+		return crawlingInformation.getTargetElement() == null;
+	}
+
 	private boolean isInputTag() {
-		String targetElementType = crawlingData.getTargetElementType();
+		String targetElementType = crawlingInformation.getTargetElementType();
 		return targetElementType.equalsIgnoreCase("input");
 	}
 
 	private void addValueAttributeToNode(Node target) {
 		LOGGER.info("Adding value to target Node...");
-		((org.w3c.dom.Element) target).setAttribute("value", crawlingData.getTargetValue());
+		((org.w3c.dom.Element) target).setAttribute("value", crawlingInformation.getTargetValue());
 	}
 
-	private boolean isTargetNodeValueEqualToRobotGave(Node target) {
-		return target.getNodeValue() == crawlingData.getTargetValue();
+	private boolean isTargetNodeValueEqualToRobotGave() {
+		String targetValue = browser.getWebElement(crawlingInformation.getTargetElement().getIdentification()).getAttribute("value");
+		LOGGER.info("Target Element value is {}", targetValue);
+		return targetValue.equalsIgnoreCase(crawlingInformation.getTargetValue());
 	}
+
+
 }
