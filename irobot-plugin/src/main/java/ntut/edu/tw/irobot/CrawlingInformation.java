@@ -1,4 +1,4 @@
-package ntut.edu.tw.irobot.crawldata;
+package ntut.edu.tw.irobot;
 
 
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import ntut.edu.tw.irobot.state.iRobotState;
 import ntut.edu.tw.irobot.state.State;
 
 
-public class CrawlingData implements Cloneable{
+public class CrawlingData {
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlingData.class);
 
     private State currentState;
@@ -25,17 +25,21 @@ public class CrawlingData implements Cloneable{
     private CandidateElement targetAction;
     private boolean restartSignal;
     private boolean terminate;
-    private boolean executeActionFailure;
+    private boolean executeActionSuccessOrNot;
     private String targetValue;
 
 
     public CrawlingData() {
+        defaultValue();
+    }
+
+    private void defaultValue() {
         this.currentState = null;
         this.targetAction = null;
         this.targetValue = "";
         this.terminate = false;
         this.restartSignal = false;
-        this.executeActionFailure = false;
+        this.executeActionSuccessOrNot = false;
         this.actions = ImmutableList.of();
     }
 
@@ -97,7 +101,7 @@ public class CrawlingData implements Cloneable{
      * @return targetAction
      *          The target action which has been transfer to {@link com.crawljax.core.CandidateElement}
      */
-    public CandidateElement getTargetElment() {
+    public CandidateElement getTargetElement() {
         LOGGER.info("Get the target element...");
         return targetAction;
     }
@@ -111,14 +115,21 @@ public class CrawlingData implements Cloneable{
         this.restartSignal = restartSignal;
     }
 
+    /**
+     * @param terminateSignal
+     *          The terminate signal which iRobot gave.
+     */
     public void setTerminateSignal(boolean terminateSignal) {
         LOGGER.info("Setting the terminate signal : {}", terminateSignal);
         this.terminate = terminateSignal;
     }
 
+    /**
+     * @return the boolean that the target action is execute success or not.
+     */
     public boolean isExecuteSuccess() {
-        LOGGER.info("Get the execute failure signal : {}", executeActionFailure);
-        return executeActionFailure;
+        LOGGER.info("Get the execute execute signal : {}", executeActionSuccessOrNot);
+        return executeActionSuccessOrNot;
     }
 
     /**
@@ -129,36 +140,54 @@ public class CrawlingData implements Cloneable{
         return restartSignal;
     }
 
+    /**
+     * @return the target element type. ex. input, a, button
+     */
     public String getTargetElementType() {
-        LOGGER.info("Get the target element type : {}", targetAction.getElement().getTagName());
-        return targetAction.getElement().getTagName();
+        if (targetAction != null){
+            LOGGER.info("Get the target element type : {}", targetAction.getElement().getTagName());
+            return targetAction.getElement().getTagName();
+        }
+
+        LOGGER.info("The target element is null, return empty string");
+        return "";
     }
 
+    /**
+     * @return the target element xpath.
+     */
     public String getTargetXpath() {
-        LOGGER.info("Get the target element xpath : {}", targetAction.getIdentification().getValue());
-        return targetAction.getIdentification().getValue();
+        if (targetAction != null){
+            LOGGER.info("Get the target element xpath : {}", targetAction.getIdentification().getValue());
+            return targetAction.getIdentification().getValue();
+        }
+
+        LOGGER.info("The target element is null, return empty string");
+        return "";
     }
 
+    /**
+     * @return the value which iRobot gave.
+     */
     public String getTargetValue() {
         LOGGER.info("Get the target value : {}", targetValue);
         return targetValue;
     }
 
-    public void setExecuteActionSignal(boolean successOrNot) {
+    /**
+     * @param successOrNot
+     *          The execute success signal which crawler gave.
+     */
+    public void setExecuteSignal(boolean successOrNot) {
         LOGGER.info("Setting the execute signal : {}", successOrNot);
-        executeActionFailure = successOrNot;
+        executeActionSuccessOrNot = successOrNot;
     }
 
+    /**
+     * Reset the data
+     */
     public void resetData() {
         LOGGER.info("Resetting data....");
-        terminate = false;
-        restartSignal = false;
-        executeActionFailure = false;
-
-    }
-
-    @Override
-    public Object clone() throws CloneNotSupportedException{
-        return super.clone();
+        defaultValue();
     }
 }
