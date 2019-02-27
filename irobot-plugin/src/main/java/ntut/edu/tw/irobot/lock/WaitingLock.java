@@ -12,18 +12,12 @@ public class WaitingLock {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaitingLock.class);
 
     private CrawlingInformation source;
-    /**
-     * When lock true, the Crawler will wait
-     * When lock false, the Robot will wait
-     */
-    private boolean lock;
     private Mutex initMutex;
 
 
     public WaitingLock() {
         this.source = new CrawlingInformation();
         this.initMutex = new Mutex();
-        this.lock = false;
     }
 
     public CrawlingInformation getSource() {
@@ -58,7 +52,6 @@ public class WaitingLock {
         try {
             LOGGER.info("Acquire the initial lock and wait for Crawljax response...");
             initMutex.acquire();
-            lock = false;
             notify();
             wait();
         } catch(Exception e) {
@@ -80,18 +73,14 @@ public class WaitingLock {
      * @throws RuntimeException
      */
     public synchronized void waitForRobotCommand() throws RuntimeException {
-        LOGGER.info("Now lock is {}", lock);
-        if (!lock) {
-            try {
-                notify();
-                lock = true;
-                LOGGER.info("Crawling is done, wait for Robot command...");
-                wait();
-            } catch (InterruptedException e) {
-                LOGGER.info("It's seems there is something interrupted waiting thread.");
-                LOGGER.debug(e.getMessage());
-                e.printStackTrace();
-            }
+        try {
+            notify();
+            LOGGER.info("Crawling is done, wait for Robot command...");
+            wait();
+        } catch (InterruptedException e) {
+            LOGGER.info("It's seems there is something interrupted waiting thread.");
+            LOGGER.debug(e.getMessage());
+            e.printStackTrace();
         }
         LOGGER.debug("Get the Robot actions successfully~~");
     }
@@ -102,17 +91,13 @@ public class WaitingLock {
      * @throws RuntimeException
      */
     public synchronized void waitForCrawlerResponse() throws RuntimeException {
-        LOGGER.info("Now lock is {}", lock);
-        if (lock) {
-            try {
-                notify();
-                lock = false;
-                LOGGER.info("The robot is finished setting data, waiting for Crawler response...");
-                wait();
-            } catch (InterruptedException e) {
-                LOGGER.info("It's seems there is something interrupted waiting thread.");
-                e.printStackTrace();
-            }
+        try {
+            notify();
+            LOGGER.info("The robot is finished setting data, waiting for Crawler response...");
+            wait();
+        } catch (InterruptedException e) {
+            LOGGER.info("It's seems there is something interrupted waiting thread.");
+            e.printStackTrace();
         }
         LOGGER.debug("Get the Crawler actions successfully~~");
     }
