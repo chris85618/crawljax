@@ -124,7 +124,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 			LOGGER.info("Setting Target Action successfully...");
 		}
 		catch (Exception e) {
-			LOGGER.info("Something happened when waiting for the robot respond.");
+			LOGGER.warn("Something happened when waiting for the robot respond.");
 			LOGGER.debug(e.getMessage());
 		}
 	}
@@ -140,8 +140,12 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		for (CandidateElement element : reconstructList) {
 			if (target == element) {
 				reconstructList.remove(element);
-				CandidateElement newElement = generateNewCandidateElement(element);
-				reconstructList.set(0, newElement);
+				CandidateElement newElement = target;
+
+				if (isInputTag())
+					newElement = generateNewCandidateElement(element);
+
+				reconstructList.add(0, newElement);
 				break;
 			}
 		}

@@ -219,7 +219,8 @@ public class UnfiredCandidateActions {
 				cache.get(state.getId()).clear();
 				cache.get(state.getId()).addAll(actions);
 			} else {
-				LOG.debug("Can't find state {} in cache, ignore it...", state.getId());
+				LOG.debug("Can't find state {} in cache, add it into cache...", state.getId());
+				addActions(actions, state);
 			}
 
 			LOG.info("There are {} states with unfired actions", statesWithCandidates.size());
@@ -272,7 +273,7 @@ public class UnfiredCandidateActions {
 	public void retainInitialStateAndRemoveOthers() {
 		for (int crawlTask : statesWithCandidates) {
 			if (crawlTask != 0)
-				removeStateInCache(crawlTask, "which is not the initial state...");
+				removeStateInCache(crawlTask, String.valueOf(crawlTask));
 		}
 	}
 
