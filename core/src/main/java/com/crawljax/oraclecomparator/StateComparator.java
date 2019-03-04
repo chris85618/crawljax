@@ -37,10 +37,11 @@ public class StateComparator {
 	/**
 	 * @param browser
 	 *            the current browser instance
+	 * @param newDom
+	 * 			  the Dom which browser gave
 	 * @return the stripped dom using {@link OracleComparator}s.
 	 */
-	public String getStrippedDom(EmbeddedBrowser browser) {
-		String newDom = browser.getStrippedDom();
+	public String getStrippedDom(EmbeddedBrowser browser, String newDom) {
 		for (OracleComparator oraclePreCondition : oracleComparator) {
 			// use oracle if preconditions succeeds
 			if (allPreConditionsSucceed(oraclePreCondition, browser)) {
