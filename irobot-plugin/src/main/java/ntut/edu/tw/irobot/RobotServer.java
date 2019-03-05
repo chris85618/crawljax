@@ -147,10 +147,10 @@ public class RobotServer implements Runnable {
         //   Crawler Overview
         String pluginPath = recordFolder.getAbsolutePath() + File.separatorChar + "plugins" + File.separatorChar;
 
-        File crawlerOverviewPlugin = new File(pluginPath + "0");
-        crawlerOverviewPlugin.mkdirs();
-        builder.addPlugin(new CrawlOverview(
-                                new HostInterfaceImpl(crawlerOverviewPlugin, new HashMap<String, String>())));
+//        File crawlerOverviewPlugin = new File(pluginPath + "0");
+//        crawlerOverviewPlugin.mkdirs();
+//        builder.addPlugin(new CrawlOverview(
+//                                new HostInterfaceImpl(crawlerOverviewPlugin, new HashMap<String, String>())));
 
         //   DQN Plugin
         File DQNPlugin = new File(pluginPath + "1");
