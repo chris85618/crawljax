@@ -132,9 +132,9 @@ public class RobotServer implements Runnable {
         builder.setUnlimitedStates();
         builder.setUnlimitedRuntime();
 
-        // event and url wait time is 1 second
-        builder.crawlRules().waitAfterEvent(1000, TimeUnit.MILLISECONDS);
-        builder.crawlRules().waitAfterReloadUrl(1000, TimeUnit.MILLISECONDS);
+        // event and url wait time is 0 second
+        builder.crawlRules().waitAfterEvent(1, TimeUnit.MILLISECONDS);
+        builder.crawlRules().waitAfterReloadUrl(1, TimeUnit.MILLISECONDS);
 
         // Click Rules
         builder.crawlRules().clickDefaultElements();
