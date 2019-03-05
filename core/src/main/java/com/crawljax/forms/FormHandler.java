@@ -8,6 +8,8 @@ import com.crawljax.core.exception.BrowserConnectionException;
 import com.crawljax.util.DomUtils;
 import com.crawljax.util.XPathHelper;
 import com.google.inject.assistedinject.Assisted;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,13 +118,19 @@ public class FormHandler {
     private void handleText(FormInput input) {
         String text = input.getInputValues().iterator().next().getValue();
 		WebElement inputElement = browser.getWebElement(input.getIdentification());
-		inputElement.clear();
+//		inputElement.clear();
 
 //        if (null == text || text.length() == 0) {
 //            return;
 //        }
+		String element = "document.evaluate('" + input.getIdentification().getValue()
+				+ "', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue";
+		String setValueCommand = ".setAttribute('value', '" + text + "')";
+		String onkeyUpCommand = ".onkeyup()";
+		browser.executeJavaScript(element + setValueCommand);
+		browser.executeJavaScript(element + onkeyUpCommand);
 
-        inputElement.sendKeys(text);
+//        inputElement.sendKeys("");
     }
 
 	/**
