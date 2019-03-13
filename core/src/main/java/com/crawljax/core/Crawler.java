@@ -122,12 +122,9 @@ public class Crawler {
 		browser.goToUrl(url);
 		plugins.runOnUrlLoadPlugins(context);
 		crawlDepth.set(0);
-
-		if (restartSignal())
-			onOldStateProcedure();
 	}
 
-	private void onOldStateProcedure() {
+	private void onOldStateProcedureAndGetRobotCommand() {
 		StateVertex oldState = stateMachine.getCurrentState();
 		ImmutableList<CandidateElement> extract = candidateExtractor.extract(oldState);
 		plugins.runOnRestartCrawlingStatePlugin(context, extract, oldState);
@@ -141,6 +138,12 @@ public class Crawler {
 	public void execute(StateVertex crawlTask) {
 		LOG.debug("Resetting the crawler and going to state {}", crawlTask.getName());
 		reset();
+		if (restartSignal())
+			onOldStateProcedureAndGetRobotCommand();
+
+		if (restartSignal())
+			return;
+
 		ImmutableList<Eventable> eventables = shortestPathTo(crawlTask);
 		try {
 			// TODO: must make sure there is no need to follow the old path
@@ -383,7 +386,7 @@ public class Crawler {
 					inspectNewState(event);
 				}
 				else
-					onOldStateProcedure();
+					onOldStateProcedureAndGetRobotCommand();
 			} else {
 				LOG.info(
 				        "Element {} not clicked because not all crawl conditions where satisfied",
