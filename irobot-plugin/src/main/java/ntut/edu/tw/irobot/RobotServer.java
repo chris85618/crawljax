@@ -8,7 +8,6 @@ import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.descriptor.Parameter;
 import com.crawljax.core.plugin.descriptor.PluginDescriptor;
 import com.google.common.collect.ImmutableList;
-import com.sun.corba.se.impl.orbutil.concurrent.Mutex;
 import ntut.edu.tw.irobot.action.Action;
 import ntut.edu.tw.irobot.fs.WorkDirManager;
 import ntut.edu.tw.irobot.lock.WaitingLock;
@@ -30,8 +29,6 @@ public class RobotServer implements Runnable {
     private WaitingLock lock;
     private GatewayServer server;
     private Timer crawlerTimer;
-    private Mutex loopMutex;
-    private Mutex terminateMutex;
     private String url;
     private CrawlingInformation data;
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -43,8 +40,6 @@ public class RobotServer implements Runnable {
         this.dirManage = new WorkDirManager();
         this.server = new GatewayServer(this);
         this.url = "";
-        this.loopMutex = new Mutex();
-        this.terminateMutex = new Mutex();
         this.data = null;
         this.crawlerTimer = new Timer();
     }
@@ -112,14 +107,12 @@ public class RobotServer implements Runnable {
      * @return
      *              The boolean which the Action is execute success or not
      */
-    public boolean executeAction(Action action, String value) throws InterruptedException {
+    public boolean executeAction(Action action, String value) {
         data.resetData();
 
         LOGGER.info("Execute Action {}, and the value is {}...", action, value);
         lock.getSource().setTargetAction(action, value);
         try{
-            loopMutex.acquire();
-
             // begin counting time
             crawlerTimer.start();
 
@@ -132,8 +125,6 @@ public class RobotServer implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
-        } finally {
-            loopMutex.release();
         }
 
         return data.isExecuteSuccess();
@@ -143,17 +134,20 @@ public class RobotServer implements Runnable {
         return crawlerTimer.getDurationTime();
     }
 
-//    public boolean
-//
-//    private void terminateCrawler() {
-//        data.setTerminateSignal(true);
-//        try {
-//            terminateMutex.acquire();
-//            executorService.shutdown();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//    }
+    public boolean terminateCrawler() {
+        try {
+            crawlerTimer.reset();
+            lock.terminateCrawler();
+//            System.out.println(executorService.isTerminated());
+//            System.out.println(executorService.isShutdown());
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOGGER.info("Terminate Crawler Failure...");
+            return false;
+        }
+        LOGGER.info("Terminate Crawler Successfully...");
+        return true;
+    }
 
     private void init() {
         File recordFolder = dirManage.getRecordFolder();

@@ -23,6 +23,12 @@ public class Timer {
         totalCost += endTime - startTime;
     }
 
+    public void reset() {
+        startTime = 0;
+        endTime = 0;
+        totalCost = 0;
+    }
+
     public long getTotalCostTime() {
         return totalCost;
     }

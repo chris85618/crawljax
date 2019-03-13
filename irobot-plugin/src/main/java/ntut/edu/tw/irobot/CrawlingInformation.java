@@ -24,7 +24,6 @@ public class CrawlingInformation {
 
     private CandidateElement targetAction;
     private boolean restartSignal;
-    private boolean terminate;
     private boolean executeActionSuccessOrNot;
     private String targetValue;
 
@@ -37,7 +36,6 @@ public class CrawlingInformation {
         this.currentState = null;
         this.targetAction = null;
         this.targetValue = "";
-        this.terminate = false;
         this.restartSignal = false;
         this.executeActionSuccessOrNot = false;
         this.actions = ImmutableList.of();
@@ -113,15 +111,6 @@ public class CrawlingInformation {
     public void setRestartSignal(boolean restartSignal) {
         LOGGER.info("Setting the restart signal : {}", restartSignal);
         this.restartSignal = restartSignal;
-    }
-
-    /**
-     * @param terminateSignal
-     *          The terminate signal which iRobot gave.
-     */
-    public void setTerminateSignal(boolean terminateSignal) {
-        LOGGER.info("Setting the terminate signal : {}", terminateSignal);
-        this.terminate = terminateSignal;
     }
 
     /**
