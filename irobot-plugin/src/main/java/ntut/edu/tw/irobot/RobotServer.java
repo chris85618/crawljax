@@ -7,7 +7,6 @@ import com.crawljax.core.configuration.CrawljaxConfiguration;
 import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.descriptor.Parameter;
 import com.crawljax.core.plugin.descriptor.PluginDescriptor;
-import com.crawljax.plugins.crawloverview.CrawlOverview;
 import com.google.common.collect.ImmutableList;
 import com.sun.corba.se.impl.orbutil.concurrent.Mutex;
 import ntut.edu.tw.irobot.action.Action;
@@ -21,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import ntut.edu.tw.irobot.timer.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import py4j.GatewayServer;
@@ -29,7 +29,9 @@ public class RobotServer implements Runnable {
     private WorkDirManager dirManage;
     private WaitingLock lock;
     private GatewayServer server;
+    private Timer crawlerTimer;
     private Mutex loopMutex;
+    private Mutex terminateMutex;
     private String url;
     private CrawlingInformation data;
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -42,7 +44,9 @@ public class RobotServer implements Runnable {
         this.server = new GatewayServer(this);
         this.url = "";
         this.loopMutex = new Mutex();
+        this.terminateMutex = new Mutex();
         this.data = null;
+        this.crawlerTimer = new Timer();
     }
 
     @Override
@@ -73,7 +77,14 @@ public class RobotServer implements Runnable {
     public void restart() {
         LOGGER.info("Set the restart signal and initialize crawler response...");
         lock.getSource().setRestartSignal(true);
+
+        // begin counting time
+        crawlerTimer.start();
+
         lock.initCrawler();
+
+        // stop counting time
+        crawlerTimer.stop();
     }
 
     /**
@@ -108,7 +119,14 @@ public class RobotServer implements Runnable {
         lock.getSource().setTargetAction(action, value);
         try{
             loopMutex.acquire();
+
+            // begin counting time
+            crawlerTimer.start();
+
             lock.waitForCrawlerResponse();
+
+            // stop counting time
+            crawlerTimer.stop();
 
             data = lock.getSource();
         } catch (Exception e) {
@@ -120,6 +138,22 @@ public class RobotServer implements Runnable {
 
         return data.isExecuteSuccess();
     }
+
+    public String getCrawlerSpendingTime() {
+        return crawlerTimer.getDurationTime();
+    }
+
+//    public boolean
+//
+//    private void terminateCrawler() {
+//        data.setTerminateSignal(true);
+//        try {
+//            terminateMutex.acquire();
+//            executorService.shutdown();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     private void init() {
         File recordFolder = dirManage.getRecordFolder();
@@ -162,9 +196,14 @@ public class RobotServer implements Runnable {
         builder.addPlugin(new DQNLearningModePlugin(
                                 new HostInterfaceImpl(DQNPlugin, parameters), lock));
 
+
+        // Begin to count time
+        crawlerTimer.start();
+
 		// Build Crawljax
         lock.init(executorService, new CrawljaxRunner(builder.build()));
+
+        // Stop counting time
+        crawlerTimer.stop();
     }
-
-
 }
