@@ -37,7 +37,7 @@ public class WaitingLock {
         try {
             resetMutex();
             crawler.stop();
-            CrawlSession sec = future.get();
+            future.get();
 //            future.cancel(true);
 //            while(!future.cancel(true));
 //            System.out.println(future.isDone());

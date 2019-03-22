@@ -11,7 +11,6 @@ import com.crawljax.forms.FormInput;
 import com.crawljax.forms.InputValue;
 import com.crawljax.util.DomUtils;
 import com.google.common.collect.ImmutableList;
-import com.sun.corba.se.impl.orbutil.concurrent.Mutex;
 import ntut.edu.tw.irobot.lock.WaitingLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,9 +78,6 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	public void preStateCrawling(CrawlerContext context, ImmutableList<CandidateElement> candidateElements, StateVertex state) {
 		browser = context.getBrowser();
 		convertAndWaitRobot(candidateElements, state);
-
-		for (CandidateElement element : state.getCandidateElements())
-			System.out.println(element.getFormInputs());
 	}
 
 	private void convertAndWaitRobot(ImmutableList<CandidateElement> candidateElements, StateVertex state) {

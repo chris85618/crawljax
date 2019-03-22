@@ -2,7 +2,9 @@ package ntut.edu.tw.irobot;
 
 import java.util.HashMap;
 
+import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.core.CrawljaxRunner;
+import com.crawljax.core.configuration.BrowserConfiguration;
 import com.crawljax.core.configuration.CrawljaxConfiguration;
 import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.descriptor.Parameter;
@@ -154,6 +156,9 @@ public class RobotServer implements Runnable {
 
         // Build Configuration (default firefox)
         CrawljaxConfiguration.CrawljaxConfigurationBuilder builder = CrawljaxConfiguration.builderFor(this.url);
+
+        // Build BrowserConfig
+        builder.setBrowserConfig(new BrowserConfiguration(EmbeddedBrowser.BrowserType.FIREFOX, 1));
 
         // the crawling Depth、State、Time is unlimited
         builder.setUnlimitedCrawlDepth();

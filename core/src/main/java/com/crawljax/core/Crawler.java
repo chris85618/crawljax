@@ -219,9 +219,9 @@ public class Crawler {
 				        "Domain/scope left while following path");
 			}
 			int depth = crawlDepth.incrementAndGet();
-			System.out.println("----------------------------------------");
-			System.out.println("now depth : " + depth);
-			System.out.println("----------------------------------------");
+//			System.out.println("----------------------------------------");
+//			System.out.println("now depth : " + depth);
+//			System.out.println("----------------------------------------");
 			LOG.info("Crawl depth is now {}", depth);
 			plugins.runOnRevisitStatePlugins(context, curState);
 
@@ -480,9 +480,9 @@ public class Crawler {
 		boolean isNewState = stateMachine.swithToStateAndCheckIfClone(event, newState, context);
 		if (isNewState) {
 			int depth = crawlDepth.incrementAndGet();
-			System.out.println("==========================================");
-			System.out.println("now depth : " + depth);
-			System.out.println("==========================================");
+//			System.out.println("==========================================");
+//			System.out.println("now depth : " + depth);
+//			System.out.println("==========================================");
 			LOG.info("New DOM is a new state! crawl depth is now {}", depth);
 			if (maxDepth == depth) {
 				LOG.debug("Maximum depth achived. Not crawling this state any further");

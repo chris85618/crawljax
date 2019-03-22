@@ -45,7 +45,7 @@ public class StateMachine {
 	}
 
 	public StateVertex newStateFor(EmbeddedBrowser browser) {
-		System.out.println("\nnew state :");
+//		System.out.println("\nnew state :");
 		String strippedDom = plugins.runOnNewFoundStatePlugins(browser.getStrippedDom());
 		String comparatorStrippedDom = stateComparator.getStrippedDom(browser, strippedDom);
 		return stateFlowGraph.newStateFor(

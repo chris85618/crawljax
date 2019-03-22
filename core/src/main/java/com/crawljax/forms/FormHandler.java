@@ -117,7 +117,7 @@ public class FormHandler {
 
     private void handleText(FormInput input) {
         String text = input.getInputValues().iterator().next().getValue();
-		WebElement inputElement = browser.getWebElement(input.getIdentification());
+//		WebElement inputElement = browser.getWebElement(input.getIdentification());
 //		inputElement.clear();
 
 //        if (null == text || text.length() == 0) {
