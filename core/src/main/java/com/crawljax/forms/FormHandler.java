@@ -117,20 +117,20 @@ public class FormHandler {
 
     private void handleText(FormInput input) {
         String text = input.getInputValues().iterator().next().getValue();
-//		WebElement inputElement = browser.getWebElement(input.getIdentification());
-//		inputElement.clear();
+		WebElement inputElement = browser.getWebElement(input.getIdentification());
+		inputElement.clear();
 
 //        if (null == text || text.length() == 0) {
 //            return;
 //        }
-		String element = "document.evaluate('" + input.getIdentification().getValue()
-				+ "', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue";
-		String setValueCommand = ".setAttribute('value', '" + text + "')";
-		String onkeyUpCommand = ".onkeyup()";
-		browser.executeJavaScript(element + setValueCommand);
-		browser.executeJavaScript(element + onkeyUpCommand);
+//		String element = "document.evaluate('" + input.getIdentification().getValue()
+//				+ "', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue";
+//		String setValueCommand = ".setAttribute('value', '" + text + "')";
+//		String onkeyUpCommand = ".onkeyup()";
+//		browser.executeJavaScript(element + setValueCommand);
+//		browser.executeJavaScript(element + onkeyUpCommand);
 
-//        inputElement.sendKeys("");
+        inputElement.sendKeys(text);
     }
 
 	/**
