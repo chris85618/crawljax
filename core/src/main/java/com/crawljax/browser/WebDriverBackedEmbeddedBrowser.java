@@ -474,6 +474,12 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	        throws ElementNotVisibleException, InterruptedException {
 		switch (eventable.getEventType()) {
 			case click:
+				// Because driver still can click the `disable` element,
+				// 		but user need to know the `click` action is click or not.
+				// The element is disable then return false
+				if (!webElement.isEnabled())
+					return false;
+
 				try {
 					webElement.click();
 				} catch (ElementNotVisibleException e) {

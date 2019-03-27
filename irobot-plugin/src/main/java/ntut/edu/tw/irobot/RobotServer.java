@@ -158,7 +158,7 @@ public class RobotServer implements Runnable {
         CrawljaxConfiguration.CrawljaxConfigurationBuilder builder = CrawljaxConfiguration.builderFor(this.url);
 
         // Build BrowserConfig
-        builder.setBrowserConfig(new BrowserConfiguration(EmbeddedBrowser.BrowserType.FIREFOX, 1));
+        builder.setBrowserConfig(new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1));
 
         // the crawling Depth、State、Time is unlimited
         builder.setUnlimitedCrawlDepth();
