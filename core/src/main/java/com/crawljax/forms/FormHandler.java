@@ -78,6 +78,7 @@ public class FormHandler {
 			throw e;
 		} catch (RuntimeException e) {
 			LOGGER.error("Could not input element values", e);
+			throw e;
 		}
 	}
 
@@ -204,7 +205,7 @@ public class FormHandler {
 	 * @param formInputs
 	 *            form input list.
 	 */
-	public void handleFormElements(List<FormInput> formInputs) {
+	public void handleFormElements(List<FormInput> formInputs) throws IOException, XPathExpressionException {
 		try {
 			Document dom = DomUtils.asDocument(browser.getStrippedDomWithoutIframeContent());
 			for (FormInput input : formInputs) {
@@ -213,6 +214,9 @@ public class FormHandler {
 			}
 		} catch (IOException | XPathExpressionException e) {
 			LOGGER.error(e.getMessage(), e);
+			throw e;
+		} catch (Exception e) {
+			throw e;
 		}
 
 	}

@@ -245,8 +245,14 @@ public class Crawler {
 		// 		default value in inputs from the current page
 		if (!this.isDQNLearningMode)
 			addOtherInputs(formInputs);
-		
-		formHandler.handleFormElements(formInputs);
+
+		try {
+			formHandler.handleFormElements(formInputs);
+		} catch (Exception e) {
+			LOG.info("Some thing wrong when input value...");
+			plugins.runOnFireEventFailedPlugins(context, eventable,
+					crawlpath.immutableCopyWithoutLast());
+		}
 	}
 
 	/**
