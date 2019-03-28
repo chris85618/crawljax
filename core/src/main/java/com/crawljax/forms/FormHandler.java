@@ -58,7 +58,7 @@ public class FormHandler {
 	private void setInputElementValue(Node element, FormInput input) {
 
 		LOGGER.debug("INPUTFIELD: {} ({})", input.getIdentification(), input.getType());
-		if (element == null || input.getInputValues().isEmpty()) {
+		if (element == null || input.getInputValues().isEmpty() || element.getAttributes().getNamedItem("type").getNodeValue().equalsIgnoreCase("submit")) {
 			return;
 		}
 		try {
@@ -78,6 +78,7 @@ public class FormHandler {
 			throw e;
 		} catch (RuntimeException e) {
 			LOGGER.error("Could not input element values", e);
+			throw e;
 		}
 	}
 
@@ -118,19 +119,19 @@ public class FormHandler {
     private void handleText(FormInput input) {
         String text = input.getInputValues().iterator().next().getValue();
 		WebElement inputElement = browser.getWebElement(input.getIdentification());
-//		inputElement.clear();
+		inputElement.clear();
 
 //        if (null == text || text.length() == 0) {
 //            return;
 //        }
-		String element = "document.evaluate('" + input.getIdentification().getValue()
-				+ "', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue";
-		String setValueCommand = ".setAttribute('value', '" + text + "')";
-		String onkeyUpCommand = ".onkeyup()";
-		browser.executeJavaScript(element + setValueCommand);
-		browser.executeJavaScript(element + onkeyUpCommand);
+//		String element = "document.evaluate('" + input.getIdentification().getValue()
+//				+ "', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue";
+//		String setValueCommand = ".setAttribute('value', '" + text + "')";
+//		String onkeyUpCommand = ".onkeyup()";
+//		browser.executeJavaScript(element + setValueCommand);
+//		browser.executeJavaScript(element + onkeyUpCommand);
 
-//        inputElement.sendKeys("");
+        inputElement.sendKeys(text);
     }
 
 	/**
@@ -204,7 +205,7 @@ public class FormHandler {
 	 * @param formInputs
 	 *            form input list.
 	 */
-	public void handleFormElements(List<FormInput> formInputs) {
+	public void handleFormElements(List<FormInput> formInputs) throws IOException, XPathExpressionException {
 		try {
 			Document dom = DomUtils.asDocument(browser.getStrippedDomWithoutIframeContent());
 			for (FormInput input : formInputs) {
@@ -213,6 +214,9 @@ public class FormHandler {
 			}
 		} catch (IOException | XPathExpressionException e) {
 			LOGGER.error(e.getMessage(), e);
+			throw e;
+		} catch (Exception e) {
+			throw e;
 		}
 
 	}

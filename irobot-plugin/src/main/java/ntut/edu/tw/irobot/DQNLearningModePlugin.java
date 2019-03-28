@@ -11,7 +11,6 @@ import com.crawljax.forms.FormInput;
 import com.crawljax.forms.InputValue;
 import com.crawljax.util.DomUtils;
 import com.google.common.collect.ImmutableList;
-import com.sun.corba.se.impl.orbutil.concurrent.Mutex;
 import ntut.edu.tw.irobot.lock.WaitingLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +29,6 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	private CrawlingInformation crawlingInformation;
 	private HostInterface hostInterface;
 	private WaitingLock lock;
-	private Mutex loopMutex;
 	private boolean isInitial;
 	private boolean isRestart;
 	private boolean isExecuteSuccess;
@@ -40,7 +38,6 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		this.hostInterface = hostInterface;
         this.lock =  waiting;
         this.crawlingInformation = null;
-        this.loopMutex = new Mutex();
         this.isInitial = true;
         this.isRestart = false;
         this.isExecuteSuccess = true;
@@ -81,9 +78,6 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	public void preStateCrawling(CrawlerContext context, ImmutableList<CandidateElement> candidateElements, StateVertex state) {
 		browser = context.getBrowser();
 		convertAndWaitRobot(candidateElements, state);
-
-		for (CandidateElement element : state.getCandidateElements())
-			System.out.println(element.getFormInputs());
 	}
 
 	private void convertAndWaitRobot(ImmutableList<CandidateElement> candidateElements, StateVertex state) {
@@ -99,7 +93,6 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 			crawlingInformation.setExecuteSignal(isExecuteSuccess);
 
 			// will wait the robot command
-			loopMutex.acquire();
 			try {
 				if (isRestart || this.isInitial) {
 					isInitial = false;
@@ -111,7 +104,6 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 				crawlingInformation = lock.getSource();
 				isExecuteSuccess = true;
 				isRestart = crawlingInformation.isRestart();
-				loopMutex.release();
 			}
 
 			if (isRestart){

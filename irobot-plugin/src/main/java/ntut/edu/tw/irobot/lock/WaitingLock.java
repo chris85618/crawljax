@@ -1,25 +1,67 @@
 package ntut.edu.tw.irobot.lock;
 
+import com.crawljax.core.CrawlSession;
 import com.crawljax.core.CrawljaxRunner;
 import com.sun.corba.se.impl.orbutil.concurrent.Mutex;
 import ntut.edu.tw.irobot.CrawlingInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class WaitingLock {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaitingLock.class);
 
     private CrawlingInformation source;
     private Mutex initMutex;
+    private Mutex crawljaxMutex;
+    private Mutex robotMutex;
+    private Mutex terminateMutex;
+    private CrawljaxRunner crawler;
+    private Future<CrawlSession> future;
 
 
     public WaitingLock() {
         this.source = new CrawlingInformation();
         this.initMutex = new Mutex();
+        this.crawljaxMutex = new Mutex();
+        this.robotMutex = new Mutex();
+        this.terminateMutex = new Mutex();
+        this.crawler = null;
+        this.future = null;
     }
 
+    public void terminateCrawler() throws ExecutionException, InterruptedException {
+        try {
+            resetMutex();
+            crawler.stop();
+            future.get();
+//            future.cancel(true);
+//            while(!future.cancel(true));
+//            System.out.println(future.isDone());
+//            System.out.println(future.isCancelled());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            future = null;
+            crawler = null;
+            source.resetData();
+        }
+    }
+
+    public synchronized void resetMutex() {
+        initMutex.release();
+        crawljaxMutex.release();
+        robotMutex.release();
+        notify();
+    }
+
+    /**
+     * @return data
+     */
     public CrawlingInformation getSource() {
         return this.source;
     }
@@ -34,11 +76,11 @@ public class WaitingLock {
      */
     public synchronized void init(ExecutorService executor, CrawljaxRunner crawler) {
         try {
-            System.out.println("Robot init the crawler, and wait for crawler response....");
+            LOGGER.info("Robot init the crawler, and wait for crawler response....");
             initMutex.acquire();
-            executor.submit(crawler);
+            this.crawler = crawler;
+            future = executor.submit(crawler);
             wait();
-            System.out.println("Crawler release Mutex, and keep going....");
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -74,9 +116,11 @@ public class WaitingLock {
      */
     public synchronized void waitForRobotCommand() throws RuntimeException {
         try {
+            crawljaxMutex.acquire();
             notify();
             LOGGER.info("Crawling is done, wait for Robot command...");
             wait();
+            crawljaxMutex.release();
         } catch (InterruptedException e) {
             LOGGER.info("It's seems there is something interrupted waiting thread.");
             LOGGER.debug(e.getMessage());
@@ -92,9 +136,11 @@ public class WaitingLock {
      */
     public synchronized void waitForCrawlerResponse() throws RuntimeException {
         try {
+            robotMutex.acquire();
             notify();
             LOGGER.info("The robot is finished setting data, waiting for Crawler response...");
             wait();
+            robotMutex.release();
         } catch (InterruptedException e) {
             LOGGER.info("It's seems there is something interrupted waiting thread.");
             e.printStackTrace();

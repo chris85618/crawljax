@@ -2,13 +2,14 @@ package ntut.edu.tw.irobot;
 
 import java.util.HashMap;
 
+import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.core.CrawljaxRunner;
+import com.crawljax.core.configuration.BrowserConfiguration;
 import com.crawljax.core.configuration.CrawljaxConfiguration;
 import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.descriptor.Parameter;
 import com.crawljax.core.plugin.descriptor.PluginDescriptor;
 import com.google.common.collect.ImmutableList;
-import com.sun.corba.se.impl.orbutil.concurrent.Mutex;
 import ntut.edu.tw.irobot.action.Action;
 import ntut.edu.tw.irobot.fs.WorkDirManager;
 import ntut.edu.tw.irobot.lock.WaitingLock;
@@ -20,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import ntut.edu.tw.irobot.timer.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import py4j.GatewayServer;
@@ -31,7 +33,7 @@ public class RobotServer implements Runnable {
 
     private GatewayServer server;
 
-    private Mutex loopMutex;
+    private Timer crawlerTimer;
     private String url;
 
     private CrawlingInformation crawlingInformation;
@@ -45,8 +47,10 @@ public class RobotServer implements Runnable {
         this.dirManage = new WorkDirManager();
         this.server = new GatewayServer(this);
         this.url = "";
-        this.loopMutex = new Mutex();
+
         this.crawlingInformation = null;
+//        this.data = null;
+        this.crawlerTimer = new Timer();
     }
 
     @Override
@@ -77,7 +81,14 @@ public class RobotServer implements Runnable {
     public void restart() {
         LOGGER.info("Set the restart signal and initialize crawler response...");
         lock.getSource().setRestartSignal(true);
+
+        // begin counting time
+        crawlerTimer.start();
+
         lock.initCrawler();
+
+        // stop counting time
+        crawlerTimer.stop();
     }
 
     /**
@@ -105,24 +116,47 @@ public class RobotServer implements Runnable {
      * @return
      *              The boolean which the Action is execute success or not
      */
-    public boolean executeAction(Action action, String value) throws InterruptedException {
+
+    public boolean executeAction(Action action, String value) {
         crawlingInformation.resetData();
 
         LOGGER.info("Execute Action {}, and the value is {}...", action, value);
         lock.getSource().setTargetAction(action, value);
         try{
-            loopMutex.acquire();
+            // begin counting time
+            crawlerTimer.start();
+
             lock.waitForCrawlerResponse();
 
+            // stop counting time
+            crawlerTimer.stop();
             crawlingInformation = lock.getSource();
+
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
-        } finally {
-            loopMutex.release();
         }
 
         return crawlingInformation.isExecuteSuccess();
+    }
+
+    public String getCrawlerSpendingTime() {
+        return crawlerTimer.getDurationTime();
+    }
+
+    public boolean terminateCrawler() {
+        try {
+            crawlerTimer.reset();
+            lock.terminateCrawler();
+//            System.out.println(executorService.isTerminated());
+//            System.out.println(executorService.isShutdown());
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOGGER.info("Terminate Crawler Failure...");
+            return false;
+        }
+        LOGGER.info("Terminate Crawler Successfully...");
+        return true;
     }
 
     private void init() {
@@ -130,6 +164,9 @@ public class RobotServer implements Runnable {
 
         // Build Configuration (default firefox)
         CrawljaxConfiguration.CrawljaxConfigurationBuilder builder = CrawljaxConfiguration.builderFor(this.url);
+
+        // Build BrowserConfig
+        builder.setBrowserConfig(new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1));
 
         // the crawling Depth、State、Time is unlimited
         builder.setUnlimitedCrawlDepth();
@@ -168,9 +205,14 @@ public class RobotServer implements Runnable {
         builder.addPlugin(new DQNLearningModePlugin(
                                 new HostInterfaceImpl(DQNPlugin, parameters), lock));
 
+
+        // Begin to count time
+        crawlerTimer.start();
+
 		// Build Crawljax
         lock.init(executorService, new CrawljaxRunner(builder.build()));
+
+        // Stop counting time
+        crawlerTimer.stop();
     }
-
-
 }

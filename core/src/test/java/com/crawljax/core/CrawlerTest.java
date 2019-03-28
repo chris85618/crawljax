@@ -5,7 +5,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import javax.inject.Provider;
+import javax.xml.xpath.XPathExpressionException;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.List;
@@ -190,7 +192,13 @@ public class CrawlerTest {
 
 	private void verifyFormElementsChecked(InOrder order) {
 		order.verify(formHandler).getFormInputs();
-		order.verify(formHandler).handleFormElements(formInputsCaptor.capture());
+		try {
+			order.verify(formHandler).handleFormElements(formInputsCaptor.capture());
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (XPathExpressionException e) {
+			e.printStackTrace();
+		}
 		formInputsCaptor.getValue().isEmpty();
 	}
 }

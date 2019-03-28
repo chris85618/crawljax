@@ -14,12 +14,14 @@ public class WorkDirManager {
 
     public WorkDirManager () {
         outputFolder = getOutputFolder();
-        currentRecordID = getCurrentRecordID();
-        recordFolder = createRecordFolder();
+        currentRecordID = 0;
+        recordFolder = null;
     }
 
     public File getRecordFolder() {
         LOGGER.info("Get the record file...");
+        currentRecordID = getCurrentRecordID();
+        recordFolder = createRecordFolder();
         return recordFolder;
     }
 
