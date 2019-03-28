@@ -570,6 +570,7 @@ public class Crawler {
 
 		browser.goToUrl(url);
 		plugins.runOnUrlLoadPlugins(context);
+		// TODO: when index need to unify the dom, need to add value attribute for learning
 		StateVertex index =
 		        vertexFactory.createIndex(url.toString(), browser.getStrippedDom(),
 		                stateComparator.getStrippedDom(browser, browser.getStrippedDom()));
