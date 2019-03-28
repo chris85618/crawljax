@@ -7,7 +7,6 @@ import com.crawljax.core.configuration.CrawljaxConfiguration;
 import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.descriptor.Parameter;
 import com.crawljax.core.plugin.descriptor.PluginDescriptor;
-import com.crawljax.plugins.crawloverview.CrawlOverview;
 import com.google.common.collect.ImmutableList;
 import com.sun.corba.se.impl.orbutil.concurrent.Mutex;
 import ntut.edu.tw.irobot.action.Action;
@@ -27,11 +26,16 @@ import py4j.GatewayServer;
 
 public class RobotServer implements Runnable {
     private WorkDirManager dirManage;
+
     private WaitingLock lock;
+
     private GatewayServer server;
+
     private Mutex loopMutex;
     private String url;
-    private CrawlingInformation data;
+
+    private CrawlingInformation crawlingInformation;
+
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static final Logger LOGGER = LoggerFactory.getLogger(RobotServer.class);
 
@@ -42,7 +46,7 @@ public class RobotServer implements Runnable {
         this.server = new GatewayServer(this);
         this.url = "";
         this.loopMutex = new Mutex();
-        this.data = null;
+        this.crawlingInformation = null;
     }
 
     @Override
@@ -59,7 +63,7 @@ public class RobotServer implements Runnable {
         try {
             lock.getSource().resetData();
             init();
-            data = lock.getSource();
+            crawlingInformation = lock.getSource();
         }catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -80,14 +84,14 @@ public class RobotServer implements Runnable {
      * @return the State
      */
     public State getState() {
-        return data.getState();
+        return crawlingInformation.getState();
     }
 
     /**
      * @return The Action List
      */
     public ImmutableList<Action> getActions() {
-        return data.getActions();
+        return crawlingInformation.getActions();
     }
 
     /**
@@ -102,7 +106,7 @@ public class RobotServer implements Runnable {
      *              The boolean which the Action is execute success or not
      */
     public boolean executeAction(Action action, String value) throws InterruptedException {
-        data.resetData();
+        crawlingInformation.resetData();
 
         LOGGER.info("Execute Action {}, and the value is {}...", action, value);
         lock.getSource().setTargetAction(action, value);
@@ -110,7 +114,7 @@ public class RobotServer implements Runnable {
             loopMutex.acquire();
             lock.waitForCrawlerResponse();
 
-            data = lock.getSource();
+            crawlingInformation = lock.getSource();
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -118,7 +122,7 @@ public class RobotServer implements Runnable {
             loopMutex.release();
         }
 
-        return data.isExecuteSuccess();
+        return crawlingInformation.isExecuteSuccess();
     }
 
     private void init() {
@@ -156,9 +160,11 @@ public class RobotServer implements Runnable {
         File DQNPlugin = new File(pluginPath + "1");
         PluginDescriptor descriptor = PluginDescriptor.forPlugin(DQNLearningModePlugin.class);
         Map<String, String> parameters = new HashMap<>();
+
         for(Parameter parameter : descriptor.getParameters()) {
             parameters.put(parameter.getId(), "DQN Plugin");
         }
+
         builder.addPlugin(new DQNLearningModePlugin(
                                 new HostInterfaceImpl(DQNPlugin, parameters), lock));
 

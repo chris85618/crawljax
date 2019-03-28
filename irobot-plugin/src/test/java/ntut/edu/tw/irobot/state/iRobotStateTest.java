@@ -7,11 +7,11 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class iRobotStateTest {
-    @Test
+    @Test(expected = ClassCastException.class)
     public void testEqual() {
         StateVertex a = new StateVertexImpl(0, "", "state1", "<div></div>", "");
         iRobotState b = (iRobotState) a;
-        assertEquals(b.getId(), 0);
+        System.out.println(b.getId());
     }
 
 }
