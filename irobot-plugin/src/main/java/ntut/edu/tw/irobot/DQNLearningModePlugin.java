@@ -216,9 +216,9 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		if (isNoTarget())
 			return dom;
 
-		// if event is not input tag then return original dom
-		if (!isInputTag())
-			return dom;
+//		// if event is not input tag then return original dom
+//		if (!isInputTag())
+//			return dom;
 
 		LOGGER.info("Adding input value...");
 
