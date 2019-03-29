@@ -216,27 +216,15 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		if (isNoTarget())
 			return dom;
 
-//		// if event is not input tag then return original dom
-//		if (!isInputTag())
-//			return dom;
-
 		LOGGER.info("Adding input value...");
 
 		try {
 			Document doc = DomUtils.asDocument(dom);
-//			Node target = DomUtils.getElementByXpath(doc, crawlingInformation.getTargetXpath());
-//			LOGGER.info("Target action element in document is {}", target);
 
-			if (isTargetNodeValueEqualToRobotGave())
-				addValueAttributeToNode(doc);
-			else {
-				LOGGER.info("Target Element value is not equal to robot gave value....");
-			}
+			addValueAttributeToNode(doc);
 			return DomUtils.getDocumentToString(doc);
 		} catch (IOException e) {
 			e.printStackTrace();
-//		} catch (XPathExpressionException e) {
-//			e.printStackTrace();
 		}
 		return null;
 	}
@@ -268,12 +256,4 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 			((org.w3c.dom.Element) inputNodes.item(i)).setAttribute("value", value);
 		}
 	}
-
-	private boolean isTargetNodeValueEqualToRobotGave() {
-		String targetValue = browser.getWebElement(crawlingInformation.getTargetElement().getIdentification()).getAttribute("value");
-		LOGGER.info("Target Element value is {}", targetValue);
-		return targetValue.equalsIgnoreCase(crawlingInformation.getTargetValue());
-	}
-
-
 }
