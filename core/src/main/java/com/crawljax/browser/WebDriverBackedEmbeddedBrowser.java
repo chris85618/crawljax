@@ -786,6 +786,27 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	}
 
 	/**
+	 * Checks if an element is interactive or not.
+	 *
+	 * @param identification
+	 * 				identification to use.
+	 * @return true if the element is interactive.
+	 */
+	@Override
+	public boolean isInteractive(Identification identification) {
+		try {
+			WebElement el = browser.findElement(identification.getWebDriverBy());
+			if (el != null) {
+				return el.isDisplayed() && el.isEnabled();
+			}
+			return false;
+		} catch (WebDriverException e) {
+			throwIfConnectionException(e);
+			return false;
+		}
+	}
+
+	/**
 	 * @return The current browser url.
 	 */
 	@Override

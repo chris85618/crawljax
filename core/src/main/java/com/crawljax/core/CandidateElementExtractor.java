@@ -375,6 +375,8 @@ public class CandidateElementExtractor {
 				Identification.How.xpath, xpath), relatedFrame));
 		}
 		for (CandidateElement candidateElement : candidateElements) {
+			if (isDisableOrInvisable(candidateElement))
+				continue;
 			if (!clickOnce || checkedElements.markChecked(candidateElement)) {
 				LOG.debug("Found new candidate element: {} with eventableCondition {}",
 					candidateElement.getUniqueString(), eventableCondition);
@@ -387,6 +389,11 @@ public class CandidateElementExtractor {
 				 */
 			}
 		}
+	}
+
+	private boolean isDisableOrInvisable(CandidateElement candidateElement) {
+		Identification candidateElementIdentification = candidateElement.getIdentification();
+		return !browser.isInteractive(candidateElementIdentification);
 	}
 
 	/**
