@@ -1,7 +1,6 @@
 package ntut.edu.tw.irobot;
 
 import java.io.IOException;
-import java.sql.Driver;
 import java.util.*;
 
 import com.crawljax.browser.EmbeddedBrowser;
@@ -15,7 +14,6 @@ import com.crawljax.util.DomUtils;
 import com.crawljax.util.XPathHelper;
 import com.google.common.collect.ImmutableList;
 import ntut.edu.tw.irobot.lock.WaitingLock;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +21,7 @@ import org.slf4j.LoggerFactory;
 import com.crawljax.core.state.StateVertex;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import javax.xml.xpath.XPathExpressionException;
-
 
 public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEventFailedPlugin, AfterReceiveRobotActionPlugin, OnNewFoundStatePlugin, OnRestartCrawlingStatePlugin {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DQNLearningModePlugin.class);

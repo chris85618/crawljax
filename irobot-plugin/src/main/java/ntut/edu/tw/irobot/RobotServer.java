@@ -55,11 +55,11 @@ public class RobotServer implements Runnable {
      *  Setting the crawling target
      * @param url
      */
-    public boolean setUrl(String url) {
+    public boolean setUrl(String url, boolean wrapElement) {
         this.url = url;
         try {
             lock.getSource().resetData();
-            init();
+            init(wrapElement);
             data = lock.getSource();
         }catch (Exception e) {
             e.printStackTrace();
@@ -151,7 +151,7 @@ public class RobotServer implements Runnable {
         return true;
     }
 
-    private void init() {
+    private void init(boolean wrapElement) {
         File recordFolder = dirManage.getRecordFolder();
 
         // Build Configuration (default firefox)
@@ -195,6 +195,8 @@ public class RobotServer implements Runnable {
         builder.addPlugin(new DQNLearningModePlugin(
                                 new HostInterfaceImpl(DQNPlugin, parameters), lock));
 
+        // Set the boolean of wrap un-interactive element
+        builder.setWrapUninteractiveElement(wrapElement);
 
         // Begin to count time
         crawlerTimer.start();

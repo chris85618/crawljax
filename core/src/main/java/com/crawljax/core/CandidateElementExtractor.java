@@ -60,6 +60,7 @@ public class CandidateElementExtractor {
 	private final ImmutableSortedSet<String> ignoredFrameIdentifiers;
 
 	private final boolean followExternalLinks;
+	private final boolean wrappedElement;
 
 	private final String siteHostName;
 
@@ -95,6 +96,7 @@ public class CandidateElementExtractor {
 		ignoredFrameIdentifiers = rules.getIgnoredFrameIdentifiers();
 		followExternalLinks = rules.followExternalLinks();
 		siteHostName = config.getUrl().getHost();
+		wrappedElement = config.getWrapElement();
 	}
 
 	private ImmutableMultimap<String, CrawlElement> asMultiMap(
@@ -265,13 +267,25 @@ public class CandidateElementExtractor {
 			String id = element.getNodeName() + ": " + DomUtils.getAllElementAttributes(element);
 
 			if (matchesXpath && !checkedElements.isChecked(id)
-			        && !isExcluded(dom, element, eventableConditionChecker)) {
+			        && !isExcluded(dom, element, eventableConditionChecker)
+					&& !isDisable(element)
+			) {
 				addElement(element, result, crawlElement);
 			} else {
 				LOG.debug("Element {} was not added", element);
 			}
 		}
 		return result.build();
+	}
+
+	private boolean isDisable(Element element) {
+		if (!this.wrappedElement)
+			return false;
+
+		String attribute = element.getAttribute("style");
+		if (element.hasAttribute("disabled") || attribute.contains("visibility:hidden") || attribute.contains("display:none"))
+			return true;
+		return false;
 	}
 
 	private boolean elementMatchesXpath(EventableConditionChecker eventableConditionChecker,
@@ -375,8 +389,6 @@ public class CandidateElementExtractor {
 				Identification.How.xpath, xpath), relatedFrame));
 		}
 		for (CandidateElement candidateElement : candidateElements) {
-			if (isDisableOrInvisable(candidateElement))
-				continue;
 			if (!clickOnce || checkedElements.markChecked(candidateElement)) {
 				LOG.debug("Found new candidate element: {} with eventableCondition {}",
 					candidateElement.getUniqueString(), eventableCondition);
