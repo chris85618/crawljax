@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 public class Timer {
     private long startTime;
     private long endTime;
+    private long episodeCost;
     private long totalCost;
 
 
@@ -12,6 +13,7 @@ public class Timer {
         startTime = 0;
         endTime = 0;
         totalCost = 0;
+        episodeCost = 0;
     }
 
     public void start() {
@@ -20,13 +22,14 @@ public class Timer {
 
     public void stop() {
         endTime = System.currentTimeMillis();
-        totalCost += endTime - startTime;
+        episodeCost += endTime - startTime;
     }
 
     public void reset() {
+        totalCost += episodeCost;
         startTime = 0;
         endTime = 0;
-        totalCost = 0;
+        episodeCost = 0;
     }
 
     public long getTotalCostTime() {

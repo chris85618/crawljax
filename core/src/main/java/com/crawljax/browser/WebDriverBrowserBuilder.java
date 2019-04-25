@@ -168,7 +168,8 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 			optionsChrome.addArguments(HEADLESS_ARG);
 		}
 
-		optionsChrome.addArguments("—whitelisted-ips=\"\"");
+		optionsChrome.addArguments("--whitelisted-ips=\"\"");
+		optionsChrome.addArguments("--disable-popup-blocking");
 
 		ChromeDriver driverChrome = new ChromeDriver(optionsChrome);
 		driverChrome.manage().window().maximize();
