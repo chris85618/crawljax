@@ -40,6 +40,8 @@ public class CrawlController implements Callable<CrawlSession> {
 
 	private ExitStatus exitReason;
 
+	private CrawlTaskConsumer firstConsumer;
+
 	@Inject
 	CrawlController(ExecutorService executor,
 			Provider<CrawlTaskConsumer> consumerFactory,
@@ -63,7 +65,7 @@ public class CrawlController implements Callable<CrawlSession> {
 	public CrawlSession call() {
 		setMaximumCrawlTimeIfNeeded();
 		plugins.runPreCrawlingPlugins(config);
-		CrawlTaskConsumer firstConsumer = consumerFactory.get();
+		firstConsumer = consumerFactory.get();
 		StateVertex firstState = firstConsumer.crawlIndex();
 		crawlSessionProvider.setup(firstState);
 		plugins.runOnNewStatePlugins(firstConsumer.getContext(), firstState);
@@ -147,6 +149,7 @@ public class CrawlController implements Callable<CrawlSession> {
 
 	void stop() {
 		exitNotifier.stop();
+		firstConsumer.clearCandidateInCache();
 	}
 
 }
