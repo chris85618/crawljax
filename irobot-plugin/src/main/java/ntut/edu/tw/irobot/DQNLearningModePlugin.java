@@ -124,20 +124,17 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	private LinkedList<CandidateElement> reConstructTheCandidateList(ImmutableList<CandidateElement> candidateElements) {
 		List<CandidateElement> reconstructList = new ArrayList<CandidateElement>();
 
-		for (CandidateElement element : candidateElements)
-			reconstructList.add(element);
-
 		CandidateElement target = crawlingInformation.getTargetElement();
 		LOGGER.info("Get the target action is {}", target);
-		for (CandidateElement element : reconstructList) {
+		CandidateElement newElement;
+		for (CandidateElement element : candidateElements) {
 			if (target == element) {
-				reconstructList.remove(element);
-				CandidateElement newElement = target;
-
 				if (isInputTag())
 					newElement = generateNewCandidateElement(element);
+				else
+					newElement = target;
 
-				reconstructList.add(0, newElement);
+				reconstructList.add(newElement);
 				break;
 			}
 		}

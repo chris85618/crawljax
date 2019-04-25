@@ -407,12 +407,13 @@ public class Crawler {
 			else
 				action = getNextAction();
 			interrupted = Thread.interrupted();
-			if (!interrupted && crawlerNotInScope()) {
-				/*
-				 * It's okay to have left the domain because the action didn't complete due to an
-				 * interruption.
-				 */
-				throw new CrawlerLeftDomainException(browser.getCurrentUrl());
+			if (!interrupted) {
+				if (crawlerNotInScope())
+					/*
+					 * It's okay to have left the domain because the action didn't complete due to an
+					 * interruption.
+					 */
+					throw new CrawlerLeftDomainException(browser.getCurrentUrl());
 			}
 		}
 		// TODO: there is no action need to report to robot
@@ -421,6 +422,7 @@ public class Crawler {
 			if (action != null) {
 				putActionBackToCache(action);
 			}
+			candidateActionCache.removeAllStateInCache();
 			Thread.currentThread().interrupt();
 		}
 	}
@@ -483,7 +485,7 @@ public class Crawler {
 	private void inspectNewDom(Eventable event, StateVertex newState) {
 		LOG.debug("The DOM has changed. Event added to the crawl path");
 		crawlpath.add(event);
-		boolean isNewState = stateMachine.swithToStateAndCheckIfClone(event, newState, context);
+		boolean isNewState = stateMachine.switchToStateAndCheckIfClone(event, newState, context);
 		if (isNewState) {
 			int depth = crawlDepth.incrementAndGet();
 //			System.out.println("==========================================");

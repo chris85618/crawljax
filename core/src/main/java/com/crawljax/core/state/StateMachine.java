@@ -140,8 +140,8 @@ public class StateMachine {
 	 * 
 	 * @return true if the new state is not found in the state machine.
 	 */
-	public boolean swithToStateAndCheckIfClone(final Eventable event, StateVertex newState,
-	        CrawlerContext context) {
+	public boolean switchToStateAndCheckIfClone(final Eventable event, StateVertex newState,
+												CrawlerContext context) {
 		StateVertex cloneState = this.addStateToCurrentState(newState, event);
 
 		runOnInvariantViolationPlugins(context);

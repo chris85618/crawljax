@@ -168,6 +168,8 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 			optionsChrome.addArguments(HEADLESS_ARG);
 		}
 
+		optionsChrome.addArguments("—whitelisted-ips=\"\"");
+
 		ChromeDriver driverChrome = new ChromeDriver(optionsChrome);
 		driverChrome.manage().window().maximize();
 

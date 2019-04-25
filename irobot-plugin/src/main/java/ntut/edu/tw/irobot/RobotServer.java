@@ -147,6 +147,9 @@ public class RobotServer implements Runnable {
             LOGGER.info("Terminate Crawler Failure...");
             return false;
         }
+        finally {
+            executorService = Executors.newSingleThreadExecutor();
+        }
         LOGGER.info("Terminate Crawler Successfully...");
         return true;
     }
