@@ -23,6 +23,7 @@ public class TimerTest {
             e.printStackTrace();
         }
         timer.stop();
+        timer.reset();
 
         assertEquals(600, timer.getTotalCostTime(), 5);
     }
@@ -35,12 +36,14 @@ public class TimerTest {
             timer.start();
             Thread.sleep(600);
             timer.stop();
+            timer.reset();
 
             assertEquals(600, timer.getTotalCostTime(), 5);
 
             timer.start();
             Thread.sleep(600);
             timer.stop();
+            timer.reset();
             assertEquals(1200, timer.getTotalCostTime(), 5);
 
         } catch (InterruptedException e) {
@@ -56,12 +59,14 @@ public class TimerTest {
             timer.start();
             Thread.sleep(600);
             timer.stop();
+            timer.reset();
 
             assertEquals("0:0:0", timer.getDurationTime());
 
             timer.start();
             Thread.sleep(600);
             timer.stop();
+            timer.reset();
             assertEquals("0:0:1", timer.getDurationTime());
         } catch (InterruptedException e) {
             e.printStackTrace();

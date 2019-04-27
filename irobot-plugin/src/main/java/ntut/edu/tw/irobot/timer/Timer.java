@@ -27,6 +27,10 @@ public class Timer {
 
     public void reset() {
         totalCost += episodeCost;
+
+        System.out.println("Current episode cost : " + getDurationTime(episodeCost));
+        System.out.println("Current CrawlJax total cost : " + getDurationTime(totalCost));
+
         startTime = 0;
         endTime = 0;
         episodeCost = 0;
@@ -37,10 +41,14 @@ public class Timer {
     }
 
     public String getDurationTime() {
-        if(totalCost < 0) {
+        return getDurationTime(totalCost);
+    }
+
+    private String getDurationTime(long time) {
+        if(time < 0) {
             throw new IllegalArgumentException("Duration must be greater than zero!");
         }
-        long temp = totalCost;
+        long temp = time;
 
         long hours = TimeUnit.MILLISECONDS.toHours(temp);
         temp -= TimeUnit.HOURS.toMillis(hours);

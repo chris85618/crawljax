@@ -9,6 +9,7 @@ import com.crawljax.core.configuration.CrawljaxConfiguration;
 import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.descriptor.Parameter;
 import com.crawljax.core.plugin.descriptor.PluginDescriptor;
+import com.crawljax.plugins.crawloverview.CrawlOverview;
 import com.google.common.collect.ImmutableList;
 import ntut.edu.tw.irobot.action.Action;
 import ntut.edu.tw.irobot.fs.WorkDirManager;
@@ -30,8 +31,9 @@ public class RobotServer implements Runnable {
     private WorkDirManager dirManage;
     private WaitingLock lock;
     private GatewayServer server;
-    private Timer crawlerTimer;
+    private Timer crawlTimer;
     private String url;
+    private boolean isRecord = false;
     private CrawlingInformation data;
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static final Logger LOGGER = LoggerFactory.getLogger(RobotServer.class);
@@ -43,7 +45,7 @@ public class RobotServer implements Runnable {
         this.server = new GatewayServer(this);
         this.url = "";
         this.data = null;
-        this.crawlerTimer = new Timer();
+        this.crawlTimer = new Timer();
     }
 
     @Override
@@ -76,12 +78,12 @@ public class RobotServer implements Runnable {
         lock.getSource().setRestartSignal(true);
 
         // begin counting time
-        crawlerTimer.start();
+        crawlTimer.start();
 
         lock.initCrawler();
 
         // stop counting time
-        crawlerTimer.stop();
+        crawlTimer.stop();
     }
 
     /**
@@ -116,12 +118,12 @@ public class RobotServer implements Runnable {
         lock.getSource().setTargetAction(action, value);
         try{
             // begin counting time
-            crawlerTimer.start();
+            crawlTimer.start();
 
             lock.waitForCrawlerResponse();
 
             // stop counting time
-            crawlerTimer.stop();
+            crawlTimer.stop();
 
             data = lock.getSource();
         } catch (Exception e) {
@@ -133,29 +135,43 @@ public class RobotServer implements Runnable {
     }
 
     public String getCrawlerSpendingTime() {
-        return crawlerTimer.getDurationTime();
+        return crawlTimer.getDurationTime();
     }
 
     public boolean terminateCrawler() {
         try {
-            crawlerTimer.reset();
+            crawlTimer.start();
             lock.terminateCrawler();
+            crawlTimer.stop();
 //            System.out.println(executorService.isTerminated());
 //            System.out.println(executorService.isShutdown());
         } catch (Exception e) {
             e.printStackTrace();
+            crawlTimer.stop();
+            crawlTimer.reset();
             LOGGER.info("Terminate Crawler Failure...");
             return false;
         }
         finally {
+            crawlTimer.reset();
             executorService = Executors.newSingleThreadExecutor();
         }
         LOGGER.info("Terminate Crawler Successfully...");
         return true;
     }
 
+    public Timer getCrawlTimer() {
+        return new Timer();
+    }
+
+    public void  setRecordBoolean(boolean isRecord) {
+        this.isRecord = isRecord;
+    }
+
     private void init(boolean wrapElement) {
-        File recordFolder = dirManage.getRecordFolder();
+        File recordFolder = null;
+        if (isRecord)
+            recordFolder = dirManage.getRecordFolder();
 
         // Build Configuration (default firefox)
         CrawljaxConfiguration.CrawljaxConfigurationBuilder builder = CrawljaxConfiguration.builderFor(this.url);
@@ -181,12 +197,16 @@ public class RobotServer implements Runnable {
 
         // Plugins
         //   Crawler Overview
-        String pluginPath = recordFolder.getAbsolutePath() + File.separatorChar + "plugins" + File.separatorChar;
+        String pluginPath = "";
+        if (isRecord) {
+            pluginPath = recordFolder.getAbsolutePath() + File.separatorChar + "plugins" + File.separatorChar;
 
-//        File crawlerOverviewPlugin = new File(pluginPath + "0");
-//        crawlerOverviewPlugin.mkdirs();
-//        builder.addPlugin(new CrawlOverview(
-//                                new HostInterfaceImpl(crawlerOverviewPlugin, new HashMap<String, String>())));
+            File crawlerOverviewPlugin = new File(pluginPath + "0");
+            crawlerOverviewPlugin.mkdirs();
+            builder.addPlugin(new CrawlOverview(
+                    new HostInterfaceImpl(crawlerOverviewPlugin, new HashMap<String, String>())));
+        }
+
 
         //   DQN Plugin
         File DQNPlugin = new File(pluginPath + "1");
@@ -202,12 +222,12 @@ public class RobotServer implements Runnable {
         builder.setWrapUninteractiveElement(wrapElement);
 
         // Begin to count time
-        crawlerTimer.start();
+        crawlTimer.start();
 
 		// Build Crawljax
         lock.init(executorService, new CrawljaxRunner(builder.build()));
 
         // Stop counting time
-        crawlerTimer.stop();
+        crawlTimer.stop();
     }
 }

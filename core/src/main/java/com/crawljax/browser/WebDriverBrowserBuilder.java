@@ -137,6 +137,8 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 			/* use proxy for everything, including localhost */
 			options.addPreference("network.proxy.no_proxies_on", "");
 		}
+		options.addArguments("--whitelisted-ips=\"\"");
+//		options.addArguments("--disable-popup-blocking");
 
 		if (configuration.getBrowserConfig().isHeadless()) {
 			options.addArguments(HEADLESS_ARG);
