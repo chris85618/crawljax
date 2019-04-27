@@ -142,18 +142,13 @@ public class RobotServer implements Runnable {
         try {
             crawlTimer.start();
             lock.terminateCrawler();
-            crawlTimer.stop();
-//            System.out.println(executorService.isTerminated());
-//            System.out.println(executorService.isShutdown());
         } catch (Exception e) {
             e.printStackTrace();
             crawlTimer.stop();
-            crawlTimer.reset();
-            LOGGER.info("Terminate Crawler Failure...");
+            LOGGER.warn("Terminate Crawler Failure...");
             return false;
-        }
-        finally {
-            crawlTimer.reset();
+        } finally {
+            crawlTimer.stop();
             executorService = Executors.newSingleThreadExecutor();
         }
         LOGGER.info("Terminate Crawler Successfully...");
@@ -162,6 +157,10 @@ public class RobotServer implements Runnable {
 
     public Timer getCrawlTimer() {
         return new Timer();
+    }
+
+    public void resetTimer() {
+        crawlTimer.reset();
     }
 
     public void  setRecordBoolean(boolean isRecord) {
