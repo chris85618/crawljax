@@ -3,15 +3,12 @@ package ntut.edu.tw.irobot.timer;
 import java.util.concurrent.TimeUnit;
 
 public class Timer {
-    private long startTime;
-    private long endTime;
-    private long totalCost;
+    private long startTime = 0;
+    private long endTime = 0;
+    private long totalCost = 0;
 
 
-    public void Timer() {
-        startTime = 0;
-        endTime = 0;
-        totalCost = 0;
+    public Timer() {
     }
 
     public void start() {
