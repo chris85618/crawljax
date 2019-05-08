@@ -2,70 +2,59 @@ package ntut.edu.tw.irobot.lock;
 
 import com.crawljax.core.CrawlSession;
 import com.crawljax.core.CrawljaxRunner;
+import com.google.common.collect.ImmutableList;
 import com.sun.corba.se.impl.orbutil.concurrent.Mutex;
 import ntut.edu.tw.irobot.CrawlingInformation;
+
+import ntut.edu.tw.irobot.WebSnapShot;
+import ntut.edu.tw.irobot.action.Action;
+import ntut.edu.tw.irobot.state.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 public class WaitingLock {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaitingLock.class);
 
-    private CrawlingInformation source;
-    private Mutex initMutex;
-    private Mutex crawljaxMutex;
-    private Mutex robotMutex;
-    private Mutex terminateMutex;
-    private CrawljaxRunner crawler;
-    private Future<CrawlSession> future;
+    private CrawlingInformation crawlingInformation;
 
+    private Mutex initMutex = new Mutex();
+
+    private Object lock = new Object();
+
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+    private CrawljaxRunner crawler = null;
+    private Future<CrawlSession> future = null;
 
     public WaitingLock() {
-        this.source = new CrawlingInformation();
-        this.initMutex = new Mutex();
-        this.crawljaxMutex = new Mutex();
-        this.robotMutex = new Mutex();
-        this.terminateMutex = new Mutex();
-        this.crawler = null;
-        this.future = null;
+        this.crawlingInformation = new CrawlingInformation();
+        this.crawlingInformation.resetData();
     }
 
-    public void terminateCrawler() throws ExecutionException, InterruptedException {
+    public WaitingLock(CrawlingInformation crawlingInformation) {
+        this.crawlingInformation = crawlingInformation;
+        this.crawlingInformation.resetData();
+    }
+
+
+    public void terminateCrawler()  {
+
         try {
-            resetMutex();
             crawler.stop();
-            future.get();
-//            future.cancel(true);
-//            while(!future.cancel(true));
-//            System.out.println(future.isDone());
-//            System.out.println(future.isCancelled());
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
         } finally {
             future = null;
             crawler = null;
-            source.resetData();
+            crawlingInformation.resetData();
         }
     }
-
-    public synchronized void resetMutex() {
-        initMutex.release();
-        crawljaxMutex.release();
-        robotMutex.release();
-        notify();
-    }
-
     /**
      * @return data
      */
-    public CrawlingInformation getSource() {
-        return this.source;
+    public CrawlingInformation getCrawlingInformation() {
+        return this.crawlingInformation;
     }
-
     /**
      * Caller is robot server
      *
@@ -74,13 +63,12 @@ public class WaitingLock {
      * @param crawler
      *              The crawler instance
      */
-    public synchronized void init(ExecutorService executor, CrawljaxRunner crawler) {
+
+
+    public void init(CrawljaxRunner crawljaxRunner) {
         try {
-            LOGGER.info("Robot init the crawler, and wait for crawler response....");
-            initMutex.acquire();
-            this.crawler = crawler;
-            future = executor.submit(crawler);
-            wait();
+            this.crawler = crawljaxRunner;
+            future = this.executorService.submit(crawler);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -109,42 +97,50 @@ public class WaitingLock {
         initMutex.release();
     }
 
+    public boolean setTargetAction(Action action, String value) {
+        this.crawlingInformation.resetData();
+        this.crawlingInformation.setTargetAction(action, value);
+        this.wakeUpSleepingThread();
+        return crawlingInformation.isExecuteSuccess();
+    }
+
+    public void wakeUpSleepingThread() {
+        synchronized (lock) {
+            lock.notifyAll();
+        }
+    }
     /**
      * Caller is Crawljax
      *
      * @throws RuntimeException
      */
-    public synchronized void waitForRobotCommand() throws RuntimeException {
-        try {
-            crawljaxMutex.acquire();
-            notify();
-            LOGGER.info("Crawling is done, wait for Robot command...");
-            wait();
-            crawljaxMutex.release();
-        } catch (InterruptedException e) {
-            LOGGER.info("It's seems there is something interrupted waiting thread.");
-            LOGGER.debug(e.getMessage());
-            e.printStackTrace();
+    public void waitForRobotCommand() throws RuntimeException {
+        synchronized (lock) {
+            try {
+                lock.wait();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
-        LOGGER.debug("Get the Robot actions successfully~~");
     }
 
-    /**
-     * Caller is Robot
-     *
-     * @throws RuntimeException
-     */
-    public synchronized void waitForCrawlerResponse() throws RuntimeException {
-        try {
-            robotMutex.acquire();
-            notify();
-            LOGGER.info("The robot is finished setting data, waiting for Crawler response...");
-            wait();
-            robotMutex.release();
-        } catch (InterruptedException e) {
-            LOGGER.info("It's seems there is something interrupted waiting thread.");
-            e.printStackTrace();
-        }
-        LOGGER.debug("Get the Crawler actions successfully~~");
+    public void setRestartSignal(boolean signal) {
+
+        this.crawlingInformation.setRestartSignal(signal);
+    }
+
+    public State getState() {
+
+        return this.crawlingInformation.getState();
+    }
+
+    public ImmutableList<Action> getActions() {
+
+        return this.crawlingInformation.getActions();
+    }
+
+    public WebSnapShot getWebSnapShot() {
+
+        return this.crawlingInformation.getWebSnapShot();
     }
 }

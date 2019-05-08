@@ -1,86 +1,77 @@
 package ntut.edu.tw.irobot;
 
 
-import java.util.ArrayList;
-import java.util.List;
+import java.lang.reflect.Method;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.crawljax.core.CandidateElement;
-import com.crawljax.core.state.StateVertex;
 import com.google.common.collect.ImmutableList;
 import ntut.edu.tw.irobot.action.Action;
-import ntut.edu.tw.irobot.action.iRobotAction;
-import ntut.edu.tw.irobot.state.iRobotState;
 import ntut.edu.tw.irobot.state.State;
 
 
-public class CrawlingInformation {
+public class CrawlingInformation implements Information {
     private static final Logger LOGGER = LoggerFactory.getLogger(CrawlingInformation.class);
 
-    private State currentState;
-    private ImmutableList<Action> actions;
+    private WebSnapShot currentWebSnapShot;
+    private BlockingQueue<WebSnapShot> webSnapShotBlockingQueue = new ArrayBlockingQueue<>(1);
 
     private CandidateElement targetAction;
-    private boolean restartSignal;
-    private boolean executeActionSuccessOrNot;
     private String targetValue;
 
+    private Action currentTargetAction;
+
+    private boolean restartSignal;
+    private boolean executeActionSuccessOrNot;
 
     public CrawlingInformation() {
-        defaultValue();
+        resetInformation();
     }
 
-    private void defaultValue() {
-        this.currentState = null;
+    private void resetInformation() {
         this.targetAction = null;
         this.targetValue = "";
         this.restartSignal = false;
         this.executeActionSuccessOrNot = false;
-        this.actions = ImmutableList.of();
     }
 
-    public void convertToRobotAction (ImmutableList<CandidateElement> candidateElements) {
-        LOGGER.info("Convert CadidateElements to iRobotActions...");
-        List<Action> transformActions = new ArrayList<Action>();
-        LOGGER.info("Transfer Ready, CandidateElements have {} items.", candidateElements.size());
-
-        for (CandidateElement element : candidateElements) {
-            LOGGER.info("Transfer CandidateAction: {}, to iRobotAction...", element);
-            transformActions.add(new iRobotAction(element));
+    public WebSnapShot getWebSnapShot() {
+        try {
+            WebSnapShot webSnapShot = webSnapShotBlockingQueue.take();
+            return webSnapShot;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
-
-        actions = ImmutableList.copyOf(transformActions);
-        LOGGER.info("Transfer complete, iRobotActions have {} items.", transformActions.size());
+        return null;
     }
 
-    /**
-     * @return actions
-     *              All actions from current page
-     */
+    @Override
+    public void setWebSnapShot(WebSnapShot webSnapShot) {
+        try {
+            webSnapShotBlockingQueue.put(webSnapShot);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        this.currentWebSnapShot = webSnapShot;
+    }
+
+    @Override
     public ImmutableList<Action> getActions() {
         LOGGER.info("Get the Action...");
-        return actions;
-    }
-
-    /**
-     * This step will convert the StateVertex to iRobotState
-     *
-     * @param state
-     *              The current State
-     */
-    public void convertToRobotState (StateVertex state) {
-        LOGGER.info("Convert StateVertex to iRobotState...");
-        currentState = new iRobotState(state);
+        return this.currentWebSnapShot.getActions();
     }
 
     /**
      * @return the currentState
      */
+    @Override
     public State getState() {
         LOGGER.info("Get the State...");
-        return currentState;
+        return this.currentWebSnapShot.getState();
     }
 
     /**
@@ -89,25 +80,32 @@ public class CrawlingInformation {
      * @param action
      *          The target action which iRobot assigned
      */
+    @Override
     public void setTargetAction(Action action, String value) {
         LOGGER.info("Get the target Action({}) from robot, transform it... ", action);
         targetAction = (CandidateElement) action.getSource();
         targetValue = value;
+        this.currentTargetAction = action;
     }
 
     /**
      * @return targetAction
      *          The target action which has been transfer to {@link com.crawljax.core.CandidateElement}
      */
+    @Override
     public CandidateElement getTargetElement() {
         LOGGER.info("Get the target element...");
         return targetAction;
     }
 
+
+
+
     /**
      * @param restartSignal
      *          The restart signal which iRobot gave.
      */
+    @Override
     public void setRestartSignal(boolean restartSignal) {
         LOGGER.info("Setting the restart signal : {}", restartSignal);
         this.restartSignal = restartSignal;
@@ -116,6 +114,7 @@ public class CrawlingInformation {
     /**
      * @return the boolean that the target action is execute success or not.
      */
+    @Override
     public boolean isExecuteSuccess() {
         LOGGER.info("Get the execute execute signal : {}", executeActionSuccessOrNot);
         return executeActionSuccessOrNot;
@@ -124,6 +123,7 @@ public class CrawlingInformation {
     /**
      * @return the restart signal.
      */
+    @Override
     public boolean isRestart() {
         LOGGER.info("Get the restart signal : {}", restartSignal);
         return restartSignal;
@@ -132,6 +132,7 @@ public class CrawlingInformation {
     /**
      * @return the target element type. ex. input, a, button
      */
+    @Override
     public String getTargetElementType() {
         if (targetAction != null){
             LOGGER.info("Get the target element type : {}", targetAction.getElement().getTagName());
@@ -145,6 +146,7 @@ public class CrawlingInformation {
     /**
      * @return the target element xpath.
      */
+    @Override
     public String getTargetXpath() {
         if (targetAction != null){
             LOGGER.info("Get the target element xpath : {}", targetAction.getIdentification().getValue());
@@ -158,6 +160,7 @@ public class CrawlingInformation {
     /**
      * @return the value which iRobot gave.
      */
+    @Override
     public String getTargetValue() {
         LOGGER.info("Get the target value : {}", targetValue);
         return targetValue;
@@ -167,6 +170,7 @@ public class CrawlingInformation {
      * @param successOrNot
      *          The execute success signal which crawler gave.
      */
+    @Override
     public void setExecuteSignal(boolean successOrNot) {
         LOGGER.info("Setting the execute signal : {}", successOrNot);
         executeActionSuccessOrNot = successOrNot;
@@ -175,8 +179,13 @@ public class CrawlingInformation {
     /**
      * Reset the data
      */
+    @Override
     public void resetData() {
         LOGGER.info("Resetting data....");
-        defaultValue();
+        resetInformation();
+    }
+
+    public Action getTargetAction() {
+        return this.currentTargetAction;
     }
 }

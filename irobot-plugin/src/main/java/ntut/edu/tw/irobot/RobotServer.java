@@ -1,55 +1,43 @@
 package ntut.edu.tw.irobot;
 
-import java.util.HashMap;
-
-import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.core.CrawljaxRunner;
-import com.crawljax.core.configuration.BrowserConfiguration;
-import com.crawljax.core.configuration.CrawljaxConfiguration;
-import com.crawljax.core.plugin.HostInterfaceImpl;
-import com.crawljax.core.plugin.descriptor.Parameter;
-import com.crawljax.core.plugin.descriptor.PluginDescriptor;
 import com.google.common.collect.ImmutableList;
 import ntut.edu.tw.irobot.action.Action;
-import ntut.edu.tw.irobot.fs.WorkDirManager;
 import ntut.edu.tw.irobot.lock.WaitingLock;
 import ntut.edu.tw.irobot.state.State;
-
-import java.io.File;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import ntut.edu.tw.irobot.timer.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import py4j.GatewayServer;
 
-public class RobotServer implements Runnable {
-    private WorkDirManager dirManage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-    private WaitingLock lock;
+public class RobotServer implements Runnable {
 
     private GatewayServer server;
 
+    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+    private CrawljaxRunner crawlJaxRunner;
+
+    private WaitingLock waitingLock = new WaitingLock();
+
     private Timer crawlerTimer;
-    private String url;
 
-    private CrawlingInformation crawlingInformation;
-
-    private static ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static final Logger LOGGER = LoggerFactory.getLogger(RobotServer.class);
 
-
     public RobotServer() {
-        this.lock = new WaitingLock();
-        this.dirManage = new WorkDirManager();
         this.server = new GatewayServer(this);
-        this.url = "";
+        this.crawlerTimer = new Timer();
+    }
 
-        this.crawlingInformation = null;
-//        this.data = null;
+    public RobotServer(WaitingLock waitingLock) {
+        // dependency injection used for testing
+        this.waitingLock = waitingLock;
+
+        this.server = new GatewayServer(this);
         this.crawlerTimer = new Timer();
     }
 
@@ -63,16 +51,36 @@ public class RobotServer implements Runnable {
      * @param url
      */
     public boolean setUrl(String url) {
-        this.url = url;
+        boolean performResult = initializeCrawlJax(url);
+        return performResult;
+    }
+
+    private boolean initializeCrawlJax(String url) {
         try {
-            lock.getSource().resetData();
-            init();
-            crawlingInformation = lock.getSource();
-        }catch (Exception e) {
+            beginCrawlerTimer();
+
+            performCrawlJax(url);
+
+            stopCrawlerTimer();
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
         return true;
+    }
+
+    private void performCrawlJax(String url) {
+        CrawlJaxRunnerFactory factory = new CrawlJaxRunnerFactory();
+        this.crawlJaxRunner = factory.createCrawlJaxRunner(url, this.waitingLock);
+        this.executorService.submit(this.crawlJaxRunner);
+    }
+
+    private void beginCrawlerTimer() {
+        crawlerTimer.start();
+    }
+
+    private void stopCrawlerTimer() {
+        crawlerTimer.stop();
     }
 
     /**
@@ -80,31 +88,33 @@ public class RobotServer implements Runnable {
      */
     public void restart() {
         LOGGER.info("Set the restart signal and initialize crawler response...");
-        lock.getSource().setRestartSignal(true);
 
+        waitingLock.setRestartSignal(true);
         // begin counting time
-        crawlerTimer.start();
+        beginCrawlerTimer();
 
-        lock.initCrawler();
-
+        waitingLock.initCrawler();
         // stop counting time
-        crawlerTimer.stop();
+        stopCrawlerTimer();
     }
 
     /**
      * @return the State
      */
     public State getState() {
-        return crawlingInformation.getState();
+        return this.waitingLock.getState();
     }
 
     /**
      * @return The Action List
      */
     public ImmutableList<Action> getActions() {
-        return crawlingInformation.getActions();
+        return this.waitingLock.getActions();
     }
 
+    public WebSnapShot getWebSnapShot() {
+        return this.waitingLock.getWebSnapShot();
+    }
     /**
      * This step will set the action
      *          and wait the crawler response
@@ -118,26 +128,8 @@ public class RobotServer implements Runnable {
      */
 
     public boolean executeAction(Action action, String value) {
-        crawlingInformation.resetData();
-
         LOGGER.info("Execute Action {}, and the value is {}...", action, value);
-        lock.getSource().setTargetAction(action, value);
-        try{
-            // begin counting time
-            crawlerTimer.start();
-
-            lock.waitForCrawlerResponse();
-
-            // stop counting time
-            crawlerTimer.stop();
-            crawlingInformation = lock.getSource();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
-
-        return crawlingInformation.isExecuteSuccess();
+        return waitingLock.setTargetAction(action, value);
     }
 
     public String getCrawlerSpendingTime() {
@@ -147,9 +139,7 @@ public class RobotServer implements Runnable {
     public boolean terminateCrawler() {
         try {
             crawlerTimer.reset();
-            lock.terminateCrawler();
-//            System.out.println(executorService.isTerminated());
-//            System.out.println(executorService.isShutdown());
+            this.crawlJaxRunner.stop();
         } catch (Exception e) {
             e.printStackTrace();
             LOGGER.info("Terminate Crawler Failure...");
@@ -157,62 +147,5 @@ public class RobotServer implements Runnable {
         }
         LOGGER.info("Terminate Crawler Successfully...");
         return true;
-    }
-
-    private void init() {
-        File recordFolder = dirManage.getRecordFolder();
-
-        // Build Configuration (default firefox)
-        CrawljaxConfiguration.CrawljaxConfigurationBuilder builder = CrawljaxConfiguration.builderFor(this.url);
-
-        // Build BrowserConfig
-        builder.setBrowserConfig(new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1));
-
-        // the crawling Depth、State、Time is unlimited
-        builder.setUnlimitedCrawlDepth();
-        builder.setUnlimitedStates();
-        builder.setUnlimitedRuntime();
-
-        // event and url wait time is 0 second
-        builder.crawlRules().waitAfterEvent(1, TimeUnit.MILLISECONDS);
-        builder.crawlRules().waitAfterReloadUrl(1, TimeUnit.MILLISECONDS);
-
-        // Click Rules
-        builder.crawlRules().clickDefaultElements();
-        builder.crawlRules().clickOnce(false);
-
-        // set DQN Mode
-        builder.setDQNLearningMode(true);
-
-        // Plugins
-        //   Crawler Overview
-        String pluginPath = recordFolder.getAbsolutePath() + File.separatorChar + "plugins" + File.separatorChar;
-
-//        File crawlerOverviewPlugin = new File(pluginPath + "0");
-//        crawlerOverviewPlugin.mkdirs();
-//        builder.addPlugin(new CrawlOverview(
-//                                new HostInterfaceImpl(crawlerOverviewPlugin, new HashMap<String, String>())));
-
-        //   DQN Plugin
-        File DQNPlugin = new File(pluginPath + "1");
-        PluginDescriptor descriptor = PluginDescriptor.forPlugin(DQNLearningModePlugin.class);
-        Map<String, String> parameters = new HashMap<>();
-
-        for(Parameter parameter : descriptor.getParameters()) {
-            parameters.put(parameter.getId(), "DQN Plugin");
-        }
-
-        builder.addPlugin(new DQNLearningModePlugin(
-                                new HostInterfaceImpl(DQNPlugin, parameters), lock));
-
-
-        // Begin to count time
-        crawlerTimer.start();
-
-		// Build Crawljax
-        lock.init(executorService, new CrawljaxRunner(builder.build()));
-
-        // Stop counting time
-        crawlerTimer.stop();
     }
 }

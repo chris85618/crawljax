@@ -553,10 +553,14 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 	private void awaitForCloseTask(Future<?> closeTask, int timeoutSeconds) throws InterruptedException {
 		try {
+			System.out.println("YO HOOO222");
 			closeTask.get(timeoutSeconds, TimeUnit.SECONDS);
+			System.out.println("YO HOOO3333");
+//			closeTask.get();
 		} catch (TimeoutException e) {
 			LOGGER.debug("Browser not closed after {} seconds.", timeoutSeconds);
 		} catch (ExecutionException e) {
+            System.out.println("YO HOOO");
 			Throwable cause = e.getCause();
 			if (cause instanceof WebDriverException) {
 				throw wrapWebDriverExceptionIfConnectionException((WebDriverException) cause);

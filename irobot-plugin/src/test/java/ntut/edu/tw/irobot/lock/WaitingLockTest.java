@@ -1,43 +1,41 @@
 package ntut.edu.tw.irobot.lock;
 
+import com.sun.corba.se.impl.orbutil.closure.Future;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.FutureTask;
+
 import static org.junit.Assert.*;
 
 public class WaitingLockTest {
-    private WaitingLock lock;
-    @Before
-    public void setUp() throws Exception {
-        lock = new WaitingLock();
-    }
 
-    @After
-    public void tearDown() throws Exception {
-    }
-
+    // need to test
     @Test
-    public void getSource() {
-    }
+    public void givenWhenThreadSleepingThen() {
+        WaitingLock waitingLock = new WaitingLock();
+        Thread waitingThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                waitingLock.waitForRobotCommand();
+            }
+        });
 
-    @Test
-    public void init() {
-    }
+        Thread wakeUpThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                waitingLock.wakeUpSleepingThread();
+            }
+        });
 
-    @Test
-    public void initCrawler() {
-    }
+        waitingThread.start();
 
-    @Test
-    public void initReady() {
-    }
-
-    @Test
-    public void waitForRobotCommand() {
+        wakeUpThread.start();
     }
 
     @Test
     public void waitForCrawlerResponse() {
+
     }
 }

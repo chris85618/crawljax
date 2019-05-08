@@ -379,7 +379,7 @@ public class Crawler {
 	private void crawlThroughActions() {
 		boolean interrupted = false;
 		CandidateCrawlAction action = getNextAction();
-
+		System.out.println("loop");
 		while (action != null && !exitNotifier.isExitCalled()) {
 			CandidateElement element = action.getCandidateElement();
 			if (element.allConditionsSatisfied(browser)) {
@@ -421,8 +421,14 @@ public class Crawler {
 			if (action != null) {
 				putActionBackToCache(action);
 			}
+			resetCache();
 			Thread.currentThread().interrupt();
 		}
+	}
+
+	private void resetCache() {
+		System.out.println("Remove all state in cache...");
+		candidateActionCache.clearAllState();
 	}
 
 	private void refreshCache() {

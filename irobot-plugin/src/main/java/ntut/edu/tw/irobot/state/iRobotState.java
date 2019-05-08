@@ -9,11 +9,15 @@ import java.util.Objects;
 
 public class iRobotState implements State {
     private final StateVertex source;
-    private ImmutableList<String> coverageVector = null;
+    private ImmutableList<String> coverageVector;
 
     public iRobotState(StateVertex state) {
         this.coverageVector = ImmutableList.of();
         this.source = state;
+    }
+
+    public StateVertex getSource() {
+        return source;
     }
 
     @Override

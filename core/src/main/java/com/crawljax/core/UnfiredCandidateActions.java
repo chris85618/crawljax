@@ -119,7 +119,7 @@ public class UnfiredCandidateActions {
 		} finally {
 			lock.unlock();
 		}
-	} 
+	}
 
 	private void removeStateFromQueue(int id) {
 		consumersWriteLock.lock();
@@ -306,6 +306,12 @@ public class UnfiredCandidateActions {
 			runningConsumers--;
 		} finally {
 			consumersWriteLock.unlock();
+		}
+	}
+
+	public void clearAllState() {
+		for (int crawlTask : statesWithCandidates) {
+			removeStateInCache(crawlTask, String.valueOf(crawlTask));
 		}
 	}
 }

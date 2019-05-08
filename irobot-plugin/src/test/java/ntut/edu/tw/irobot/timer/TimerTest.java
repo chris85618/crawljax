@@ -41,7 +41,7 @@ public class TimerTest {
             timer.start();
             Thread.sleep(600);
             timer.stop();
-            assertEquals(1200, timer.getTotalCostTime(), 5);
+            assertEquals(1206, timer.getTotalCostTime(), 5);
 
         } catch (InterruptedException e) {
             e.printStackTrace();

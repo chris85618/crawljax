@@ -4,7 +4,6 @@ import com.crawljax.core.state.StateVertex;
 import com.crawljax.core.state.StateVertexImpl;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
 
 public class iRobotStateTest {
     @Test(expected = ClassCastException.class)

@@ -11,6 +11,7 @@ import com.crawljax.forms.FormInput;
 import com.crawljax.forms.InputValue;
 import com.crawljax.util.DomUtils;
 import com.google.common.collect.ImmutableList;
+import ntut.edu.tw.irobot.adapter.WebSnapShotMapper;
 import ntut.edu.tw.irobot.lock.WaitingLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,24 +85,19 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		LOGGER.info("In DQN Plugin, convert data and wait the robot command...");
 		try{
 			// reset the data
-			crawlingInformation = lock.getSource();
+			crawlingInformation = lock.getCrawlingInformation();
 			crawlingInformation.resetData();
 
-			// setting the data
-			crawlingInformation.convertToRobotAction(candidateElements);
-			crawlingInformation.convertToRobotState(state);
+			WebSnapShot webSnapShot = new WebSnapShotMapper().mappingFrom(candidateElements, state);
+
+			crawlingInformation.setWebSnapShot(webSnapShot);
+
 			crawlingInformation.setExecuteSignal(isExecuteSuccess);
 
-			// will wait the robot command
 			try {
-				if (isRestart || this.isInitial) {
-					isInitial = false;
-					isRestart = false;
-					lock.initReady();
-				}
 				lock.waitForRobotCommand();
 			} finally {
-				crawlingInformation = lock.getSource();
+				crawlingInformation = lock.getCrawlingInformation();
 				isExecuteSuccess = true;
 				isRestart = crawlingInformation.isRestart();
 			}
