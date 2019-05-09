@@ -38,24 +38,35 @@ public class CrawlingInformation implements Information {
         this.executeActionSuccessOrNot = false;
     }
 
-    public WebSnapShot getWebSnapShot() {
+    public WebSnapShot getCurrentWebSnapShot() {
+        return currentWebSnapShot;
+    }
+
+    public void waitForCurrentWebSnapShot() {
+
         try {
-            WebSnapShot webSnapShot = webSnapShotBlockingQueue.take();
-            return webSnapShot;
+            System.out.println("Getting websnapshot");
+            System.out.println(webSnapShotBlockingQueue.size());
+            this.currentWebSnapShot = webSnapShotBlockingQueue.take();
+            System.out.println("Done");
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            e.printStackTrace();
         }
-        return null;
     }
 
     @Override
     public void setWebSnapShot(WebSnapShot webSnapShot) {
         try {
+            System.out.println("setting websnapshot");
+
             webSnapShotBlockingQueue.put(webSnapShot);
+//            webSnapShotBlockingQueue.notify();
+
+            System.out.println("setting websnapshot Done");
+
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            e.printStackTrace();
         }
-        this.currentWebSnapShot = webSnapShot;
     }
 
     @Override

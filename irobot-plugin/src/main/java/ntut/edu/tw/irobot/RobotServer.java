@@ -70,11 +70,11 @@ public class RobotServer implements Runnable {
     }
 
     private void performCrawlJax(String url) {
-
-
         this.crawlJaxRunner = factory.createCrawlJaxRunner(url, this.waitingLock);
 
         this.executorService.submit(this.crawlJaxRunner);
+
+        this.waitingLock.waitForCurrentWebSnapShot();
     }
 
     private void beginCrawlerTimer() {
@@ -101,10 +101,7 @@ public class RobotServer implements Runnable {
     }
 
     public WebSnapShot getWebSnapShot() {
-        beginCrawlerTimer();
-        WebSnapShot webSnapShot = this.waitingLock.getWebSnapShot();
-        stopCrawlerTimer();
-        return webSnapShot;
+        return this.waitingLock.getWebSnapShot();
     }
     /**
      * This step will set the action

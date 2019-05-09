@@ -31,8 +31,13 @@ public class InformationDecorator extends CrawlingInformation {
     }
 
     @Override
-    public WebSnapShot getWebSnapShot() {
-        WebSnapShot webSnapShot = this.infoDecorator.getWebSnapShot();
+    public void waitForCurrentWebSnapShot() {
+        this.infoDecorator.waitForCurrentWebSnapShot();
+    }
+
+    @Override
+    public WebSnapShot getCurrentWebSnapShot() {
+        WebSnapShot webSnapShot = this.infoDecorator.getCurrentWebSnapShot();
         this.threadSequence.add("Robot: getActions");
         this.threadSequence.add("Robot: getState");
         return webSnapShot;

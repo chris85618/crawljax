@@ -120,6 +120,8 @@ public class RobotServerTest {
         robotServer = new RobotServer(waitingLock);
         robotServer.run();
         robotServer.setUrl("http://localhost:8888/age", false);
+        WebSnapShot webSnapShot = robotServer.getWebSnapShot();
+        robotServer.executeAction(webSnapShot.getActions().get(2), "10");
     }
 
     @After
@@ -135,7 +137,7 @@ public class RobotServerTest {
     @Test
     public void GivenURLWhenSendSignalToServiceThenResponseOfCrawlJaxIsCorrect() {
         WebSnapShot webSnapShot = robotServer.getWebSnapShot();
-
+        System.out.println(webSnapShot);
         robotServer.executeAction(webSnapShot.getActions().get(2), "10");
 
         webSnapShot = robotServer.getWebSnapShot();
@@ -147,12 +149,11 @@ public class RobotServerTest {
 //        robotServer.getState().getDom();
 //        action = robotServer.getActions().get(1);
 
-        final int THREE_TIMES = 3;
+        final int FOUR_TIMES = 4;
 
         ArrayList<String> threadSequence = decorator.getThreadSequence();
 
-
-        assertThat(threadSequence, satisifyInteractionOrder(THREE_TIMES));
+        assertThat(threadSequence, satisifyInteractionOrder(FOUR_TIMES));
 
     }
 }

@@ -1,11 +1,14 @@
 package ntut.edu.tw.irobot.lock;
 
+import com.crawljax.core.plugin.descriptor.jaxb.generated.OptionList;
 import ntut.edu.tw.irobot.CrawlingInformation;
 
 import ntut.edu.tw.irobot.WebSnapShot;
 import ntut.edu.tw.irobot.action.Action;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 
 public class WaitingLock {
@@ -50,7 +53,13 @@ public class WaitingLock {
         this.crawlingInformation.setTargetAction(action, value);
         this.wakeUpSleepingThread();
 
+        this.waitForCurrentWebSnapShot();
+
         return crawlingInformation.isExecuteSuccess();
+    }
+
+    public void waitForCurrentWebSnapShot() {
+        this.crawlingInformation.waitForCurrentWebSnapShot();
     }
 
     public void wakeUpSleepingThread() {
@@ -67,6 +76,7 @@ public class WaitingLock {
     public void waitForRobotCommand() throws RuntimeException {
         synchronized (lock) {
             try {
+                System.out.println("wait~");
                 lock.wait();
             } catch (InterruptedException e) {
 //                Thread.currentThread().interrupt();
@@ -79,6 +89,6 @@ public class WaitingLock {
     }
 
     public WebSnapShot getWebSnapShot() {
-        return this.crawlingInformation.getWebSnapShot();
+        return this.crawlingInformation.getCurrentWebSnapShot();
     }
 }
