@@ -379,7 +379,6 @@ public class Crawler {
 	private void crawlThroughActions() {
 		boolean interrupted = false;
 		CandidateCrawlAction action = getNextAction();
-		System.out.println("loop");
 		while (action != null && !exitNotifier.isExitCalled()) {
 			CandidateElement element = action.getCandidateElement();
 			if (element.allConditionsSatisfied(browser)) {
@@ -407,17 +406,19 @@ public class Crawler {
 			else
 				action = getNextAction();
 			interrupted = Thread.interrupted();
-			if (!interrupted && crawlerNotInScope()) {
-				/*
-				 * It's okay to have left the domain because the action didn't complete due to an
-				 * interruption.
-				 */
-				throw new CrawlerLeftDomainException(browser.getCurrentUrl());
+			if (!interrupted) {
+				if (crawlerNotInScope())
+					/*
+					 * It's okay to have left the domain because the action didn't complete due to an
+					 * interruption.
+					 */
+					throw new CrawlerLeftDomainException(browser.getCurrentUrl());
 			}
 		}
 		// TODO: there is no action need to report to robot
 		if (interrupted) {
 			LOG.info("Interrupted while firing actions. Putting back the actions on the todo list");
+			System.out.println(action);
 			if (action != null) {
 				putActionBackToCache(action);
 			}
@@ -428,7 +429,7 @@ public class Crawler {
 
 	private void resetCache() {
 		System.out.println("Remove all state in cache...");
-		candidateActionCache.clearAllState();
+		candidateActionCache.removeAllStateInCache();
 	}
 
 	private void refreshCache() {
@@ -489,7 +490,7 @@ public class Crawler {
 	private void inspectNewDom(Eventable event, StateVertex newState) {
 		LOG.debug("The DOM has changed. Event added to the crawl path");
 		crawlpath.add(event);
-		boolean isNewState = stateMachine.swithToStateAndCheckIfClone(event, newState, context);
+		boolean isNewState = stateMachine.switchToStateAndCheckIfClone(event, newState, context);
 		if (isNewState) {
 			int depth = crawlDepth.incrementAndGet();
 //			System.out.println("==========================================");
@@ -576,6 +577,7 @@ public class Crawler {
 
 		browser.goToUrl(url);
 		plugins.runOnUrlLoadPlugins(context);
+		// TODO: when index need to unify the dom, need to add value attribute for learning
 		StateVertex index =
 		        vertexFactory.createIndex(url.toString(), browser.getStrippedDom(),
 		                stateComparator.getStrippedDom(browser, browser.getStrippedDom()));

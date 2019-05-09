@@ -9,6 +9,7 @@ import com.crawljax.core.configuration.CrawljaxConfiguration.CrawljaxConfigurati
 import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.descriptor.Parameter;
 import com.crawljax.core.plugin.descriptor.PluginDescriptor;
+import com.crawljax.plugins.crawloverview.CrawlOverview;
 import ntut.edu.tw.irobot.fs.WorkDirManager;
 import ntut.edu.tw.irobot.lock.WaitingLock;
 
@@ -20,22 +21,28 @@ import java.util.concurrent.TimeUnit;
 import static com.crawljax.core.configuration.CrawljaxConfiguration.builderFor;
 
 public class CrawlJaxRunnerFactory {
-    File recordFolder = null;
 
     private String url;
     private WaitingLock waitingLock;
-    private WorkDirManager dirManage = new WorkDirManager();
+    private boolean isRecord = false;
+    private boolean wrapElement = false;
 
     public CrawljaxRunner createCrawlJaxRunner(String url, WaitingLock waitingLock) {
         this.url = url;
         this.waitingLock = waitingLock;
-
 
         CrawljaxConfigurationBuilder builder = createCrawlJaxBuilder();
         CrawljaxRunner crawljaxRunner = new CrawljaxRunner(builder.build());
         return crawljaxRunner;
     }
 
+    public void setWrapElementMode(boolean wrapElement) {
+        this.wrapElement = wrapElement;
+    }
+
+    public void setRecordMode(boolean recordMode) {
+        isRecord = recordMode;
+    }
 
     private CrawljaxConfigurationBuilder createCrawlJaxBuilder() {
         CrawljaxConfigurationBuilder builder = builderFor(this.url);
@@ -44,7 +51,7 @@ public class CrawlJaxRunnerFactory {
     }
 
     private void configureBuilder(CrawljaxConfigurationBuilder builder) {
-        builder.setBrowserConfig(new BrowserConfiguration(EmbeddedBrowser.BrowserType.FIREFOX, 1));
+        builder.setBrowserConfig(new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1));
         // the crawling Depth、State、Time is unlimited
         builder.setUnlimitedCrawlDepth();
         builder.setUnlimitedStates();
@@ -55,15 +62,17 @@ public class CrawlJaxRunnerFactory {
         // Click Rules
         builder.crawlRules().clickDefaultElements();
         builder.crawlRules().clickOnce(false);
-        // set DQN Mode
+        // set Crawler Configuration
         builder.setDQNLearningMode(true);
+        builder.setWrapUninteractiveElement(wrapElement);
+        // set CrawlOverView Plugin
+        if (isRecord)
+            builder.addPlugin(createCrawlOverViewPlugin());
+        // set DQN Mode
         builder.addPlugin(createDQNPlugin());
     }
 
     private DQNLearningModePlugin createDQNPlugin() {
-        String pluginPath = getRecordFolder()
-                .getAbsolutePath() + File.separatorChar + "plugins" + File.separatorChar;
-        File DQNPlugin = new File(pluginPath + "1");
         PluginDescriptor descriptor = PluginDescriptor.forPlugin(DQNLearningModePlugin.class);
         Map<String, String> parameters = new HashMap<>();
 
@@ -71,14 +80,22 @@ public class CrawlJaxRunnerFactory {
             parameters.put(parameter.getId(), "DQN Plugin");
         }
 
-        return (new DQNLearningModePlugin(
-                new HostInterfaceImpl(DQNPlugin, parameters), waitingLock));
+        return new DQNLearningModePlugin(waitingLock);
+    }
+    private CrawlOverview createCrawlOverViewPlugin() {
+        String pluginPath = getPluginPath();
+        File crawlerOverviewPlugin = new File(pluginPath + "0");
+        crawlerOverviewPlugin.mkdirs();
+        return new CrawlOverview(
+                new HostInterfaceImpl(crawlerOverviewPlugin, new HashMap<String, String>()));
+    }
+
+    private String getPluginPath() {
+        return getRecordFolder().getAbsolutePath() + File.separatorChar + "plugins" + File.separatorChar;
     }
 
 
     File getRecordFolder() {
-        if (this.recordFolder == null)
-            this.recordFolder = dirManage.getRecordFolder();
-        return this.recordFolder;
+        return new WorkDirManager().getRecordFolder();
     }
 }

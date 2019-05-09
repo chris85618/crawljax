@@ -119,7 +119,7 @@ public class RobotServerTest {
 
         robotServer = new RobotServer(waitingLock);
         robotServer.run();
-        robotServer.setUrl("http://localhost:30000/age");
+        robotServer.setUrl("http://localhost:8888/age", false);
     }
 
     @After

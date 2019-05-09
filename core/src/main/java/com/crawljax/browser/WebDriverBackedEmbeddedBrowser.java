@@ -40,20 +40,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.io.Files;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.ElementNotInteractableException;
-import org.openqa.selenium.ElementNotVisibleException;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.NoSuchFrameException;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.Platform;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.UnhandledAlertException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebDriverException;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.WrapsDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.ErrorHandler.UnknownServerException;
@@ -553,14 +540,10 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 	private void awaitForCloseTask(Future<?> closeTask, int timeoutSeconds) throws InterruptedException {
 		try {
-			System.out.println("YO HOOO222");
 			closeTask.get(timeoutSeconds, TimeUnit.SECONDS);
-			System.out.println("YO HOOO3333");
-//			closeTask.get();
 		} catch (TimeoutException e) {
 			LOGGER.debug("Browser not closed after {} seconds.", timeoutSeconds);
 		} catch (ExecutionException e) {
-            System.out.println("YO HOOO");
 			Throwable cause = e.getCause();
 			if (cause instanceof WebDriverException) {
 				throw wrapWebDriverExceptionIfConnectionException((WebDriverException) cause);
@@ -782,6 +765,27 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 				return el.isDisplayed();
 			}
 
+			return false;
+		} catch (WebDriverException e) {
+			throwIfConnectionException(e);
+			return false;
+		}
+	}
+
+	/**
+	 * Checks if an element is interactive or not.
+	 *
+	 * @param identification
+	 * 				identification to use.
+	 * @return true if the element is interactive.
+	 */
+	@Override
+	public boolean isInteractive(Identification identification) {
+		try {
+			WebElement el = browser.findElement(identification.getWebDriverBy());
+			if (el != null) {
+				return el.isDisplayed() && el.isEnabled();
+			}
 			return false;
 		} catch (WebDriverException e) {
 			throwIfConnectionException(e);

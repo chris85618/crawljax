@@ -137,6 +137,8 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 			/* use proxy for everything, including localhost */
 			options.addPreference("network.proxy.no_proxies_on", "");
 		}
+		options.addArguments("--whitelisted-ips=\"\"");
+//		options.addArguments("--disable-popup-blocking");
 
 		if (configuration.getBrowserConfig().isHeadless()) {
 			options.addArguments(HEADLESS_ARG);
@@ -167,6 +169,9 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 		if (configuration.getBrowserConfig().isHeadless()) {
 			optionsChrome.addArguments(HEADLESS_ARG);
 		}
+
+		optionsChrome.addArguments("--whitelisted-ips=\"\"");
+		optionsChrome.addArguments("--disable-popup-blocking");
 
 		ChromeDriver driverChrome = new ChromeDriver(optionsChrome);
 		driverChrome.manage().window().maximize();

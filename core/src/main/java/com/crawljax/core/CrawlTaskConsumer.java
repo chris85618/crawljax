@@ -88,4 +88,8 @@ public class CrawlTaskConsumer implements Callable<Void> {
 		return crawler.getContext();
 	}
 
+	public void clearCandidateInCache() {
+		candidates.removeAllStateInCache();
+	}
+
 }

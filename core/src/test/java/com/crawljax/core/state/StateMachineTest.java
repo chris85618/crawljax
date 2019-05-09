@@ -82,7 +82,7 @@ public class StateMachineTest {
 
 		// Add index.
 		Eventable c = new Eventable(new Identification(How.xpath, "/bla"), EventType.click);
-		assertTrue(sm.swithToStateAndCheckIfClone(c, state2, context));
+		assertTrue(sm.switchToStateAndCheckIfClone(c, state2, context));
 
 		// Current index is the new index
 		assertEquals(sm.getCurrentState(), state2);
@@ -107,7 +107,7 @@ public class StateMachineTest {
 		assertNotSame(sm.getCurrentState(), state2);
 
 		Eventable c = new Eventable(new Identification(How.xpath, "/bla"), EventType.click);
-		assertTrue(sm.swithToStateAndCheckIfClone(c, state2, context));
+		assertTrue(sm.switchToStateAndCheckIfClone(c, state2, context));
 
 		// can not change to state2 because we are already in state2
 		assertFalse(sm.changeState(state2));
@@ -122,7 +122,7 @@ public class StateMachineTest {
 		Eventable c2 = new Eventable(new Identification(How.xpath, "/bla2"), EventType.click);
 
 		// False because its CLONE!
-		assertFalse(sm.swithToStateAndCheckIfClone(c2, state3, context));
+		assertFalse(sm.switchToStateAndCheckIfClone(c2, state3, context));
 
 		// state2.equals(state3)
 		assertEquals("state2 equals state3", state2, state3);
@@ -148,7 +148,7 @@ public class StateMachineTest {
 		assertNotSame(sm.getCurrentState(), state2);
 
 		Eventable c = new Eventable(new Identification(How.xpath, "/bla"), EventType.click);
-		assertTrue(sm.swithToStateAndCheckIfClone(c, state2, context));
+		assertTrue(sm.switchToStateAndCheckIfClone(c, state2, context));
 
 		// can not change to state2 because we are already in state2
 		assertFalse(sm.changeState(state2));
@@ -163,13 +163,13 @@ public class StateMachineTest {
 		Eventable c2 = new Eventable(new Identification(How.xpath, "/bla2"), EventType.click);
 
 		// False because its CLONE!
-		assertFalse(sm.swithToStateAndCheckIfClone(c2, state3, context));
+		assertFalse(sm.switchToStateAndCheckIfClone(c2, state3, context));
 
 		Eventable c3 = new Eventable(new Identification(How.xpath, "/bla2"), EventType.click);
 
 		// True because its not yet known
 		assertTrue(sm
-		        .swithToStateAndCheckIfClone(c3, state4, context));
+		        .switchToStateAndCheckIfClone(c3, state4, context));
 
 		sm.rewind();
 
@@ -218,7 +218,7 @@ public class StateMachineTest {
 
 		Eventable c = new Eventable(new Identification(How.xpath, "/bla"), EventType.click);
 
-		assertTrue(smLocal.swithToStateAndCheckIfClone(c, state2, context));
+		assertTrue(smLocal.switchToStateAndCheckIfClone(c, state2, context));
 
 		// New State so hit must be true;
 		assertTrue("Invariants are exeucted", hit);
@@ -227,7 +227,7 @@ public class StateMachineTest {
 
 		Eventable c2 = new Eventable(new Identification(How.xpath, "/bla"), EventType.click);
 
-		assertFalse(smLocal.swithToStateAndCheckIfClone(c2, state3, context));
+		assertFalse(smLocal.switchToStateAndCheckIfClone(c2, state3, context));
 		// CLONE State so hit must be true;
 		assertTrue("Invariants are exeucted", hit);
 	}
@@ -260,7 +260,7 @@ public class StateMachineTest {
 
 		Eventable c = new Eventable(new Identification(How.xpath, "/bla"), EventType.click);
 
-		assertTrue(sm.swithToStateAndCheckIfClone(c, state2, context));
+		assertTrue(sm.switchToStateAndCheckIfClone(c, state2, context));
 
 		// New State so hit must be true;
 		assertTrue("Plugins are exeucted", hit);
@@ -269,7 +269,7 @@ public class StateMachineTest {
 
 		Eventable c2 = new Eventable(new Identification(How.xpath, "/bla"), EventType.click);
 
-		assertFalse(sm.swithToStateAndCheckIfClone(c2, state3, context));
+		assertFalse(sm.switchToStateAndCheckIfClone(c2, state3, context));
 
 		// CLONE State so no plugin execution
 		assertFalse("Plugins are NOT exeucted", hit);
@@ -308,7 +308,7 @@ public class StateMachineTest {
 
 		Eventable c = new Eventable(new Identification(How.xpath, "/bla"), EventType.click);
 
-		assertTrue(sm.swithToStateAndCheckIfClone(c, state2, context));
+		assertTrue(sm.switchToStateAndCheckIfClone(c, state2, context));
 
 		// New State so hit must be true;
 		assertTrue("InvariantViolationPlugin are exeucted", hit);
@@ -317,7 +317,7 @@ public class StateMachineTest {
 
 		Eventable c2 = new Eventable(new Identification(How.xpath, "/bla"), EventType.click);
 
-		assertFalse(sm.swithToStateAndCheckIfClone(c2, state3, context));
+		assertFalse(sm.switchToStateAndCheckIfClone(c2, state3, context));
 
 		// New State so plugin execution
 		assertTrue("InvariantViolationPlugin are exeucted", hit);

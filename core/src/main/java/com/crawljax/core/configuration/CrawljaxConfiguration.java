@@ -237,6 +237,10 @@ public class CrawljaxConfiguration {
 			}
 		}
 
+		public void setWrapUninteractiveElement(boolean wrapElement) {
+			config.wrapElement = wrapElement;
+		}
+
 		public CrawljaxConfiguration build() {
 			config.plugins = pluginBuilder.build();
 			config.crawlRules = crawlRules.build();
@@ -285,6 +289,8 @@ public class CrawljaxConfiguration {
 	private int maximumDepth = 2;
 	private File output = new File("out");
 	private boolean DQNLearningMode = false;
+
+	private boolean wrapElement = false;
 
 	private StateVertexFactory stateVertexFactory;
 
@@ -337,6 +343,10 @@ public class CrawljaxConfiguration {
 
 	public boolean getDQNLearningMode() {
 		return DQNLearningMode;
+	}
+
+	public boolean getWrapElement() {
+		return wrapElement;
 	}
 
 	public StateVertexFactory getStateVertexFactory() {

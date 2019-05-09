@@ -116,6 +116,15 @@ public interface EmbeddedBrowser {
 	boolean isVisible(Identification identification);
 
 	/**
+	 * Checks if an element is interactive or not.
+	 *
+	 * @param identification
+	 * 				identification to use.
+	 * @return true if the element is interactive.
+	 */
+	boolean isInteractive(Identification identification);
+
+	/**
 	 * @return The current browser url.
 	 */
 	String getCurrentUrl();

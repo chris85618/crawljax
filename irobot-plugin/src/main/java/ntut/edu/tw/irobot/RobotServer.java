@@ -22,21 +22,20 @@ public class RobotServer implements Runnable {
 
     private CrawljaxRunner crawlJaxRunner;
 
-    private WaitingLock waitingLock = new WaitingLock();
+    private CrawlJaxRunnerFactory factory = new CrawlJaxRunnerFactory();
+
+    private WaitingLock waitingLock;
 
     private Timer crawlerTimer;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RobotServer.class);
 
     public RobotServer() {
-        this.server = new GatewayServer(this);
-        this.crawlerTimer = new Timer();
+        this(new WaitingLock());
     }
 
     public RobotServer(WaitingLock waitingLock) {
-        // dependency injection used for testing
         this.waitingLock = waitingLock;
-
         this.server = new GatewayServer(this);
         this.crawlerTimer = new Timer();
     }
@@ -50,7 +49,8 @@ public class RobotServer implements Runnable {
      *  Setting the crawling target
      * @param url
      */
-    public boolean setUrl(String url) {
+    public boolean setUrl(String url, boolean wrapElement) {
+        factory.setWrapElementMode(wrapElement);
         boolean performResult = initializeCrawlJax(url);
         return performResult;
     }
@@ -70,8 +70,10 @@ public class RobotServer implements Runnable {
     }
 
     private void performCrawlJax(String url) {
-        CrawlJaxRunnerFactory factory = new CrawlJaxRunnerFactory();
+
+
         this.crawlJaxRunner = factory.createCrawlJaxRunner(url, this.waitingLock);
+
         this.executorService.submit(this.crawlJaxRunner);
     }
 
@@ -98,22 +100,11 @@ public class RobotServer implements Runnable {
         stopCrawlerTimer();
     }
 
-    /**
-     * @return the State
-     */
-    public State getState() {
-        return this.waitingLock.getState();
-    }
-
-    /**
-     * @return The Action List
-     */
-    public ImmutableList<Action> getActions() {
-        return this.waitingLock.getActions();
-    }
-
     public WebSnapShot getWebSnapShot() {
-        return this.waitingLock.getWebSnapShot();
+        beginCrawlerTimer();
+        WebSnapShot webSnapShot = this.waitingLock.getWebSnapShot();
+        stopCrawlerTimer();
+        return webSnapShot;
     }
     /**
      * This step will set the action
@@ -129,7 +120,10 @@ public class RobotServer implements Runnable {
 
     public boolean executeAction(Action action, String value) {
         LOGGER.info("Execute Action {}, and the value is {}...", action, value);
-        return waitingLock.setTargetAction(action, value);
+        beginCrawlerTimer();
+        boolean result = waitingLock.setTargetAction(action, value);
+        stopCrawlerTimer();
+        return result;
     }
 
     public String getCrawlerSpendingTime() {
@@ -137,15 +131,29 @@ public class RobotServer implements Runnable {
     }
 
     public boolean terminateCrawler() {
+        LOGGER.info("Terminate Crawler ...");
         try {
-            crawlerTimer.reset();
+            beginCrawlerTimer();
+            this.waitingLock.wakeUpSleepingThread();
             this.crawlJaxRunner.stop();
         } catch (Exception e) {
             e.printStackTrace();
-            LOGGER.info("Terminate Crawler Failure...");
+            stopCrawlerTimer();
+            LOGGER.warn("Terminate Crawler Failure...");
             return false;
+        } finally {
+            stopCrawlerTimer();
+            executorService = Executors.newSingleThreadExecutor();
         }
         LOGGER.info("Terminate Crawler Successfully...");
         return true;
+    }
+
+    public void resetTimer() {
+        crawlerTimer.reset();
+    }
+
+    public void  setRecordBoolean(boolean isRecord) {
+        factory.setRecordMode(isRecord);
     }
 }

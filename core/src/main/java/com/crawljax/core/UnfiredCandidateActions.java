@@ -271,10 +271,15 @@ public class UnfiredCandidateActions {
 	 * This method is for robot to restart the crawler
 	 */
 	public void retainInitialStateAndRemoveOthers() {
-		for (int crawlTask : statesWithCandidates) {
-			if (crawlTask != 0)
-				removeStateInCache(crawlTask, String.valueOf(crawlTask));
-		}
+	    consumersWriteLock.lock();
+	    try {
+            for (int crawlTask : statesWithCandidates) {
+                if (crawlTask != 0)
+                    removeStateInCache(crawlTask, String.valueOf(crawlTask));
+            }
+        } finally {
+            consumersWriteLock.unlock();
+        }
 	}
 
 	private void removeStateInCache(int id, String name) {
@@ -293,6 +298,17 @@ public class UnfiredCandidateActions {
 		}
 	}
 
+	public void removeAllStateInCache() {
+        consumersWriteLock.lock();
+        try {
+            for (int crawlTask : statesWithCandidates) {
+                removeStateInCache(crawlTask, String.valueOf(crawlTask));
+            }
+        } finally {
+            consumersWriteLock.unlock();
+        }
+    }
+
 	/**
 	 * Indicates that a task is done.
 	 * <p>
@@ -306,12 +322,6 @@ public class UnfiredCandidateActions {
 			runningConsumers--;
 		} finally {
 			consumersWriteLock.unlock();
-		}
-	}
-
-	public void clearAllState() {
-		for (int crawlTask : statesWithCandidates) {
-			removeStateInCache(crawlTask, String.valueOf(crawlTask));
 		}
 	}
 }

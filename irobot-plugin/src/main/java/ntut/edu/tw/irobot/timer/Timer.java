@@ -3,15 +3,12 @@ package ntut.edu.tw.irobot.timer;
 import java.util.concurrent.TimeUnit;
 
 public class Timer {
-    private long startTime;
-    private long endTime;
-    private long totalCost;
+    private long startTime = 0;
+    private long endTime = 0;
+    private long totalCost = 0;
 
 
-    public void Timer() {
-        startTime = 0;
-        endTime = 0;
-        totalCost = 0;
+    public Timer() {
     }
 
     public void start() {
@@ -34,11 +31,14 @@ public class Timer {
     }
 
     public String getDurationTime() {
-        if(totalCost < 0) {
+        return getDurationTime(totalCost);
+    }
+
+    private String getDurationTime(long time) {
+        if(time < 0) {
             throw new IllegalArgumentException("Duration must be greater than zero!");
         }
-        long temp = totalCost;
-
+        long temp = time;
         long hours = TimeUnit.MILLISECONDS.toHours(temp);
         temp -= TimeUnit.HOURS.toMillis(hours);
         long minutes = TimeUnit.MILLISECONDS.toMinutes(temp);
