@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import com.crawljax.core.CrawljaxException;
+import com.crawljax.core.plugin.Plugins;
 import com.crawljax.core.state.Eventable;
 import com.crawljax.core.state.Eventable.EventType;
 import com.crawljax.core.state.Identification;
@@ -48,6 +49,8 @@ public class WebDriverBackedEmbeddedBrowserNoCrashTest {
 
 	private EmbeddedBrowser browser;
 
+	private Plugins pluigins;
+
 	@BeforeClass
 	public static void setupBeforeClass() {
 		// XXX JBrowserDriver hangs(?) if no URL is accessed before closing the browser
@@ -61,7 +64,7 @@ public class WebDriverBackedEmbeddedBrowserNoCrashTest {
 	 */
 	@Before
 	public void setUp() {
-		browser = WebDriverBackedEmbeddedBrowser.withDriver(provider.newBrowser());
+		browser = WebDriverBackedEmbeddedBrowser.withDriver(provider.newBrowser(), pluigins);
 	}
 
 	/**

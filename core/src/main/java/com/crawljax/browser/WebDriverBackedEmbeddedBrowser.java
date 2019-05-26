@@ -21,14 +21,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.sound.midi.Soundbank;
-
 import com.crawljax.core.CrawljaxException;
 import com.crawljax.core.configuration.AcceptAllFramesChecker;
 import com.crawljax.core.configuration.DefaultUnexpectedAlertHandler;
 import com.crawljax.core.configuration.IgnoreFrameChecker;
 import com.crawljax.core.configuration.UnexpectedAlertHandler;
 import com.crawljax.core.exception.BrowserConnectionException;
+import com.crawljax.core.plugin.Plugins;
 import com.crawljax.core.state.Eventable;
 import com.crawljax.core.state.Identification;
 import com.crawljax.forms.FormHandler;
@@ -61,10 +60,11 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	private static final int BROWSER_CLOSE_TIMEOUT_SECS = 3;
 	private static final int BROWSER_CLOSE_2ND_TIMEOUT_SECS = 2;
 	private static ExecutorService closeBrowserExecutor;
+	private final Plugins plugins;
 
 	/**
 	 * Create a RemoteWebDriver backed EmbeddedBrowser.
-	 * 
+	 *
 	 * @param hubUrl
 	 *            Url of the server.
 	 * @param filterAttributes
@@ -76,14 +76,14 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 * @return The EmbeddedBrowser.
 	 */
 	public static WebDriverBackedEmbeddedBrowser withRemoteDriver(String hubUrl,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent, long crawlWaitReload) {
+																  ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent, long crawlWaitReload, Plugins plugins) {
 		return WebDriverBackedEmbeddedBrowser.withDriver(buildRemoteWebDriver(hubUrl),
-		        filterAttributes, crawlWaitEvent, crawlWaitReload);
+				filterAttributes, crawlWaitEvent, crawlWaitReload, plugins);
 	}
 
 	/**
 	 * Create a RemoteWebDriver backed EmbeddedBrowser.
-	 * 
+	 *
 	 * @param hubUrl
 	 *            Url of the server.
 	 * @param filterAttributes
@@ -97,15 +97,15 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 * @return The EmbeddedBrowser.
 	 */
 	public static WebDriverBackedEmbeddedBrowser withRemoteDriver(String hubUrl,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
-	        long crawlWaitReload, IgnoreFrameChecker ignoreFrameChecker) {
+																  ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
+																  long crawlWaitReload, IgnoreFrameChecker ignoreFrameChecker, Plugins plugins) {
 		return WebDriverBackedEmbeddedBrowser.withDriver(buildRemoteWebDriver(hubUrl),
-		        filterAttributes, crawlWaitEvent, crawlWaitReload, ignoreFrameChecker);
+				filterAttributes, crawlWaitEvent, crawlWaitReload, ignoreFrameChecker, plugins);
 	}
 
 	/**
 	 * Create a RemoteWebDriver backed EmbeddedBrowser.
-	 * 
+	 *
 	 * @param hubUrl
 	 *            Url of the server.
 	 * @param filterAttributes
@@ -121,15 +121,15 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 * @since 3.8
 	 */
 	public static WebDriverBackedEmbeddedBrowser withRemoteDriver(String hubUrl,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
-	        long crawlWaitReload, UnexpectedAlertHandler unexpectedAlertHandler) {
+																  ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
+																  long crawlWaitReload, UnexpectedAlertHandler unexpectedAlertHandler, Plugins plugins) {
 		return WebDriverBackedEmbeddedBrowser.withDriver(buildRemoteWebDriver(hubUrl),
-		        filterAttributes, crawlWaitEvent, crawlWaitReload, unexpectedAlertHandler);
+				filterAttributes, crawlWaitEvent, crawlWaitReload, unexpectedAlertHandler, plugins);
 	}
 
 	/**
 	 * Create a RemoteWebDriver backed EmbeddedBrowser.
-	 * 
+	 *
 	 * @param hubUrl
 	 *            Url of the server.
 	 * @param filterAttributes
@@ -147,17 +147,17 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 * @since 3.8
 	 */
 	public static WebDriverBackedEmbeddedBrowser withRemoteDriver(String hubUrl,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
-	        long crawlWaitReload, IgnoreFrameChecker ignoreFrameChecker,
-	        UnexpectedAlertHandler unexpectedAlertHandler) {
+																  ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
+																  long crawlWaitReload, IgnoreFrameChecker ignoreFrameChecker,
+																  UnexpectedAlertHandler unexpectedAlertHandler, Plugins plugins) {
 		return WebDriverBackedEmbeddedBrowser.withDriver(buildRemoteWebDriver(hubUrl),
-		        filterAttributes, crawlWaitEvent, crawlWaitReload, ignoreFrameChecker,
-		        unexpectedAlertHandler);
+				filterAttributes, crawlWaitEvent, crawlWaitReload, ignoreFrameChecker,
+				unexpectedAlertHandler, plugins);
 	}
 
 	/**
 	 * Create a WebDriver backed EmbeddedBrowser.
-	 * 
+	 *
 	 * @param driver
 	 *            The WebDriver to use.
 	 * @param filterAttributes
@@ -169,14 +169,14 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 * @return The EmbeddedBrowser.
 	 */
 	public static WebDriverBackedEmbeddedBrowser withDriver(WebDriver driver,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent, long crawlWaitReload) {
+															ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent, long crawlWaitReload, Plugins plugins) {
 		return new WebDriverBackedEmbeddedBrowser(driver, filterAttributes, crawlWaitEvent,
-		        crawlWaitReload);
+				crawlWaitReload, plugins);
 	}
 
 	/**
 	 * Create a WebDriver backed EmbeddedBrowser.
-	 * 
+	 *
 	 * @param driver
 	 *            The WebDriver to use.
 	 * @param filterAttributes
@@ -190,15 +190,15 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 * @return The EmbeddedBrowser.
 	 */
 	public static WebDriverBackedEmbeddedBrowser withDriver(WebDriver driver,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
-	        long crawlWaitReload, IgnoreFrameChecker ignoreFrameChecker) {
+															ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
+															long crawlWaitReload, IgnoreFrameChecker ignoreFrameChecker, Plugins plugins) {
 		return new WebDriverBackedEmbeddedBrowser(driver, filterAttributes, crawlWaitEvent,
-		        crawlWaitReload, ignoreFrameChecker);
+				crawlWaitReload, ignoreFrameChecker, plugins);
 	}
 
 	/**
 	 * Create a WebDriver backed EmbeddedBrowser.
-	 * 
+	 *
 	 * @param driver
 	 *            The WebDriver to use.
 	 * @param filterAttributes
@@ -214,15 +214,15 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 * @since 3.8
 	 */
 	public static WebDriverBackedEmbeddedBrowser withDriver(WebDriver driver,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
-	        long crawlWaitReload, UnexpectedAlertHandler unexpectedAlertHandler) {
+															ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
+															long crawlWaitReload, UnexpectedAlertHandler unexpectedAlertHandler, Plugins plugins) {
 		return new WebDriverBackedEmbeddedBrowser(driver, filterAttributes, crawlWaitEvent,
-		        crawlWaitReload, unexpectedAlertHandler);
+				crawlWaitReload, unexpectedAlertHandler, plugins);
 	}
 
 	/**
 	 * Create a WebDriver backed EmbeddedBrowser.
-	 * 
+	 *
 	 * @param driver
 	 *            The WebDriver to use.
 	 * @param filterAttributes
@@ -240,28 +240,28 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 * @since 3.8
 	 */
 	public static WebDriverBackedEmbeddedBrowser withDriver(WebDriver driver,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
-	        long crawlWaitReload, IgnoreFrameChecker ignoreFrameChecker,
-	        UnexpectedAlertHandler unexpectedAlertHandler) {
+															ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
+															long crawlWaitReload, IgnoreFrameChecker ignoreFrameChecker,
+															UnexpectedAlertHandler unexpectedAlertHandler, Plugins plugins) {
 		return new WebDriverBackedEmbeddedBrowser(driver, filterAttributes, crawlWaitEvent,
-		        crawlWaitReload, ignoreFrameChecker, unexpectedAlertHandler);
+				crawlWaitReload, ignoreFrameChecker, unexpectedAlertHandler, plugins);
 	}
 
 	/**
 	 * Create a RemoteWebDriver backed EmbeddedBrowser.
-	 * 
+	 *
 	 * @param hubUrl
 	 *            Url of the server.
 	 * @return The EmbeddedBrowser.
 	 */
-	public static WebDriverBackedEmbeddedBrowser withRemoteDriver(String hubUrl) {
-		return WebDriverBackedEmbeddedBrowser.withDriver(buildRemoteWebDriver(hubUrl));
+	public static WebDriverBackedEmbeddedBrowser withRemoteDriver(String hubUrl, Plugins plugins) {
+		return WebDriverBackedEmbeddedBrowser.withDriver(buildRemoteWebDriver(hubUrl), plugins);
 	}
 
 	/**
 	 * Private used static method for creation of a RemoteWebDriver. Taking care of the default
 	 * Capabilities and using the HttpCommandExecutor.
-	 * 
+	 *
 	 * @param hubUrl
 	 *            the url of the hub to use.
 	 * @return the RemoteWebDriver instance.
@@ -274,7 +274,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 			url = new URL(hubUrl);
 		} catch (MalformedURLException e) {
 			LOGGER.error("The given hub url of the remote server is malformed can not continue!",
-			        e);
+					e);
 			return null;
 		}
 		HttpCommandExecutor executor = null;
@@ -285,7 +285,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 			// NullPointers, why
 			// not throw RuntimeExcption direct?
 			LOGGER.error("Received unknown exception while creating the "
-			        + "HttpCommandExecutor, can not continue!", e);
+					+ "HttpCommandExecutor, can not continue!", e);
 			return null;
 		}
 		return new RemoteWebDriver(executor, capabilities);
@@ -301,18 +301,19 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 	/**
 	 * Constructor without configuration values.
-	 * 
+	 *
 	 * @param driver
 	 *            The WebDriver to use.
 	 */
-	private WebDriverBackedEmbeddedBrowser(WebDriver driver) {
+	private WebDriverBackedEmbeddedBrowser(WebDriver driver, Plugins plugins) {
 		this.browser = driver;
+		this.plugins = plugins;
 		filterAttributes = ImmutableSortedSet.of();
 	}
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param driver
 	 *            The WebDriver to use.
 	 * @param filterAttributes
@@ -323,16 +324,17 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 *            the period to wait after an event is fired.
 	 */
 	private WebDriverBackedEmbeddedBrowser(WebDriver driver,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitReload, long crawlWaitEvent) {
+										   ImmutableSortedSet<String> filterAttributes, long crawlWaitReload, long crawlWaitEvent, Plugins plugins) {
 		this.browser = driver;
 		this.filterAttributes = Preconditions.checkNotNull(filterAttributes);
 		this.crawlWaitEvent = crawlWaitEvent;
 		this.crawlWaitReload = crawlWaitReload;
+		this.plugins = plugins;
 	}
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param driver
 	 *            The WebDriver to use.
 	 * @param filterAttributes
@@ -345,15 +347,15 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 *            the checker used to determine if a certain frame must be ignored.
 	 */
 	private WebDriverBackedEmbeddedBrowser(WebDriver driver,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitReload,
-	        long crawlWaitEvent, IgnoreFrameChecker ignoreFrameChecker) {
-		this(driver, filterAttributes, crawlWaitReload, crawlWaitEvent);
+										   ImmutableSortedSet<String> filterAttributes, long crawlWaitReload,
+										   long crawlWaitEvent, IgnoreFrameChecker ignoreFrameChecker, Plugins plugins) {
+		this(driver, filterAttributes, crawlWaitReload, crawlWaitEvent, plugins);
 		this.ignoreFrameChecker = ignoreFrameChecker;
 	}
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param driver
 	 *            The WebDriver to use.
 	 * @param filterAttributes
@@ -368,9 +370,9 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 * @since 3.8
 	 */
 	public WebDriverBackedEmbeddedBrowser(WebDriver driver,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
-	        long crawlWaitReload, UnexpectedAlertHandler unexpectedAlertHandler) {
-		this(driver, filterAttributes, crawlWaitReload, crawlWaitEvent);
+										  ImmutableSortedSet<String> filterAttributes, long crawlWaitEvent,
+										  long crawlWaitReload, UnexpectedAlertHandler unexpectedAlertHandler, Plugins plugins) {
+		this(driver, filterAttributes, crawlWaitReload, crawlWaitEvent, plugins);
 		if (unexpectedAlertHandler != null) {
 			this.unexpectedAlertHandler = unexpectedAlertHandler;
 		}
@@ -378,7 +380,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param driver
 	 *            The WebDriver to use.
 	 * @param filterAttributes
@@ -395,22 +397,22 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 * @since 3.8
 	 */
 	private WebDriverBackedEmbeddedBrowser(WebDriver driver,
-	        ImmutableSortedSet<String> filterAttributes, long crawlWaitReload,
-	        long crawlWaitEvent, IgnoreFrameChecker ignoreFrameChecker,
-	        UnexpectedAlertHandler unexpectedAlertHandler) {
-		this(driver, filterAttributes, crawlWaitReload, crawlWaitEvent, unexpectedAlertHandler);
+										   ImmutableSortedSet<String> filterAttributes, long crawlWaitReload,
+										   long crawlWaitEvent, IgnoreFrameChecker ignoreFrameChecker,
+										   UnexpectedAlertHandler unexpectedAlertHandler, Plugins plugins) {
+		this(driver, filterAttributes, crawlWaitReload, crawlWaitEvent, unexpectedAlertHandler, plugins);
 		this.ignoreFrameChecker = ignoreFrameChecker;
 	}
 
 	/**
 	 * Create a WebDriver backed EmbeddedBrowser.
-	 * 
+	 *
 	 * @param driver
 	 *            The WebDriver to use.
 	 * @return The EmbeddedBrowser.
 	 */
-	public static WebDriverBackedEmbeddedBrowser withDriver(WebDriver driver) {
-		return new WebDriverBackedEmbeddedBrowser(driver);
+	public static WebDriverBackedEmbeddedBrowser withDriver(WebDriver driver, Plugins plugins) {
+		return new WebDriverBackedEmbeddedBrowser(driver, plugins);
 	}
 
 	/**
@@ -611,6 +613,9 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 		htmlFormatted = m.replaceAll("");
 
 		htmlFormatted = filterAttributes(htmlFormatted);
+
+		htmlFormatted = plugins.runOnHtmlAttributeFilteringPlugins(htmlFormatted, browser.getCurrentUrl());
+
 		return htmlFormatted;
 	}
 
@@ -635,6 +640,8 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 		// In new Firefox versions (>= 59) Marionette adds an empty style attribute to clicked
 		// elements which incorrectly causes new crawling states.
 		filteredHtml = filteredHtml.replaceAll("(?i)\\sstyle=\"\"", "");
+
+
 
 		return filteredHtml;
 	}

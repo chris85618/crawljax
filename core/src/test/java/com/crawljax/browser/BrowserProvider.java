@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.crawljax.core.plugin.Plugins;
 import org.junit.rules.ExternalResource;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -27,6 +28,8 @@ public class BrowserProvider extends ExternalResource {
 			.getLogger(BrowserProvider.class);
 	private List<RemoteWebDriver> usedBrowsers;
 
+	private static Plugins plugins;
+
 	public static EmbeddedBrowser.BrowserType getBrowserType() {
 		String browser = System.getProperty("test.browser");
 		if (!Strings.isNullOrEmpty(browser)) {
@@ -42,7 +45,7 @@ public class BrowserProvider extends ExternalResource {
 	}
 
 	public EmbeddedBrowser newEmbeddedBrowser() {
-		return WebDriverBackedEmbeddedBrowser.withDriver(newBrowser());
+		return WebDriverBackedEmbeddedBrowser.withDriver(newBrowser(), plugins);
 	}
 
 	/**

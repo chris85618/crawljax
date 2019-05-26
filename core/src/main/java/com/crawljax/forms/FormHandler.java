@@ -58,7 +58,8 @@ public class FormHandler {
 	private void setInputElementValue(Node element, FormInput input) {
 
 		LOGGER.debug("INPUTFIELD: {} ({})", input.getIdentification(), input.getType());
-		if (element == null || input.getInputValues().isEmpty() || element.getAttributes().getNamedItem("type").getNodeValue().equalsIgnoreCase("submit")) {
+
+		if (element == null || input.getInputValues().isEmpty() || isTypeSubmit(element.getAttributes().getNamedItem("type"))) {
 			return;
 		}
 		try {
@@ -82,7 +83,11 @@ public class FormHandler {
 		}
 	}
 
-    private void handleCheckBoxes(FormInput input) {
+	private boolean isTypeSubmit(Node type) {
+		 return (type == null) ? false : type.getNodeValue().equalsIgnoreCase("submit");
+	}
+
+	private void handleCheckBoxes(FormInput input) {
         for (InputValue inputValue : input.getInputValues()) {
             boolean check;
             if (!randomFieldValue) {
@@ -214,8 +219,10 @@ public class FormHandler {
 			}
 		} catch (IOException | XPathExpressionException e) {
 			LOGGER.error(e.getMessage(), e);
+			e.printStackTrace();
 			throw e;
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw e;
 		}
 
