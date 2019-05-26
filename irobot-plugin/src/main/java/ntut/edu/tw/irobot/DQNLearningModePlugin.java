@@ -54,7 +54,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		createVariableElementsList();
 	}
 
-	public void createVariableElementsList() {
+	private void createVariableElementsList() {
 		JsonParser jsonParser = new JsonParser();
 		try {
 			JsonArray VEJson = ((JsonObject) jsonParser.parse(new FileReader(getClass().getClassLoader().getResource("variableElementList.json").getPath()))).getAsJsonArray("variableList");
