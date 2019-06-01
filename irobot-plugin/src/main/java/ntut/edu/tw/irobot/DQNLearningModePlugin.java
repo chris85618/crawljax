@@ -54,6 +54,13 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		createVariableElementsList();
 	}
 
+	public  void printVariableElementList() {
+		for(Map.Entry<String, Map<String, List<String>>> set : variableElementList.entrySet()) {
+			System.out.println("Key : " + set.getKey());
+			System.out.println("Value : " + set.getValue());
+		}
+	}
+
 	private void createVariableElementsList() {
 		JsonParser jsonParser = new JsonParser();
 		try {
@@ -299,24 +306,26 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	 */
 	@Override
 	public String filterDom(String dom, String url) {
-//		if (variableElementList.get(url) == null)
-//			return dom;
-//
-//		return removeTheVariableElements(dom, variableElementList.get(url));
-		return dom;
+		if (variableElementList.get(url) == null)
+			return dom;
+
+		return removeTheVariableElements(dom, variableElementList.get(url));
+//		return dom;
 	}
 
 	private String removeTheVariableElements(String dom, Map<String, List<String>> elementPair) {
-		Document doc = null;
+		String strippedDOM = "";
 		try {
-			doc = DomUtils.asDocument(dom);
+			Document doc = DomUtils.asDocument(dom);
 			for (Map.Entry<String, List<String>> pair : elementPair.entrySet())
 				removeAttribute(doc, pair.getKey(), pair.getValue());
+
+			strippedDOM = DomUtils.getDocumentToString(doc);
 		} catch (IOException e) {
 			LOGGER.warn("Something wrong when removed the attribute....");
 			e.printStackTrace();
 		}
-		return DomUtils.getDocumentToString(doc);
+		return strippedDOM;
 	}
 
 	private void removeAttribute(Document doc, String type, List<String> xpathList) {
