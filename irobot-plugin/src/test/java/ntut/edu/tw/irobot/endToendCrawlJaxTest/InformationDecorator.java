@@ -47,19 +47,19 @@ public class InformationDecorator extends CrawlingInformation {
      * @return actions
      *              All actions from current page
      */
-    @Override
-    public ImmutableList<Action> getActions() {
-        return this.infoDecorator.getActions();
-    }
+//    @Override
+//    public ImmutableList<Action> getActions() {
+//        return this.infoDecorator.getActions();
+//    }
 
 
     /**
      * @return the currentState
      */
-    @Override
-    public State getState() {
-        return this.infoDecorator.getState();
-    }
+//    @Override
+//    public State getState() {
+//        return this.infoDecorator.getState();
+//    }
 
     /**
      * This step will convert Action to CandidateElement

@@ -418,7 +418,7 @@ public class Crawler {
 		// TODO: there is no action need to report to robot
 		if (interrupted) {
 			LOG.info("Interrupted while firing actions. Putting back the actions on the todo list");
-			System.out.println(action);
+//			System.out.println(action);
 			if (action != null) {
 				putActionBackToCache(action);
 			}
@@ -428,7 +428,7 @@ public class Crawler {
 	}
 
 	private void resetCache() {
-		System.out.println("Remove all state in cache...");
+//		System.out.println("Remove all state in cache...");
 		candidateActionCache.removeAllStateInCache();
 	}
 

@@ -76,7 +76,6 @@ public class WaitingLock {
     public void waitForRobotCommand() throws RuntimeException {
         synchronized (lock) {
             try {
-                System.out.println("wait~");
                 lock.wait();
             } catch (InterruptedException e) {
 //                Thread.currentThread().interrupt();
@@ -84,11 +83,18 @@ public class WaitingLock {
         }
     }
 
-    public void setRestartSignal(boolean signal) {
-        this.crawlingInformation.setRestartSignal(signal);
-    }
+//    public void setRestartSignal(boolean signal) {
+//        this.crawlingInformation.setRestartSignal(signal);
+//    }
 
     public WebSnapShot getWebSnapShot() {
         return this.crawlingInformation.getCurrentWebSnapShot();
+    }
+
+    public void waitForRestart() {
+        this.crawlingInformation.setRestartSignal(true);
+        this.wakeUpSleepingThread();
+
+        this.waitForCurrentWebSnapShot();
     }
 }

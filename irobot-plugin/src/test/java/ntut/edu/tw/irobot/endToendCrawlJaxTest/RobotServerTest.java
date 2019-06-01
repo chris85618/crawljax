@@ -1,5 +1,6 @@
 package ntut.edu.tw.irobot.endToendCrawlJaxTest;
 
+import com.crawljax.core.CandidateElement;
 import ntut.edu.tw.irobot.CrawlingInformation;
 import ntut.edu.tw.irobot.RobotServer;
 import ntut.edu.tw.irobot.WebSnapShot;
@@ -14,16 +15,18 @@ import org.junit.Test;
 import java.util.ArrayList;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class RobotServerTest {
 
     RobotServer robotServer;
     InformationDecorator decorator;
 
-    public class SatisifyInteractionOrderMatcher extends TypeSafeMatcher<ArrayList<String>> {
+    public class SatisfyInteractionOrderMatcher extends TypeSafeMatcher<ArrayList<String>> {
         protected final int expectedTimes;
 
-        public SatisifyInteractionOrderMatcher(int times) {
+        public SatisfyInteractionOrderMatcher(int times) {
             expectedTimes = times;
         }
 
@@ -107,8 +110,8 @@ public class RobotServerTest {
         }
     }
 
-    public SatisifyInteractionOrderMatcher satisifyInteractionOrder(int times) {
-        return new SatisifyInteractionOrderMatcher(times);
+    public SatisfyInteractionOrderMatcher satisfyInteractionOrder(int times) {
+        return new SatisfyInteractionOrderMatcher(times);
     }
 
 
@@ -118,10 +121,9 @@ public class RobotServerTest {
         WaitingLock waitingLock = new WaitingLock(decorator);
 
         robotServer = new RobotServer(waitingLock);
-        robotServer.run();
         robotServer.setUrl("http://localhost:8888/age", false);
         WebSnapShot webSnapShot = robotServer.getWebSnapShot();
-        robotServer.executeAction(webSnapShot.getActions().get(2), "10");
+        robotServer.executeAction(webSnapShot.getActions().get(3), "10");
     }
 
     @After
@@ -134,26 +136,47 @@ public class RobotServerTest {
         }
     }
 
+    private void executeAction(int actionIndex, String value) {
+        WebSnapShot webSnapShot = robotServer.getWebSnapShot();
+        robotServer.executeAction(webSnapShot.getActions().get(actionIndex), value);
+    }
+
+
     @Test
     public void GivenURLWhenSendSignalToServiceThenResponseOfCrawlJaxIsCorrect() {
-        WebSnapShot webSnapShot = robotServer.getWebSnapShot();
-        System.out.println(webSnapShot);
-        robotServer.executeAction(webSnapShot.getActions().get(2), "10");
 
-        webSnapShot = robotServer.getWebSnapShot();
-        robotServer.executeAction(webSnapShot.getActions().get(2), "20");
+        executeAction(2, "10");
 
+        executeAction(2, "20");
 
-
-        webSnapShot = robotServer.getWebSnapShot();
-//        robotServer.getState().getDom();
-//        action = robotServer.getActions().get(1);
-
-        final int FOUR_TIMES = 4;
+        final int THREE_TIMES = 3;
 
         ArrayList<String> threadSequence = decorator.getThreadSequence();
 
-        assertThat(threadSequence, satisifyInteractionOrder(FOUR_TIMES));
+        assertThat(threadSequence, satisfyInteractionOrder(THREE_TIMES));
+    }
 
+    private void assertCurrentUrl(String url) {
+        WebSnapShot webSnapShot = robotServer.getWebSnapShot();
+        assertEquals(url, webSnapShot.getState().getUrl());
+    }
+
+    @Test
+    public void WhenRestartCrawlerThenCrawlerBackToRootIndex() {
+
+        executeAction(2, "test@test.com");
+
+        executeAction(1, "");
+
+        assertCurrentUrl("http://localhost:8888/view/concept.html?");
+
+        robotServer.restart();
+
+        assertCurrentUrl("http://localhost:8888/age");
+
+        final int FIVE_TIMES = 5;
+
+        ArrayList<String> threadSequence = decorator.getThreadSequence();
+        assertThat(threadSequence, satisfyInteractionOrder(FIVE_TIMES));
     }
 }

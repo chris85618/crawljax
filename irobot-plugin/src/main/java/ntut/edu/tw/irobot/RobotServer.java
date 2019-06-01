@@ -1,10 +1,8 @@
 package ntut.edu.tw.irobot;
 
 import com.crawljax.core.CrawljaxRunner;
-import com.google.common.collect.ImmutableList;
 import ntut.edu.tw.irobot.action.Action;
 import ntut.edu.tw.irobot.lock.WaitingLock;
-import ntut.edu.tw.irobot.state.State;
 
 import ntut.edu.tw.irobot.timer.Timer;
 import org.slf4j.Logger;
@@ -47,12 +45,22 @@ public class RobotServer implements Runnable {
 
     /**
      *  Setting the crawling target
+     *
      * @param url
      */
     public boolean setUrl(String url, boolean wrapElement) {
         factory.setWrapElementMode(wrapElement);
         boolean performResult = initializeCrawlJax(url);
         return performResult;
+    }
+
+    /**
+     *  Setting the boolean which turn on/off the record mechanism
+     *
+     * @param isRecord
+     */
+    public void  setRecordBoolean(boolean isRecord) {
+        factory.setRecordMode(isRecord);
     }
 
     private boolean initializeCrawlJax(String url) {
@@ -91,18 +99,16 @@ public class RobotServer implements Runnable {
     public void restart() {
         LOGGER.info("Set the restart signal and initialize crawler response...");
 
-        waitingLock.setRestartSignal(true);
-        // begin counting time
         beginCrawlerTimer();
+        waitingLock.waitForRestart();
 
-        waitingLock.initCrawler();
-        // stop counting time
         stopCrawlerTimer();
     }
 
     public WebSnapShot getWebSnapShot() {
         return this.waitingLock.getWebSnapShot();
     }
+
     /**
      * This step will set the action
      *          and wait the crawler response
@@ -114,17 +120,12 @@ public class RobotServer implements Runnable {
      * @return
      *              The boolean which the Action is execute success or not
      */
-
     public boolean executeAction(Action action, String value) {
         LOGGER.info("Execute Action {}, and the value is {}...", action, value);
         beginCrawlerTimer();
         boolean result = waitingLock.setTargetAction(action, value);
         stopCrawlerTimer();
         return result;
-    }
-
-    public String getCrawlerSpendingTime() {
-        return crawlerTimer.getDurationTime();
     }
 
     public boolean terminateCrawler() {
@@ -150,7 +151,7 @@ public class RobotServer implements Runnable {
         crawlerTimer.reset();
     }
 
-    public void  setRecordBoolean(boolean isRecord) {
-        factory.setRecordMode(isRecord);
+    public String getCrawlerSpendingTime() {
+        return crawlerTimer.getDurationTime();
     }
 }
