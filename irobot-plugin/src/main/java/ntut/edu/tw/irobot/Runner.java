@@ -18,12 +18,19 @@ public class Runner {
 		/**
 		 *  Create the sever to communicate with  iRobot
 		 */
-		System.out.println(args.length);
-		if (args.length == 0) {
-			GatewayServer server = new GatewayServer(new RobotServer());
-			server.start();
-		}
-		else {
+		if (args.length == 0)
+			createServer();
+		else
+			createServer(args);
+	}
+
+	private static void createServer() {
+		GatewayServer server = new GatewayServer(new RobotServer());
+		server.start();
+	}
+
+	private static void createServer(String[] args) {
+		try {
 			String java_port = "";
 			String python_port = "";
 
@@ -34,20 +41,18 @@ public class Runner {
 					python_port = args[i + 1];
 			}
 
-			try {
-				GatewayServer server = new GatewayServer.GatewayServerBuilder(new RobotServer())
-						.javaPort(Integer.parseInt(java_port))
-						.javaAddress(InetAddress.getByName("127.0.0.1"))
-						.callbackClient(Integer.parseInt(python_port), InetAddress.getByName("127.0.0.1"))
-						.build();
-				server.start();
-			} catch (UnknownHostException e) {
-				System.out.println("Can Not Find Host Name");
-				throw new RuntimeException("Can not find host name");
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw new RuntimeException("Something went wrong...");
-			}
+			GatewayServer server = new GatewayServer.GatewayServerBuilder(new RobotServer())
+					.javaPort(Integer.parseInt(java_port))
+					.javaAddress(InetAddress.getByName("127.0.0.1"))
+					.callbackClient(Integer.parseInt(python_port), InetAddress.getByName("127.0.0.1"))
+					.build();
+			server.start();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Can not find host name");
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Something went wrong...");
 		}
 	}
 }
