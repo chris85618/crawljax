@@ -25,12 +25,10 @@ import java.util.concurrent.TimeUnit;
 import ntut.edu.tw.irobot.timer.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import py4j.GatewayServer;
 
-public class RobotServer implements Runnable {
+public class RobotServer {
     private WorkDirManager dirManage;
     private WaitingLock lock;
-    private GatewayServer server;
     private Timer crawlTimer;
     private String url;
     private boolean isRecord = false;
@@ -39,18 +37,12 @@ public class RobotServer implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(RobotServer.class);
 
 
-    public RobotServer() {
+    public RobotServer(){
         this.lock = new WaitingLock();
         this.dirManage = new WorkDirManager();
-        this.server = new GatewayServer(this);
         this.url = "";
         this.data = null;
         this.crawlTimer = new Timer();
-    }
-
-    @Override
-    public void run() {
-        server.start();
     }
 
     /**

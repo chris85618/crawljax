@@ -1,5 +1,6 @@
 package ntut.edu.tw.irobot;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -64,7 +65,8 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	private void createVariableElementsList() {
 		JsonParser jsonParser = new JsonParser();
 		try {
-			JsonArray VEJson = ((JsonObject) jsonParser.parse(new FileReader(getClass().getClassLoader().getResource("variableElementList.json").getPath()))).getAsJsonArray("variableList");
+			File veList = new File("variableElementList.json");
+			JsonArray VEJson = ((JsonObject) jsonParser.parse(new FileReader(veList.getAbsoluteFile()))).getAsJsonArray("variableList");
 			for(JsonElement jsonElement : VEJson) {
 				String url = jsonElement.getAsJsonObject().get("url").getAsString();
 
