@@ -1,5 +1,6 @@
 package ntut.edu.tw.irobot;
 
+import com.crawljax.core.CrawlSession;
 import com.crawljax.core.CrawljaxRunner;
 import ntut.edu.tw.irobot.action.Action;
 import ntut.edu.tw.irobot.lock.WaitingLock;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 
 public class RobotServer {
@@ -24,6 +26,8 @@ public class RobotServer {
     private WaitingLock waitingLock;
 
     private Timer crawlerTimer;
+
+    private Future<CrawlSession> crawler = null;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RobotServer.class);
 
@@ -83,7 +87,7 @@ public class RobotServer {
     private void performCrawlJax(String url) {
         this.crawlJaxRunner = factory.createCrawlJaxRunner(url, this.waitingLock);
 
-        this.executorService.submit(this.crawlJaxRunner);
+        this.crawler = this.executorService.submit(this.crawlJaxRunner);
 
         this.waitingLock.waitForCurrentWebSnapShot();
     }
@@ -137,6 +141,7 @@ public class RobotServer {
             beginCrawlerTimer();
             this.waitingLock.wakeUpSleepingThread();
             this.crawlJaxRunner.stop();
+            this.crawler.get();
         } catch (Exception e) {
             e.printStackTrace();
             stopCrawlerTimer();
@@ -144,6 +149,7 @@ public class RobotServer {
             return false;
         } finally {
             stopCrawlerTimer();
+            this.crawler = null;
             executorService = Executors.newSingleThreadExecutor();
         }
         LOGGER.info("Terminate Crawler Successfully...");
