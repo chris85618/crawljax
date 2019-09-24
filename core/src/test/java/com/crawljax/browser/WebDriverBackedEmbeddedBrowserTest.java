@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import com.crawljax.core.plugin.Plugins;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,6 +31,8 @@ public class WebDriverBackedEmbeddedBrowserTest {
 	public static final RunWithWebServer SERVER = new RunWithWebServer(
 			"/site/iframe");
 
+	public static Plugins plugins;
+
 	@Rule
 	public final BrowserProvider provider = new BrowserProvider();
 
@@ -41,7 +44,7 @@ public class WebDriverBackedEmbeddedBrowserTest {
 
 		WebDriverBackedEmbeddedBrowser browser = WebDriverBackedEmbeddedBrowser
 				.withDriver(provider.newBrowser(),
-						ImmutableSortedSet.<String> of(), 100, 100);
+						ImmutableSortedSet.<String> of(), 100, 100, plugins);
 
 		Document doc;
 		browser.goToUrl(SERVER.getSiteUrl());
@@ -60,7 +63,7 @@ public class WebDriverBackedEmbeddedBrowserTest {
 	public void saveScreenShot() throws CrawljaxException, IOException {
 		WebDriverBackedEmbeddedBrowser browser = WebDriverBackedEmbeddedBrowser
 				.withDriver(provider.newBrowser(),
-						ImmutableSortedSet.<String> of(), 500, 500);
+						ImmutableSortedSet.<String> of(), 500, 500, plugins);
 
 		File f = File.createTempFile("test-screenshot", ".png");
 		f.deleteOnExit();

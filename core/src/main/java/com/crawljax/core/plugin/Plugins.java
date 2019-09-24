@@ -52,7 +52,8 @@ public class Plugins {
 					PreCrawlingPlugin.class, AfterRetrievePathPlugin.class,
 					LoginPlugin.class, OnAlertPresentedPlugin.class,
 					OnCloneStatePlugin.class, AfterReceiveRobotActionPlugin.class,
-					OnNewFoundStatePlugin.class, OnRestartCrawlingStatePlugin.class);
+					OnNewFoundStatePlugin.class, OnRestartCrawlingStatePlugin.class,
+					OnHtmlAttributeFilteringPlugin.class);
 
 	private final ImmutableListMultimap<Class<? extends Plugin>, Plugin> plugins;
 
@@ -525,6 +526,23 @@ public class Plugins {
 		}
 	}
 
+	public String runOnHtmlAttributeFilteringPlugins(String dom, String url) {
+		LOGGER.debug("Running OnHtmlAttributeFilteringPlugins...");
+		counters.get(OnHtmlAttributeFilteringPlugin.class).inc();
+		String filteredHtml = dom;
+		for (Plugin plugin : plugins.get(OnHtmlAttributeFilteringPlugin.class)) {
+			if (plugin instanceof OnHtmlAttributeFilteringPlugin) {
+				try {
+					LOGGER.debug("Calling plugin {}", plugin);
+					filteredHtml = ((OnHtmlAttributeFilteringPlugin) plugin).filterDom(dom, url);
+				} catch (RuntimeException e) {
+					reportFailingPlugin(plugin, e);
+				}
+			}
+		}
+		return filteredHtml;
+	}
+
 	private boolean defaultDomComparison(final StateVertex stateBefore,
 	        final StateVertex stateAfter) {
 		// default DOM comparison behavior
@@ -568,5 +586,4 @@ public class Plugins {
 		}
 		return names.build();
 	}
-
 }

@@ -70,7 +70,7 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 					browser =
 					        WebDriverBackedEmbeddedBrowser.withDriver(
 					                new InternetExplorerDriver(),
-					                filterAttributes, crawlWaitEvent, crawlWaitReload);
+					                filterAttributes, crawlWaitEvent, crawlWaitReload, plugins);
 					break;
 				case JBD:
 					browser =
@@ -83,7 +83,7 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 					browser =
 					        WebDriverBackedEmbeddedBrowser.withRemoteDriver(configuration
 					                .getBrowserConfig().getRemoteHubUrl(), filterAttributes,
-					                crawlWaitEvent, crawlWaitReload);
+					                crawlWaitEvent, crawlWaitReload, plugins);
 					break;
 				case PHANTOMJS:
 					browser =
@@ -148,7 +148,7 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 		firefoxDriver.manage().window().maximize();
 		
 		return WebDriverBackedEmbeddedBrowser.withDriver(firefoxDriver,
-		        filterAttributes, crawlWaitEvent, crawlWaitReload, unexpectedAlertHandler);
+		        filterAttributes, crawlWaitEvent, crawlWaitReload, unexpectedAlertHandler, plugins);
 	}
 
 	private EmbeddedBrowser newChromeBrowser(ImmutableSortedSet<String> filterAttributes,
@@ -177,7 +177,7 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 		driverChrome.manage().window().maximize();
 
 		return WebDriverBackedEmbeddedBrowser.withDriver(driverChrome, filterAttributes,
-		        crawlWaitEvent, crawlWaitReload);
+		        crawlWaitEvent, crawlWaitReload, plugins);
 	}
 
 	private EmbeddedBrowser newJBrowserDriver(ImmutableSortedSet<String> filterAttributes,
@@ -196,7 +196,7 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 		
 		return WebDriverBackedEmbeddedBrowser.withDriver(
 		        jbDriver,
-		        filterAttributes, crawlWaitEvent, crawlWaitReload);
+		        filterAttributes, crawlWaitEvent, crawlWaitReload, plugins);
 	}
 
 	private EmbeddedBrowser newPhantomJSDriver(ImmutableSortedSet<String> filterAttributes,
@@ -218,7 +218,7 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 		PhantomJSDriver phantomJsDriver = new PhantomJSDriver(caps);
 		phantomJsDriver.manage().window().maximize();
 		return WebDriverBackedEmbeddedBrowser.withDriver(phantomJsDriver, filterAttributes,
-		        crawlWaitEvent, crawlWaitReload);
+		        crawlWaitEvent, crawlWaitReload, plugins);
 	}
 
 }

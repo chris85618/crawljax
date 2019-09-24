@@ -1,5 +1,7 @@
 package ntut.edu.tw.irobot;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
@@ -14,6 +16,10 @@ import com.crawljax.util.DomUtils;
 import com.crawljax.util.XPathHelper;
 import com.google.common.collect.ImmutableList;
 import ntut.edu.tw.irobot.adapter.WebSnapShotMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonArray;
 import ntut.edu.tw.irobot.lock.WaitingLock;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
@@ -22,9 +28,12 @@ import org.slf4j.LoggerFactory;
 import com.crawljax.core.state.StateVertex;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEventFailedPlugin, AfterReceiveRobotActionPlugin, OnNewFoundStatePlugin, OnRestartCrawlingStatePlugin {
+import javax.xml.xpath.XPathExpressionException;
+
+public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEventFailedPlugin, AfterReceiveRobotActionPlugin, OnNewFoundStatePlugin, OnRestartCrawlingStatePlugin, OnHtmlAttributeFilteringPlugin {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DQNLearningModePlugin.class);
 
 	private CrawlingInformation crawlingInformation;
@@ -32,12 +41,54 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	private boolean isRestart;
 	private boolean isExecuteSuccess;
 	private EmbeddedBrowser browser;
+	private Map<String, Map<String, List<String>>> variableElementList = new HashMap<>();
+
 
 	public DQNLearningModePlugin(WaitingLock waitingLock) {
         this.waitingLock =  waitingLock;
         this.crawlingInformation = null;
         this.isRestart = false;
         this.isExecuteSuccess = true;
+		createVariableElementsList();
+	}
+
+	public  void printVariableElementList() {
+		for(Map.Entry<String, Map<String, List<String>>> set : variableElementList.entrySet()) {
+			System.out.println("Key : " + set.getKey());
+			System.out.println("Value : " + set.getValue());
+		}
+	}
+
+	private void createVariableElementsList() {
+		JsonParser jsonParser = new JsonParser();
+		try {
+			File veList = new File("variableElement/variableElementList.json");
+			JsonArray VEJson = ((JsonObject) jsonParser.parse(new FileReader(veList.getAbsoluteFile()))).getAsJsonArray("variableList");
+			for(JsonElement jsonElement : VEJson) {
+				String url = jsonElement.getAsJsonObject().get("url").getAsString();
+
+				Map<String, List<String>> elementPair;
+				if (variableElementList.get(url) != null)
+					elementPair = variableElementList.get(url);
+				else {
+					elementPair = new HashMap<>();
+				}
+
+				String type = jsonElement.getAsJsonObject().get("attribute").getAsString();
+				List<String> list;
+				if (elementPair.get(type) != null)
+					list = elementPair.get(type);
+				else
+					list = new ArrayList<>();
+
+				String xpath = jsonElement.getAsJsonObject().get("element").getAsString();
+				list.add(xpath);
+				elementPair.put(type, list);
+				variableElementList.put(url, elementPair);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -143,12 +194,17 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 
 	private List<FormInput> generateFormInput(CandidateElement oldElement) {
 		List<FormInput> formInputs = new ArrayList<FormInput>();
-		FormInput input = new FormInput();
-		input.setType("text");
-		input.setIdentification(oldElement.getIdentification());
-		input.setInputValues(getValueList());
-		formInputs.add(input);
-		LOGGER.info("New Form is create : {}", input);
+		String inputValue = crawlingInformation.getTargetValue();
+		if (inputValue == null)
+			return formInputs;
+		if (!inputValue.equalsIgnoreCase("null")) {
+			FormInput input = new FormInput();
+			input.setType("text");
+			input.setIdentification(oldElement.getIdentification());
+			input.setInputValues(getValueList());
+			formInputs.add(input);
+			LOGGER.info("New Form is create : {}", input);
+		}
 		return formInputs;
 	}
 
@@ -237,6 +293,47 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 				continue;
 
 			((org.w3c.dom.Element) inputNodes.item(i)).setAttribute("value", value);
+		}
+	}
+
+	/**
+	 * Remove the variable element
+	 *
+	 * @param dom
+	 * @param url
+	 * @return the dom without variable element
+	 */
+	@Override
+	public String filterDom(String dom, String url) {
+		if (variableElementList.get(url) == null)
+			return dom;
+
+		return removeTheVariableElements(dom, variableElementList.get(url));
+	}
+
+	private String removeTheVariableElements(String dom, Map<String, List<String>> elementPair) {
+		String strippedDOM = "";
+		try {
+			Document doc = DomUtils.asDocument(dom);
+			for (Map.Entry<String, List<String>> pair : elementPair.entrySet())
+				removeAttribute(doc, pair.getKey(), pair.getValue());
+
+			strippedDOM = DomUtils.getDocumentToString(doc);
+		} catch (IOException e) {
+			LOGGER.warn("Something wrong when removed the attribute....");
+			e.printStackTrace();
+		}
+		return strippedDOM;
+	}
+
+	private void removeAttribute(Document doc, String type, List<String> xpathList) {
+		for (String xpath : xpathList) {
+			try {
+				Element element = DomUtils.getElementByXpath(doc, xpath);
+				element.setAttribute(type, "");
+			} catch (XPathExpressionException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }

@@ -7,16 +7,15 @@ import ntut.edu.tw.irobot.lock.WaitingLock;
 import ntut.edu.tw.irobot.timer.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import py4j.GatewayServer;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class RobotServer implements Runnable {
 
-    private GatewayServer server;
+public class RobotServer {
+    //    private static final Logger LOGGER = LoggerFactory.getLogger(RobotServer.class);
 
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     private CrawljaxRunner crawlJaxRunner;
 
@@ -34,13 +33,7 @@ public class RobotServer implements Runnable {
 
     public RobotServer(WaitingLock waitingLock) {
         this.waitingLock = waitingLock;
-        this.server = new GatewayServer(this);
         this.crawlerTimer = new Timer();
-    }
-
-    @Override
-    public void run() {
-        server.start();
     }
 
     /**
@@ -52,6 +45,16 @@ public class RobotServer implements Runnable {
         factory.setWrapElementMode(wrapElement);
         boolean performResult = initializeCrawlJax(url);
         return performResult;
+    }
+
+    /**
+     *  Setting the boolean which turn on/off the browser headless mode
+     *
+     * @param isHeadLess
+     */
+
+    public void setHeadLess(boolean isHeadLess) {
+        factory.setHeadLess(isHeadLess);
     }
 
     /**

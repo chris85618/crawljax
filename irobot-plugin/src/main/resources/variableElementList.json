@@ -1,0 +1,190 @@
+{
+    "variableList": [
+        {
+            "state": "state7",
+            "url": "http://localhost:3000/keystone/signin",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[2]/FORM[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state7",
+            "url": "http://localhost:3000/keystone/signin",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[2]/FORM[1]/DIV[2]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state19",
+            "url": "http://localhost:3000/keystone/galleries",
+            "element": "/HTML[1]/BODY[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state27",
+            "url": "http://localhost:3000/keystone/signin?signedout",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/DIV[2]/DIV[1]/DIV[2]/FORM[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state27",
+            "url": "http://localhost:3000/keystone/signin?signedout",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/DIV[2]/DIV[1]/DIV[2]/FORM[1]/DIV[2]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state30",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[1]/DIV[1]/DIV[1]/DIV[3]/DIV[1]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state30",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[1]/DIV[1]/DIV[1]/DIV[3]/DIV[1]/DIV[1]/DIV[2]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state30",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[1]/DIV[1]/DIV[1]/DIV[4]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state37",
+            "url": "http://localhost:3000/keystone/posts?create",
+            "element": "/HTML[1]/BODY[1]/DIV[6]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state44",
+            "url": "http://localhost:3000/keystone/post-categories?create",
+            "element": "/HTML[1]/BODY[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state51",
+            "url": "http://localhost:3000/keystone/post-categories/5ce7b3172631dc27448dfd51",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state51",
+            "url": "http://localhost:3000/keystone/post-categories/5ce7b3172631dc27448dfd51",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[1]/DIV[1]/DIV[1]/DIV[2]/SPAN[2]/INPUT[1]",
+            "attribute": "value"
+        },
+        {
+            "state": "state55",
+            "url": "http://localhost:3000/keystone/galleries?create",
+            "element": "/HTML[1]/BODY[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state67",
+            "url": "http://localhost:3000/keystone/users?create",
+            "element": "/HTML[1]/BODY[1]/DIV[6]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state67",
+            "url": "http://localhost:3000/keystone/users?create",
+            "element": "/HTML[1]/BODY[1]/DIV[6]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[2]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state67",
+            "url": "http://localhost:3000/keystone/users?create",
+            "element": "/HTML[1]/BODY[1]/DIV[6]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[2]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state67",
+            "url": "http://localhost:3000/keystone/users?create",
+            "element": "/HTML[1]/BODY[1]/DIV[6]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[3]/DIV[1]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state67",
+            "url": "http://localhost:3000/keystone/users?create",
+            "element": "/HTML[1]/BODY[1]/DIV[6]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[3]/DIV[1]/DIV[1]/DIV[2]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state80",
+            "url": "http://localhost:3000/keystone/posts/5ce2aace15deeb04d8cb844a",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state80",
+            "url": "http://localhost:3000/keystone/posts/5ce2aace15deeb04d8cb844a",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[1]/DIV[1]/DIV[1]/DIV[6]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[2]/IFRAME[1]",
+            "attribute": "cd_frame_id_"
+        },
+        {
+            "state": "state80",
+            "url": "http://localhost:3000/keystone/posts/5ce2aace15deeb04d8cb844a",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[1]/DIV[1]/DIV[1]/DIV[7]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[2]/IFRAME[1]",
+            "attribute": "cd_frame_id_"
+        },
+        {
+            "state": "state83",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state83",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[2]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state83",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[2]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state83",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[3]/DIV[1]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state83",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[3]/DIV[1]/DIV[1]/DIV[2]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state84",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[1]/DIV[1]/DIV[1]/DIV[5]/DIV[1]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state84",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[1]/DIV[1]/DIV[1]/DIV[5]/DIV[1]/DIV[1]/DIV[2]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state86",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[1]/DIV[1]/DIV[3]/DIV[1]/DIV[1]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state86",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[1]/DIV[1]/DIV[3]/DIV[1]/DIV[1]/DIV[2]/INPUT[1]",
+            "attribute": "id"
+        },
+        {
+            "state": "state86",
+            "url": "http://localhost:3000/keystone/users/5ce2a7120ffb4039f81a18ae",
+            "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[1]/MAIN[1]/DIV[1]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[1]/DIV[1]/DIV[4]/DIV[1]/INPUT[1]",
+            "attribute": "id"
+        }
+    ]
+}

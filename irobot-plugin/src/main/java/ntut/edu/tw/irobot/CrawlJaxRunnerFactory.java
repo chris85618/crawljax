@@ -25,6 +25,7 @@ public class CrawlJaxRunnerFactory {
     private String url;
     private WaitingLock waitingLock;
     private boolean isRecord = false;
+    private boolean isHeadLess = false;
     private boolean wrapElement = false;
 
     public CrawljaxRunner createCrawlJaxRunner(String url, WaitingLock waitingLock) {
@@ -44,6 +45,10 @@ public class CrawlJaxRunnerFactory {
         isRecord = recordMode;
     }
 
+    public void setHeadLess(boolean isHeadLess) {
+        this.isHeadLess = isHeadLess;
+    }
+
     private CrawljaxConfigurationBuilder createCrawlJaxBuilder() {
         CrawljaxConfigurationBuilder builder = builderFor(this.url);
         configureBuilder(builder);
@@ -51,7 +56,9 @@ public class CrawlJaxRunnerFactory {
     }
 
     private void configureBuilder(CrawljaxConfigurationBuilder builder) {
-        builder.setBrowserConfig(new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1));
+        BrowserConfiguration browserConfig = new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1);
+        browserConfig.setHeadless(this.isHeadLess);
+        builder.setBrowserConfig(browserConfig);
         // the crawling Depth、State、Time is unlimited
         builder.setUnlimitedCrawlDepth();
         builder.setUnlimitedStates();

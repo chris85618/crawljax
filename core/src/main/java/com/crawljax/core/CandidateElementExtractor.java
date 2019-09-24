@@ -282,8 +282,17 @@ public class CandidateElementExtractor {
 		if (!this.wrappedElement)
 			return false;
 
+		if (isTypeIsHidden(element.getAttribute("type")))
+			return true;
+
 		String attribute = element.getAttribute("style");
 		if (element.hasAttribute("disabled") || attribute.contains("visibility:hidden") || attribute.contains("display:none"))
+			return true;
+		return false;
+	}
+
+	private boolean isTypeIsHidden(String type) {
+		if (type.contains("hidden"))
 			return true;
 		return false;
 	}
