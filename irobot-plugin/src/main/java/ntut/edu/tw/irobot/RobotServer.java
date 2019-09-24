@@ -32,6 +32,7 @@ public class RobotServer {
     private Timer crawlTimer;
     private String url;
     private boolean isRecord = false;
+    private boolean isHeadLess = false;
     private CrawlingInformation data;
     private static ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static final Logger LOGGER = LoggerFactory.getLogger(RobotServer.class);
@@ -159,6 +160,10 @@ public class RobotServer {
         this.isRecord = isRecord;
     }
 
+    public void setHeadLess(boolean isHeadLess) {
+        this.isHeadLess = isHeadLess;
+    }
+
     private void init(boolean wrapElement) {
         File recordFolder = null;
         if (isRecord)
@@ -168,7 +173,9 @@ public class RobotServer {
         CrawljaxConfiguration.CrawljaxConfigurationBuilder builder = CrawljaxConfiguration.builderFor(this.url);
 
         // Build BrowserConfig
-        builder.setBrowserConfig(new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1));
+        BrowserConfiguration browserConfig = new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1);
+        browserConfig.setHeadless(this.isHeadLess);
+        builder.setBrowserConfig(browserConfig);
 
         // the crawling Depth、State、Time is unlimited
         builder.setUnlimitedCrawlDepth();

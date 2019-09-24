@@ -65,7 +65,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	private void createVariableElementsList() {
 		JsonParser jsonParser = new JsonParser();
 		try {
-			File veList = new File("variableElementList.json");
+			File veList = new File("variableElement/variableElementList.json");
 			JsonArray VEJson = ((JsonObject) jsonParser.parse(new FileReader(veList.getAbsoluteFile()))).getAsJsonArray("variableList");
 			for(JsonElement jsonElement : VEJson) {
 				String url = jsonElement.getAsJsonObject().get("url").getAsString();
@@ -202,12 +202,17 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 
 	private List<FormInput> generateFormInput(CandidateElement oldElement) {
 		List<FormInput> formInputs = new ArrayList<FormInput>();
-		FormInput input = new FormInput();
-		input.setType("text");
-		input.setIdentification(oldElement.getIdentification());
-		input.setInputValues(getValueList());
-		formInputs.add(input);
-		LOGGER.info("New Form is create : {}", input);
+		String inputValue = crawlingInformation.getTargetValue();
+		if (inputValue != null)
+			return formInputs;
+		if (!inputValue.equalsIgnoreCase("null")) {
+			FormInput input = new FormInput();
+			input.setType("text");
+			input.setIdentification(oldElement.getIdentification());
+			input.setInputValues(getValueList());
+			formInputs.add(input);
+			LOGGER.info("New Form is create : {}", input);
+		}
 		return formInputs;
 	}
 
