@@ -8,6 +8,8 @@ import ntut.edu.tw.irobot.action.Action;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -48,6 +50,16 @@ public class WaitingLock {
         }
     }
 
+    /**
+     * this is for setting one target action, like execute "one" element
+     *
+     * @param action
+     *      action which agent select
+     * @param value
+     *      value which agent assign
+     * @return
+     *      the boolean witch action is execute successfully
+     */
     public boolean setTargetAction(Action action, String value) {
         this.crawlingInformation.resetData();
         this.crawlingInformation.setTargetAction(action, value);
@@ -56,6 +68,29 @@ public class WaitingLock {
         this.waitForCurrentWebSnapShot();
 
         return crawlingInformation.isExecuteSuccess();
+    }
+
+    /**
+     * this is for setting multiple action, like fill in multiple input
+     *
+     * @param actions
+     *      actions which agent assign multiple action
+     * @return
+     *      the boolean witch all action were execute successfully
+     */
+    public boolean setTargetActions(Map<Action, String> actions) {
+        this.crawlingInformation.resetData();
+        this.crawlingInformation.setTargetActions(actions);
+        this.wakeUpSleepingThread();
+
+        this.waitForCurrentWebSnapShot();
+
+        return crawlingInformation.isExecuteSuccess();
+    }
+
+    public void terminateCrawljax() {
+        this.crawlingInformation.resetData();
+        this.wakeUpSleepingThread();
     }
 
     public void waitForCurrentWebSnapShot() {
@@ -92,6 +127,7 @@ public class WaitingLock {
     }
 
     public void waitForRestart() {
+        this.crawlingInformation.resetData();
         this.crawlingInformation.setRestartSignal(true);
         this.wakeUpSleepingThread();
 

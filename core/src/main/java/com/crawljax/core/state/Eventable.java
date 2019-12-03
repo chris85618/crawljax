@@ -37,7 +37,7 @@ public class Eventable extends DefaultEdge implements Serializable {
 	 * The event type.
 	 */
 	public enum EventType {
-		click, hover
+		click, hover, input
 	}
 
 	/**

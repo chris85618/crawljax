@@ -787,9 +787,9 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 * @return true if the element is interactive.
 	 */
 	@Override
-	public boolean isInteractive(Identification identification) {
+	public boolean isInteractive(String identification) {
 		try {
-			WebElement el = browser.findElement(identification.getWebDriverBy());
+			WebElement el = browser.findElement(By.xpath(identification.replaceAll("/BODY\\[1\\]/", "/BODY/")));
 			if (el != null) {
 				return el.isDisplayed() && el.isEnabled();
 			}

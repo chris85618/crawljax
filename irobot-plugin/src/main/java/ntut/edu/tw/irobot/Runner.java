@@ -1,14 +1,10 @@
 package ntut.edu.tw.irobot;
 
-//<<<<<<< HEAD
-//=======
 import py4j.GatewayServer;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-
-//>>>>>>> feature-irobot
 
 /**
  * Use the sample plugin in combination with Crawljax.
@@ -21,12 +17,6 @@ public class Runner {
 		/**
 		 *  Create the sever to communicate with  iRobot
 		 */
-//<<<<<<< HEAD
-//		RobotServer server = new RobotServer();
-//		server.run();
-//	}
-//
-//=======
 		if (args.length == 0)
 			createServer();
 		else
@@ -34,14 +24,24 @@ public class Runner {
 	}
 
 	private static void createServer() {
-		GatewayServer server = new GatewayServer(new RobotServer());
+		GatewayServer server = null;
+		try {
+			server = new GatewayServer.GatewayServerBuilder(new RobotServer())
+					.javaPort(50020)
+					.javaAddress(InetAddress.getByName("127.0.0.1"))
+					.callbackClient(50021, InetAddress.getByName("127.0.0.1"))
+					.build();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+//		GatewayServer server = new GatewayServer(new RobotServer());
 		server.start();
 	}
 
 	private static void createServer(String[] args) {
 		try {
-			String java_port = "";
-			String python_port = "";
+			String java_port = "50000";
+			String python_port = "50001";
 
 			for (int i = 0; i < args.length; i+=2) {
 				if (args[i].equalsIgnoreCase("-java_port"))
@@ -64,5 +64,4 @@ public class Runner {
 			throw new RuntimeException("Something went wrong...");
 		}
 	}
-//>>>>>>> feature-irobot
 }

@@ -191,7 +191,11 @@ public class UnfiredCandidateActions {
 		LOG.info("This part is for learning part, will reconstruct the order in cache.");
 		List<CandidateCrawlAction> actions = new ArrayList<>(extract.size());
 		for (CandidateElement candidateElement : extract) {
-			actions.add(new CandidateCrawlAction(candidateElement, EventType.click));
+			String tagName = candidateElement.getElement().getTagName();
+			if (tagName.equalsIgnoreCase("input") || tagName.equalsIgnoreCase("text"))
+				actions.add(new CandidateCrawlAction(candidateElement, EventType.input));
+			else
+				actions.add(new CandidateCrawlAction(candidateElement, EventType.click));
 		}
 		setActions(actions, currentState);
 	}

@@ -179,4 +179,15 @@ public class RobotServerTest {
         ArrayList<String> threadSequence = decorator.getThreadSequence();
         assertThat(threadSequence, satisfyInteractionOrder(FIVE_TIMES));
     }
+
+    @Test
+    public void ContinuousTerminateCrawljaxAndCheckIfThereIsGracefullyTerminate() {
+        for (int i = 0; i < 10; i++) {
+            robotServer.terminateCrawler();
+            robotServer.setUrl("http://localhost:8888/age", false);
+            WebSnapShot webSnapShot = robotServer.getWebSnapShot();
+            robotServer.executeAction(webSnapShot.getActions().get(3), "10");
+            robotServer.getWebSnapShot();
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package ntut.edu.tw.irobot;
 
 import com.crawljax.browser.EmbeddedBrowser;
+import com.crawljax.condition.browserwaiter.ExpectedVisibleCondition;
 import com.crawljax.core.CrawljaxRunner;
 
 
@@ -24,6 +25,8 @@ public class CrawlJaxRunnerFactory {
 
     private String url;
     private WaitingLock waitingLock;
+    private int pageWaitingTime = 1;
+    private int eventWaitingTime = 1;
     private boolean isRecord = false;
     private boolean isHeadLess = false;
     private boolean wrapElement = false;
@@ -49,12 +52,19 @@ public class CrawlJaxRunnerFactory {
         this.isHeadLess = isHeadLess;
     }
 
+    public void setEventWaitingTime(int eventWaitingTime) {
+        this.eventWaitingTime = eventWaitingTime;
+    }
+
+    public void setPageWaitingTime(int pageWaitingTime) {
+        this.pageWaitingTime = pageWaitingTime;
+    }
+
     private CrawljaxConfigurationBuilder createCrawlJaxBuilder() {
         CrawljaxConfigurationBuilder builder = builderFor(this.url);
         configureBuilder(builder);
         return builder;
     }
-
     private void configureBuilder(CrawljaxConfigurationBuilder builder) {
         BrowserConfiguration browserConfig = new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1);
         browserConfig.setHeadless(this.isHeadLess);
@@ -64,8 +74,8 @@ public class CrawlJaxRunnerFactory {
         builder.setUnlimitedStates();
         builder.setUnlimitedRuntime();
         // event and url wait time is 0 second
-        builder.crawlRules().waitAfterEvent(1, TimeUnit.MILLISECONDS);
-        builder.crawlRules().waitAfterReloadUrl(1, TimeUnit.MILLISECONDS);
+        builder.crawlRules().waitAfterEvent(this.eventWaitingTime, TimeUnit.MILLISECONDS);
+        builder.crawlRules().waitAfterReloadUrl(this.pageWaitingTime, TimeUnit.MILLISECONDS);
         // Click Rules
         builder.crawlRules().clickDefaultElements();
         builder.crawlRules().clickOnce(false);
@@ -89,6 +99,7 @@ public class CrawlJaxRunnerFactory {
 
         return new DQNLearningModePlugin(waitingLock);
     }
+
     private CrawlOverview createCrawlOverViewPlugin() {
         String pluginPath = getPluginPath();
         File crawlerOverviewPlugin = new File(pluginPath + "0");

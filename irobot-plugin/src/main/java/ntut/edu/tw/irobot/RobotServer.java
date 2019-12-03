@@ -9,6 +9,7 @@ import ntut.edu.tw.irobot.timer.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -38,6 +39,19 @@ public class RobotServer {
     public RobotServer(WaitingLock waitingLock) {
         this.waitingLock = waitingLock;
         this.crawlerTimer = new Timer();
+    }
+
+    /**
+     *  Setting the crawling waiting time
+     *
+     * @param eventWaitingTime (ms)
+     *               the waiting time after clicked the event
+     * @param pageWaitingTime (ms)
+     *               the waiting time after reload the page
+     */
+    public void setWaitingTime(int eventWaitingTime, int pageWaitingTime) {
+        factory.setEventWaitingTime(eventWaitingTime);
+        factory.setPageWaitingTime(pageWaitingTime);
     }
 
     /**
@@ -135,11 +149,28 @@ public class RobotServer {
         return result;
     }
 
+    /**
+     * This step will set the actions
+     *          and wait the crawler response
+     *
+     * @param actions
+     *              The actions which the robot assigned
+     * @return
+     *              The boolean which the Action is execute success or not
+     */
+    public boolean executeActions(Map<Action, String> actions) {
+        LOGGER.info("Execute Actions {}", actions);
+        beginCrawlerTimer();
+        boolean result = waitingLock.setTargetActions(actions);
+        stopCrawlerTimer();
+        return result;
+    }
+
     public boolean terminateCrawler() {
         LOGGER.info("Terminate Crawler ...");
         try {
             beginCrawlerTimer();
-            this.waitingLock.wakeUpSleepingThread();
+            this.waitingLock.terminateCrawljax();
             this.crawlJaxRunner.stop();
             this.crawler.get();
         } catch (Exception e) {

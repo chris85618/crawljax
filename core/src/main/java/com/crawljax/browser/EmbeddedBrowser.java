@@ -122,7 +122,7 @@ public interface EmbeddedBrowser {
 	 * 				identification to use.
 	 * @return true if the element is interactive.
 	 */
-	boolean isInteractive(Identification identification);
+	boolean isInteractive(String identification);
 
 	/**
 	 * @return The current browser url.

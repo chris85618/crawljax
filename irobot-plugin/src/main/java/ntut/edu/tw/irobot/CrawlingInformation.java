@@ -1,6 +1,10 @@
 package ntut.edu.tw.irobot;
 
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -20,6 +24,7 @@ public class CrawlingInformation {
     private BlockingQueue<WebSnapShot> webSnapShotBlockingQueue = new ArrayBlockingQueue<>(1);
 
     private CandidateElement targetAction;
+    private Map<CandidateElement, String> targetActions = new HashMap<CandidateElement, String>();
     private String targetValue;
 
     private boolean restartSignal;
@@ -30,8 +35,9 @@ public class CrawlingInformation {
     }
 
     private void resetInformation() {
-        this.targetAction = null;
         this.targetValue = "";
+        this.targetAction = null;
+        this.targetActions.clear();
         this.restartSignal = false;
         this.executeActionSuccessOrNot = false;
     }
@@ -69,12 +75,35 @@ public class CrawlingInformation {
     }
 
     /**
+     * This step will convert Action to CandidateElement
+     *
+     * @param actions
+     *          The target action which iRobot assigned
+     */
+    public void setTargetActions(Map<Action, String> actions) {
+        LOGGER.info("Get the target Action({}) from robot, transform it... ", actions);
+        for (Map.Entry<Action, String> actionStringEntry : actions.entrySet()) {
+            targetActions.put((CandidateElement) actionStringEntry.getKey().getSource(), actionStringEntry.getValue());
+        }
+    }
+
+    /**
      * @return targetAction
      *          The target action which has been transfer to {@link com.crawljax.core.CandidateElement}
      */
     public CandidateElement getTargetElement() {
         LOGGER.info("Get the target element...");
         return targetAction;
+    }
+
+    /**
+     * @return targetActions
+     *          The Map of target and value, which target action which has been transfer to {@link com.crawljax.core.CandidateElement}
+     *
+     */
+    public Map<CandidateElement, String> getTargetElements() {
+        LOGGER.info("Get the target elements value Map...");
+        return targetActions;
     }
 
     /**
@@ -109,6 +138,11 @@ public class CrawlingInformation {
         if (targetAction != null){
             LOGGER.info("Get the target element type : {}", targetAction.getElement().getTagName());
             return targetAction.getElement().getTagName();
+        }
+        else if (targetActions.size() != 0) {
+            CandidateElement element = targetActions.entrySet().iterator().next().getKey();
+            LOGGER.info("Get the target element type : {}", element);
+            return element.getElement().getTagName();
         }
 
         LOGGER.info("The target element is null, return empty string");

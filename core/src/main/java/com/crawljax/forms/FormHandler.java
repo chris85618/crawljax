@@ -8,6 +8,7 @@ import com.crawljax.core.exception.BrowserConnectionException;
 import com.crawljax.util.DomUtils;
 import com.crawljax.util.XPathHelper;
 import com.google.inject.assistedinject.Assisted;
+import org.openqa.selenium.ElementNotInteractableException;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -64,9 +65,9 @@ public class FormHandler {
 		}
 		try {
 			if (input.getType().toLowerCase().startsWith("text")
-			        || input.getType().equalsIgnoreCase("password")
-			        || input.getType().equalsIgnoreCase("email")
-			        || input.getType().equalsIgnoreCase("hidden")) {
+					|| input.getType().equalsIgnoreCase("password")
+					|| input.getType().equalsIgnoreCase("email")
+					|| input.getType().equalsIgnoreCase("hidden")) {
 				handleText(input);
 			} else if ("checkbox".equals(input.getType())) {
 				handleCheckBoxes(input);
@@ -75,6 +76,8 @@ public class FormHandler {
 			} else if (input.getType().startsWith("select")) {
 				handleSelectBoxes(input);
 			}
+		} catch (ElementNotInteractableException e) {
+			LOGGER.debug("Element is not interactable...", e);
 		} catch (BrowserConnectionException e) {
 			throw e;
 		} catch (RuntimeException e) {

@@ -33,7 +33,9 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.xpath.XPathExpressionException;
 
-public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEventFailedPlugin, AfterReceiveRobotActionPlugin, OnNewFoundStatePlugin, OnRestartCrawlingStatePlugin, OnHtmlAttributeFilteringPlugin {
+public class DQNLearningModePlugin implements PreStateCrawlingPlugin,
+		OnFireEventFailedPlugin, AfterReceiveRobotActionPlugin,
+		OnNewFoundStatePlugin, OnRestartCrawlingStatePlugin, OnHtmlAttributeFilteringPlugin {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DQNLearningModePlugin.class);
 
 	private CrawlingInformation crawlingInformation;
@@ -168,6 +170,11 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		List<CandidateElement> reconstructList = new ArrayList<CandidateElement>();
 
 		CandidateElement target = crawlingInformation.getTargetElement();
+		if (target == null && crawlingInformation.getTargetElements().size() != 0)
+			target = crawlingInformation.getTargetElements().entrySet().iterator().next().getKey();
+		if (target == null)
+			return new LinkedList<CandidateElement>(reconstructList);
+
 		LOGGER.info("Get the target action is {}", target);
 		CandidateElement newElement;
 		for (CandidateElement element : candidateElements) {
@@ -188,29 +195,46 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	private CandidateElement generateNewCandidateElement(CandidateElement oldElement) {
 		org.w3c.dom.Element cloneElement = (org.w3c.dom.Element) oldElement.getElement().cloneNode(true);
 		String targetXpath = crawlingInformation.getTargetXpath();
-		CandidateElement newElement = new CandidateElement(cloneElement, targetXpath, generateFormInput(oldElement));
-		return newElement;
+		return new CandidateElement(cloneElement, targetXpath, generateFormInput(oldElement));
 	}
 
 	private List<FormInput> generateFormInput(CandidateElement oldElement) {
 		List<FormInput> formInputs = new ArrayList<FormInput>();
 		String inputValue = crawlingInformation.getTargetValue();
-		if (inputValue == null)
+		Map<CandidateElement, String> elementValueMap = crawlingInformation.getTargetElements();
+		if (inputValue == null && elementValueMap.size() == 0)
 			return formInputs;
-		if (!inputValue.equalsIgnoreCase("null")) {
-			FormInput input = new FormInput();
-			input.setType("text");
-			input.setIdentification(oldElement.getIdentification());
-			input.setInputValues(getValueList());
-			formInputs.add(input);
-			LOGGER.info("New Form is create : {}", input);
+
+		if (elementValueMap.size() != 0)
+			formInputs = generateMultipleFormInput();
+		else
+			formInputs.add(generateOneFormInput(inputValue, oldElement.getIdentification()));
+		return formInputs;
+	}
+
+	private List<FormInput> generateMultipleFormInput() {
+		List<FormInput> formInputs = new ArrayList<FormInput>();
+		for (Map.Entry<CandidateElement, String> candidateElementStringEntry : crawlingInformation.getTargetElements().entrySet()) {
+			formInputs.add(generateOneFormInput(candidateElementStringEntry.getValue(),
+								 candidateElementStringEntry.getKey().getIdentification()));
 		}
 		return formInputs;
 	}
 
-	private Set<InputValue> getValueList() {
+	private FormInput generateOneFormInput(String inputValue, Identification elementIdentification) {
+		FormInput formInputs = new FormInput();
+		if (!inputValue.equalsIgnoreCase("null")) {
+			formInputs.setType("text");
+			formInputs.setIdentification(elementIdentification);
+			formInputs.setInputValues(createValueList(inputValue));
+			LOGGER.info("New Form is create : {}", formInputs);
+		}
+		return formInputs;
+	}
+
+	private Set<InputValue> createValueList(String value) {
 		Set<InputValue> transformList = new HashSet<InputValue>();
-		transformList.add(new InputValue(crawlingInformation.getTargetValue(), true));
+		transformList.add(new InputValue(value, true));
 		return transformList;
 	}
 

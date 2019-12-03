@@ -268,7 +268,7 @@ public class CandidateElementExtractor {
 
 			if (matchesXpath && !checkedElements.isChecked(id)
 			        && !isExcluded(dom, element, eventableConditionChecker)
-					&& !isDisable(element)
+					&& isInteractable(element)
 			) {
 				addElement(element, result, crawlElement);
 			} else {
@@ -278,17 +278,25 @@ public class CandidateElementExtractor {
 		return result.build();
 	}
 
-	private boolean isDisable(Element element) {
+	private boolean isInteractable(Element element) {
 		if (!this.wrappedElement)
-			return false;
-
-		if (isTypeIsHidden(element.getAttribute("type")))
 			return true;
 
-		String attribute = element.getAttribute("style");
-		if (element.hasAttribute("disabled") || attribute.contains("visibility:hidden") || attribute.contains("display:none"))
-			return true;
-		return false;
+//		if (isTypeIsHidden(element.getAttribute("type")))
+//			return false;
+//
+//		String attribute = element.getAttribute("style");
+//		if (element.hasAttribute("disabled") || attribute.contains("visibility:hidden") || attribute.contains("display:none"))
+//			return false;
+//
+//		return true;
+		long startTime = 0;
+		long endTime = 0;
+		startTime = System.currentTimeMillis();
+		boolean a = browser.isInteractive(XPathHelper.getXPathExpression(element));
+		endTime = System.currentTimeMillis();
+		System.out.println("find one element cost time is " + String.valueOf(endTime - startTime) + " ms, and boolean is " + a);
+		return a;
 	}
 
 	private boolean isTypeIsHidden(String type) {
@@ -410,11 +418,6 @@ public class CandidateElementExtractor {
 				 */
 			}
 		}
-	}
-
-	private boolean isDisableOrInvisable(CandidateElement candidateElement) {
-		Identification candidateElementIdentification = candidateElement.getIdentification();
-		return !browser.isInteractive(candidateElementIdentification);
 	}
 
 	/**
