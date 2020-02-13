@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.xml.xpath.XPathExpressionException;
@@ -282,21 +283,21 @@ public class CandidateElementExtractor {
 		if (!this.wrappedElement)
 			return true;
 
-//		if (isTypeIsHidden(element.getAttribute("type")))
-//			return false;
-//
-//		String attribute = element.getAttribute("style");
-//		if (element.hasAttribute("disabled") || attribute.contains("visibility:hidden") || attribute.contains("display:none"))
-//			return false;
-//
-//		return true;
-		long startTime = 0;
-		long endTime = 0;
-		startTime = System.currentTimeMillis();
-		boolean a = browser.isInteractive(XPathHelper.getXPathExpression(element));
-		endTime = System.currentTimeMillis();
-		System.out.println("find one element cost time is " + String.valueOf(endTime - startTime) + " ms, and boolean is " + a);
-		return a;
+		if (isTypeIsHidden(element.getAttribute("type")))
+			return false;
+
+		String attribute = element.getAttribute("style");
+		if (element.hasAttribute("disabled") || attribute.contains("visibility:hidden") || attribute.contains("display:none"))
+			return false;
+
+		return true;
+//		long startTime = 0;
+//		long endTime = 0;
+//		startTime = System.currentTimeMillis();
+//		boolean a = browser.isInteractive(XPathHelper.getXPathExpression(element));
+//		endTime = System.currentTimeMillis();
+//		System.out.println("find one element cost time is " + String.valueOf(endTime - startTime) + " ms, and boolean is " + a);
+//		return a;
 	}
 
 	private boolean isTypeIsHidden(String type) {
@@ -402,8 +403,9 @@ public class CandidateElementExtractor {
 				formHandler.getCandidateElementsForInputs(sourceElement, eventableCondition);
 		} else {
 			// just add default element
-			candidateElements.add(new CandidateElement(sourceElement, new Identification(
-				Identification.How.xpath, xpath), relatedFrame));
+			Identification identification = new Identification(Identification.How.xpath, xpath);
+			String value = browser.getWebElement(identification).getAttribute("value");
+			candidateElements.add(new CandidateElement(sourceElement, identification, relatedFrame, value));
 		}
 		for (CandidateElement candidateElement : candidateElements) {
 			if (!clickOnce || checkedElements.markChecked(candidateElement)) {

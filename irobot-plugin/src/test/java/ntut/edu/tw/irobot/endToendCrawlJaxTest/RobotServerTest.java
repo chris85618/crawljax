@@ -1,10 +1,8 @@
 package ntut.edu.tw.irobot.endToendCrawlJaxTest;
 
-import com.crawljax.core.CandidateElement;
 import ntut.edu.tw.irobot.CrawlingInformation;
 import ntut.edu.tw.irobot.RobotServer;
 import ntut.edu.tw.irobot.WebSnapShot;
-import ntut.edu.tw.irobot.action.Action;
 import ntut.edu.tw.irobot.lock.WaitingLock;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -13,10 +11,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 public class RobotServerTest {
 
@@ -122,8 +121,6 @@ public class RobotServerTest {
 
         robotServer = new RobotServer(waitingLock);
         robotServer.setUrl("http://localhost:8888/age", false);
-        WebSnapShot webSnapShot = robotServer.getWebSnapShot();
-        robotServer.executeAction(webSnapShot.getActions().get(3), "10");
     }
 
     @After
@@ -144,6 +141,7 @@ public class RobotServerTest {
 
     @Test
     public void GivenURLWhenSendSignalToServiceThenResponseOfCrawlJaxIsCorrect() {
+        executeAction(3, "10");
 
         executeAction(2, "10");
 
@@ -157,12 +155,14 @@ public class RobotServerTest {
     }
 
     private void assertCurrentUrl(String url) {
+        executeAction(3, "10");
         WebSnapShot webSnapShot = robotServer.getWebSnapShot();
         assertEquals(url, webSnapShot.getState().getUrl());
     }
 
     @Test
     public void WhenRestartCrawlerThenCrawlerBackToRootIndex() {
+        executeAction(3, "10");
 
         executeAction(2, "test@test.com");
 
@@ -190,4 +190,12 @@ public class RobotServerTest {
             robotServer.getWebSnapShot();
         }
     }
+
+    @Test
+    public void CheckIsElementsInteractableWillReturnCorrectOrder() {
+        List<Boolean> result = robotServer.isElementsInteractable(robotServer.getWebSnapShot().getActions());
+        List<Boolean> groundTrue = Arrays.asList(true, false, true, true);
+        assertEquals(groundTrue, result);
+    }
+
 }

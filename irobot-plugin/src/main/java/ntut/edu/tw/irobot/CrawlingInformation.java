@@ -158,6 +158,11 @@ public class CrawlingInformation {
             return targetAction.getIdentification().getValue();
         }
 
+        if (targetActions.size() != 0) {
+            LOGGER.info("Get the target element xpath : {}", targetActions.entrySet().iterator().next().getKey().getIdentification().getValue());
+            return targetActions.entrySet().iterator().next().getKey().getIdentification().getValue();
+        }
+
         LOGGER.info("The target element is null, return empty string");
         return "";
     }

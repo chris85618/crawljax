@@ -383,15 +383,13 @@ public class Crawler {
 			CandidateElement element = action.getCandidateElement();
 			if (element.allConditionsSatisfied(browser)) {
 				Eventable event = new Eventable(element, action.getEventType());
-				event.setRelatedFormInputs(new CopyOnWriteArrayList<>(element.getFormInputs()));
 				handleInputElements(event);
 				waitForRefreshTagIfAny(event);
 
 				boolean fired = fireEvent(event);
-				if (fired) {
+				if (fired)
 					inspectNewState(event);
-				}
-				else
+				else if (this.isDQNLearningMode)
 					onOldStateProcedureAndGetRobotCommand();
 			} else {
 				LOG.info(

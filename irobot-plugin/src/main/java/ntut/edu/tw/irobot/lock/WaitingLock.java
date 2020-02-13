@@ -1,5 +1,6 @@
 package ntut.edu.tw.irobot.lock;
 
+import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.core.plugin.descriptor.jaxb.generated.OptionList;
 import ntut.edu.tw.irobot.CrawlingInformation;
 
@@ -17,6 +18,7 @@ public class WaitingLock {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaitingLock.class);
 
     private CrawlingInformation crawlingInformation;
+    private EmbeddedBrowser browser = null;
 
     private Object lock = new Object();
 
@@ -132,5 +134,13 @@ public class WaitingLock {
         this.wakeUpSleepingThread();
 
         this.waitForCurrentWebSnapShot();
+    }
+
+    public void setBrowser(EmbeddedBrowser browser) {
+        this.browser = browser;
+    }
+
+    public EmbeddedBrowser getBrowser() {
+        return this.browser;
     }
 }

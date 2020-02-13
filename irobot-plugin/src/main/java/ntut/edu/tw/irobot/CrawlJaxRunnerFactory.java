@@ -1,7 +1,6 @@
 package ntut.edu.tw.irobot;
 
 import com.crawljax.browser.EmbeddedBrowser;
-import com.crawljax.condition.browserwaiter.ExpectedVisibleCondition;
 import com.crawljax.core.CrawljaxRunner;
 
 
@@ -13,6 +12,7 @@ import com.crawljax.core.plugin.descriptor.PluginDescriptor;
 import com.crawljax.plugins.crawloverview.CrawlOverview;
 import ntut.edu.tw.irobot.fs.WorkDirManager;
 import ntut.edu.tw.irobot.lock.WaitingLock;
+import ntut.edu.tw.irobot.plugin.DQNLearningModePlugin;
 
 import java.io.File;
 import java.util.HashMap;
@@ -25,8 +25,8 @@ public class CrawlJaxRunnerFactory {
 
     private String url;
     private WaitingLock waitingLock;
-    private int pageWaitingTime = 1;
-    private int eventWaitingTime = 1;
+    private long pageWaitingTime = 1;
+    private long eventWaitingTime = 1;
     private boolean isRecord = false;
     private boolean isHeadLess = false;
     private boolean wrapElement = false;
@@ -52,11 +52,11 @@ public class CrawlJaxRunnerFactory {
         this.isHeadLess = isHeadLess;
     }
 
-    public void setEventWaitingTime(int eventWaitingTime) {
+    public void setEventWaitingTime(long eventWaitingTime) {
         this.eventWaitingTime = eventWaitingTime;
     }
 
-    public void setPageWaitingTime(int pageWaitingTime) {
+    public void setPageWaitingTime(long pageWaitingTime) {
         this.pageWaitingTime = pageWaitingTime;
     }
 
@@ -70,7 +70,8 @@ public class CrawlJaxRunnerFactory {
         browserConfig.setHeadless(this.isHeadLess);
         builder.setBrowserConfig(browserConfig);
         // the crawling Depth、State、Time is unlimited
-        builder.setUnlimitedCrawlDepth();
+//        builder.setUnlimitedCrawlDepth();
+        builder.setMaximumDepth(4);
         builder.setUnlimitedStates();
         builder.setUnlimitedRuntime();
         // event and url wait time is 0 second
@@ -80,13 +81,13 @@ public class CrawlJaxRunnerFactory {
         builder.crawlRules().clickDefaultElements();
         builder.crawlRules().clickOnce(false);
         // set Crawler Configuration
-        builder.setDQNLearningMode(true);
+        builder.setDQNLearningMode(false);
         builder.setWrapUninteractiveElement(wrapElement);
         // set CrawlOverView Plugin
         if (isRecord)
             builder.addPlugin(createCrawlOverViewPlugin());
         // set DQN Mode
-        builder.addPlugin(createDQNPlugin());
+//        builder.addPlugin(createDQNPlugin());
     }
 
     private DQNLearningModePlugin createDQNPlugin() {

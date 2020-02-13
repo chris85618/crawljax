@@ -17,6 +17,16 @@ public interface Action {
     String getType();
 
     /**
+     * @return the Xpath of action
+     */
+    String getXpath();
+
+    /**
+     * @return the current element value.
+     */
+    String getValue();
+
+    /**
      * @return the source object
      */
     Object getSource();

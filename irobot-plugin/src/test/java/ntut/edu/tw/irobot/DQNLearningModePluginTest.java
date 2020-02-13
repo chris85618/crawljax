@@ -1,6 +1,7 @@
 package ntut.edu.tw.irobot;
 
 import ntut.edu.tw.irobot.lock.WaitingLock;
+import ntut.edu.tw.irobot.plugin.DQNLearningModePlugin;
 import org.eclipse.jetty.util.resource.Resource;
 import org.junit.Test;
 

@@ -77,5 +77,6 @@
 		<module>url-id-inputs-file-retriever</module>
 		<module>support-inputs-manager</module>
 		<module>web-element-hash-generator</module>
-	</modules>
+        <module>aiguide-plugin</module>
+    </modules>
 </project>

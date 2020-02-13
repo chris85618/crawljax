@@ -1,5 +1,6 @@
 package ntut.edu.tw.irobot;
 
+import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.core.CrawlSession;
 import com.crawljax.core.CrawljaxRunner;
 import ntut.edu.tw.irobot.action.Action;
@@ -9,10 +10,12 @@ import ntut.edu.tw.irobot.timer.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 
 public class RobotServer {
@@ -49,7 +52,7 @@ public class RobotServer {
      * @param pageWaitingTime (ms)
      *               the waiting time after reload the page
      */
-    public void setWaitingTime(int eventWaitingTime, int pageWaitingTime) {
+    public void setWaitingTime(long eventWaitingTime, long pageWaitingTime) {
         factory.setEventWaitingTime(eventWaitingTime);
         factory.setPageWaitingTime(pageWaitingTime);
     }
@@ -164,6 +167,15 @@ public class RobotServer {
         boolean result = waitingLock.setTargetActions(actions);
         stopCrawlerTimer();
         return result;
+    }
+
+    public List<Boolean> isElementsInteractable(List<Action> elements) {
+        EmbeddedBrowser browser = waitingLock.getBrowser();
+//        elements.forEach(element-> System.out.println(element.getSource()));
+//        elements.forEach(element-> System.out.println(browser.isInteractive(element.getXpath())));
+        return elements.parallelStream()
+                .map(element-> browser.isInteractive(element.getXpath()))
+                .collect(Collectors.toList());
     }
 
     public boolean terminateCrawler() {

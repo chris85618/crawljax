@@ -1,4 +1,4 @@
-package ntut.edu.tw.irobot;
+package ntut.edu.tw.irobot.plugin;
 
 import java.io.File;
 import java.io.FileReader;
@@ -15,6 +15,8 @@ import com.crawljax.forms.InputValue;
 import com.crawljax.util.DomUtils;
 import com.crawljax.util.XPathHelper;
 import com.google.common.collect.ImmutableList;
+import ntut.edu.tw.irobot.CrawlingInformation;
+import ntut.edu.tw.irobot.WebSnapShot;
 import ntut.edu.tw.irobot.adapter.WebSnapShotMapper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -127,6 +129,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin,
 	@Override
 	public void preStateCrawling(CrawlerContext context, ImmutableList<CandidateElement> candidateElements, StateVertex state) {
 		browser = context.getBrowser();
+		waitingLock.setBrowser(browser);
 		convertAndWaitRobot(candidateElements, state);
 	}
 
@@ -294,7 +297,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin,
 
 	private boolean isNoTarget() {
 		LOGGER.debug("Target element which Robot gave is {}", crawlingInformation.getTargetElement());
-		return crawlingInformation.getTargetElement() == null;
+		return crawlingInformation.getTargetElement() == null && crawlingInformation.getTargetElements().size() == 0;
 	}
 
 	private boolean isInputTag() {

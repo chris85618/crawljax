@@ -27,6 +27,8 @@ public class CandidateElement {
 	private final ImmutableList<FormInput> formInputs;
 	private final String relatedFrame;
 
+	private final String value;
+
 	private EventableCondition eventableCondition;
 
 	/**
@@ -40,11 +42,12 @@ public class CandidateElement {
 	 *            the frame this element belongs to.
 	 */
 	public CandidateElement(Element element, Identification identification, String relatedFrame,
-	        List<FormInput> formInputs) {
+	        List<FormInput> formInputs, String value) {
 		this.identification = identification;
 		this.element = element;
 		this.relatedFrame = relatedFrame;
 		this.formInputs = ImmutableList.copyOf(formInputs);
+		this.value = value;
 	}
 
 	/**
@@ -56,12 +59,21 @@ public class CandidateElement {
 	 *            the xpath expression of the element
 	 */
 	public CandidateElement(Element element, String xpath, List<FormInput> formInputs) {
-		this(element, new Identification(Identification.How.xpath, xpath), "", formInputs);
+		this(element, new Identification(Identification.How.xpath, xpath), "", formInputs, "");
 	}
 
 	public CandidateElement(Element sourceElement, Identification identification,
 	        String relatedFrame) {
-		this(sourceElement, identification, relatedFrame, ImmutableList.<FormInput> of());
+		this(sourceElement, identification, relatedFrame, ImmutableList.<FormInput> of(), "");
+	}
+
+	public CandidateElement(Element element, String xpath, List<FormInput> formInputs, String value) {
+		this(element, new Identification(Identification.How.xpath, xpath), "", formInputs, value);
+	}
+
+	public CandidateElement(Element sourceElement, Identification identification,
+							String relatedFrame, String value) {
+		this(sourceElement, identification, relatedFrame, ImmutableList.<FormInput> of(), value);
 	}
 
 	/**
@@ -126,6 +138,13 @@ public class CandidateElement {
 	 */
 	public Identification getIdentification() {
 		return identification;
+	}
+
+	/**
+	 * @return the value of current element.
+	 */
+	public String getValue() {
+		return value;
 	}
 
 	/**

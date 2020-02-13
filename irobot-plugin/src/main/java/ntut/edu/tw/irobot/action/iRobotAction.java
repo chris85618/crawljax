@@ -21,6 +21,14 @@ public class iRobotAction implements Action {
     }
 
     @Override
+    public String getXpath() { return source.getIdentification().getValue(); }
+
+    @Override
+    public String getValue() {
+        return source.getValue();
+    }
+
+    @Override
     public Object getSource() {
         return source;
     }
@@ -28,5 +36,11 @@ public class iRobotAction implements Action {
     @Override
     public String toString(){
         return source.toString();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+        return this.source.getUniqueString()
+                          .equals(((iRobotAction) that).source.getUniqueString());
     }
 }
