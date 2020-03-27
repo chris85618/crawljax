@@ -2,12 +2,15 @@ package com.crawljax.core;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -42,6 +45,7 @@ import com.crawljax.util.ElementResolver;
 import com.crawljax.util.UrlUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import sun.security.ec.point.ProjectivePoint;
 
 public class Crawler {
 
@@ -127,7 +131,7 @@ public class Crawler {
 	private void onOldStateProcedureAndGetRobotCommand() {
 		StateVertex oldState = stateMachine.getCurrentState();
 		ImmutableList<CandidateElement> extract = candidateExtractor.extract(oldState);
-		plugins.runOnRestartCrawlingStatePlugin(context, extract, oldState);
+		plugins.runOnRevisitStateWithExtractElementsPlugin(context, extract, oldState);
 		candidateActionCache.setActions(oldState.getCandidateElements(), oldState);
 	}
 
@@ -144,7 +148,7 @@ public class Crawler {
 		if (restartSignal())
 			return;
 
-		ImmutableList<Eventable> eventables = shortestPathTo(crawlTask);
+		ImmutableList<Eventable> eventables = shortestPathTo(context.getSession().getInitialState(), crawlTask);
 		try {
 			// TODO: must make sure there is no need to follow the old path
 			if (!this.isDQNLearningMode)
@@ -160,9 +164,15 @@ public class Crawler {
 		}
 	}
 
-	private ImmutableList<Eventable> shortestPathTo(StateVertex crawlTask) {
+	private ImmutableList<Eventable> shortestPathTo(StateVertex startState, StateVertex endState) {
+		ImmutableList<Eventable> result;
 		StateFlowGraph graph = context.getSession().getStateFlowGraph();
-		return graph.getShortestPath(graph.getInitialState(), crawlTask);
+		try {
+			result = graph.getShortestPath(startState, endState);
+		} catch (NullPointerException e) {
+			result = ImmutableList.copyOf(Collections.emptyList());
+		}
+		return result;
 	}
 
 	private void follow(CrawlPath path, StateVertex targetState)
@@ -181,6 +191,9 @@ public class Crawler {
 				tryToFireEvent(targetState, curState, clickable);
 				checkCrawlConditions(targetState);
 			}
+		} catch (StateUnreachableException e) {
+			LOG.debug("When running on state {},  will try current State still can go to target state: {}", curState, targetState);
+			curState = checkStillCanGoToTargetState(curState, targetState);
 		} catch (CrawljaxException e) {
 			plugins.runAfterRetrievePathPlugin(context, actualPath, curState);
 			throw e;
@@ -193,6 +206,70 @@ public class Crawler {
 			        "The path didn't result in the desired state but in state "
 			                + curState.getName());
 		}
+	}
+
+	private StateVertex checkStillCanGoToTargetState(StateVertex curState, StateVertex targetState) {
+		try {
+			// try the current state can go to the target state
+			return tryCurrentStateStillCanGoToTargetState(targetState);
+		} catch (StateUnreachableException exception) {
+			LOG.debug("Still can not go to target state, remove state in cache...");
+			plugins.runAfterRetrievePathPlugin(context, actualPath, curState);
+			throw exception;
+		}
+	}
+
+	private void crawlingWithGivenPath(StateVertex curState, StateVertex targetState, ImmutableList<Eventable> path) {
+		for (Eventable clickable : path) {
+			checkCrawlConditions(targetState);
+			LOG.debug("Backtracking by executing {} on element: {}", clickable.getEventType(), clickable);
+			curState = changeState(targetState, clickable);
+			handleInputElements(clickable);
+			tryToFireEvent(targetState, curState, clickable);
+			checkCrawlConditions(targetState);
+		}
+	}
+
+	private StateVertex tryCurrentStateStillCanGoToTargetState(StateVertex targetState) throws StateUnreachableException {
+		while (true) {
+			StateVertex currentState = stateMachine.newStateFor(browser);
+			List<StateVertex> findState = findStateInGraph(currentState);
+			LOG.debug("Match state is : {}", findState);
+			// check the current state is in graph
+			if (findState.size() == 0) {
+				LOG.info("Current State is not in graph, keep crawling another candidate element");
+				throw new StateUnreachableException(targetState, "");
+			}
+
+			// check current state is target state, if yes then return current state
+			currentState = findState.get(0);
+			stateMachine.setCurrentState(currentState);
+			if (currentState.equals(targetState)) {
+				LOG.info("Target state is arrived, keep firing unfired candidate element");
+				return currentState;
+			}
+
+			// check the path size between current state and target state
+			ImmutableList<Eventable> path = shortestPathTo(currentState, targetState);
+			if (path.isEmpty()) {
+				LOG.info("Current state is in graph, but current state can not go to target state, try another candidate element");
+				throw new StateUnreachableException(targetState, "");
+			}
+
+			try {
+				crawlingWithGivenPath(currentState, targetState, path);
+			} catch (StateUnreachableException e) {
+				// try again
+				LOG.info("There something state unreachable problem when go to target state, keep trying another path..");
+			}
+		}
+	}
+
+	private List<StateVertex> findStateInGraph(StateVertex currentState) {
+		StateFlowGraph stateFlowGraph = context.getSession().getStateFlowGraph();
+		return stateFlowGraph.getAllStates().stream()
+				.filter(state -> state.equals(currentState))
+				.collect(Collectors.toList());
 	}
 
 	private void checkCrawlConditions(StateVertex targetState) {
@@ -218,7 +295,8 @@ public class Crawler {
 				throw new StateUnreachableException(targetState,
 				        "Domain/scope left while following path");
 			}
-			int depth = crawlDepth.incrementAndGet();
+			plugins.runOnCountingDepthPlugins(curState, crawlDepth);
+			int depth = crawlDepth.get();
 //			System.out.println("----------------------------------------");
 //			System.out.println("now depth : " + depth);
 //			System.out.println("----------------------------------------");
@@ -455,8 +533,7 @@ public class Crawler {
 			LOG.debug("The browser left the domain/scope. Going back one state...");
 			goBackOneState();
 		} else {
-			StateVertex newState;
-			newState = stateMachine.newStateFor(browser);
+			StateVertex newState = stateMachine.newStateFor(browser);
 			if (domChanged(event, newState)) {
 				inspectNewDom(event, newState);
 			} else {
@@ -491,12 +568,13 @@ public class Crawler {
 		crawlpath.add(event);
 		boolean isNewState = stateMachine.switchToStateAndCheckIfClone(event, newState, context);
 		if (isNewState) {
-			int depth = crawlDepth.incrementAndGet();
+			plugins.runOnCountingDepthPlugins(newState, crawlDepth);
+			int depth = crawlDepth.get();
 //			System.out.println("==========================================");
 //			System.out.println("now depth : " + depth);
 //			System.out.println("==========================================");
 			LOG.info("New DOM is a new state! crawl depth is now {}", depth);
-			if (maxDepth == depth) {
+			if (maxDepth <= depth) {
 				LOG.debug("Maximum depth achived. Not crawling this state any further");
 			} else {
 				parseCurrentPageForCandidateElements();

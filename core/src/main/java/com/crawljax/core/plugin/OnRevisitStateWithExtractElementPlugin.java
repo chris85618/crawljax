@@ -8,10 +8,10 @@ import com.google.common.collect.ImmutableList;
 /**
  * This Plugin will be call every time when the crawler is restart.
  */
-public interface OnRestartCrawlingStatePlugin extends Plugin {
+public interface OnRevisitStateWithExtractElementPlugin extends Plugin {
 
     /**
-     * This will allow you to modify the state, which is a old state,
+     * This will allow you to modify the state, which is a clone state,
      *      so you can be do something.
      * This is similar to {@link PreStateCrawlingPlugin}, but that plugin
      *      will be call at pre "New State" crawling.

@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -52,8 +53,8 @@ public class Plugins {
 					PreCrawlingPlugin.class, AfterRetrievePathPlugin.class,
 					LoginPlugin.class, OnAlertPresentedPlugin.class,
 					OnCloneStatePlugin.class, AfterReceiveRobotActionPlugin.class,
-					OnNewFoundStatePlugin.class, OnRestartCrawlingStatePlugin.class,
-					OnHtmlAttributeFilteringPlugin.class);
+					OnNewFoundStatePlugin.class, OnRevisitStateWithExtractElementPlugin.class,
+					OnHtmlAttributeFilteringPlugin.class, OnCountingDepthPlugin.class);
 
 	private final ImmutableListMultimap<Class<? extends Plugin>, Plugin> plugins;
 
@@ -509,15 +510,15 @@ public class Plugins {
 	 * @param candidateElements
 	 * @param state
 	 */
-	public void runOnRestartCrawlingStatePlugin(CrawlerContext context,
-										   ImmutableList<CandidateElement> candidateElements, StateVertex state) {
+	public void runOnRevisitStateWithExtractElementsPlugin(CrawlerContext context,
+														   ImmutableList<CandidateElement> candidateElements, StateVertex state) {
 		LOGGER.debug("Running OnRestartCrawlingStatePlugins...");
-		counters.get(OnRestartCrawlingStatePlugin.class).inc();
-		for (Plugin plugin : plugins.get(OnRestartCrawlingStatePlugin.class)) {
-			if (plugin instanceof OnRestartCrawlingStatePlugin) {
+		counters.get(OnRevisitStateWithExtractElementPlugin.class).inc();
+		for (Plugin plugin : plugins.get(OnRevisitStateWithExtractElementPlugin.class)) {
+			if (plugin instanceof OnRevisitStateWithExtractElementPlugin) {
 				LOGGER.debug("Calling plugin {}", plugin);
 				try {
-					((OnRestartCrawlingStatePlugin) plugin).onRestartCrawling(context,
+					((OnRevisitStateWithExtractElementPlugin) plugin).onRestartCrawling(context,
 							candidateElements, state);
 				} catch (RuntimeException e) {
 					reportFailingPlugin(plugin, e);
@@ -541,6 +542,21 @@ public class Plugins {
 			}
 		}
 		return filteredHtml;
+	}
+
+	public void runOnCountingDepthPlugins(StateVertex currentState, AtomicInteger crawlDepth) {
+		LOGGER.debug("Running OnSpecificPagePlugin...");
+		counters.get(OnCountingDepthPlugin.class).inc();
+		for (Plugin plugin : plugins.get(OnCountingDepthPlugin.class)) {
+			if (plugin instanceof OnCountingDepthPlugin) {
+				try {
+					LOGGER.debug("Calling plugin {}", plugin);
+					((OnCountingDepthPlugin) plugin).controlDepth(currentState, crawlDepth);
+				} catch (RuntimeException e) {
+					reportFailingPlugin(plugin, e);
+				}
+			}
+		}
 	}
 
 	private boolean defaultDomComparison(final StateVertex stateBefore,
@@ -586,4 +602,5 @@ public class Plugins {
 		}
 		return names.build();
 	}
+
 }

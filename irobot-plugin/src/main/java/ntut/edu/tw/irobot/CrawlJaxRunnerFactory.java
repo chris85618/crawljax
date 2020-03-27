@@ -7,6 +7,7 @@ import com.crawljax.core.CrawljaxRunner;
 import com.crawljax.core.configuration.BrowserConfiguration;
 import com.crawljax.core.configuration.CrawljaxConfiguration.CrawljaxConfigurationBuilder;
 import com.crawljax.core.plugin.HostInterfaceImpl;
+import com.crawljax.core.plugin.Plugin;
 import com.crawljax.core.plugin.descriptor.Parameter;
 import com.crawljax.core.plugin.descriptor.PluginDescriptor;
 import com.crawljax.plugins.crawloverview.CrawlOverview;
@@ -25,19 +26,62 @@ public class CrawlJaxRunnerFactory {
 
     private String url;
     private WaitingLock waitingLock;
+    private int depth = 0;
     private long pageWaitingTime = 1;
     private long eventWaitingTime = 1;
     private boolean isRecord = false;
     private boolean isHeadLess = false;
     private boolean wrapElement = false;
 
-    public CrawljaxRunner createCrawlJaxRunner(String url, WaitingLock waitingLock) {
+    public CrawljaxRunner createAgentCrawlJaxRunner(String url, WaitingLock waitingLock) {
         this.url = url;
         this.waitingLock = waitingLock;
 
-        CrawljaxConfigurationBuilder builder = createCrawlJaxBuilder();
-        CrawljaxRunner crawljaxRunner = new CrawljaxRunner(builder.build());
-        return crawljaxRunner;
+        CrawljaxConfigurationBuilder builder = createAgentCrawlJaxBuilder();
+        return new CrawljaxRunner(builder.build());
+    }
+
+    public CrawljaxRunner createCrawlerCrawlJaxRunner(String url, Plugin... plugins) {
+        this.url = url;
+
+        CrawljaxConfigurationBuilder builder = createCrawlerConfigurationBuilder();
+        builder.addPlugin(plugins);
+
+        return new CrawljaxRunner(builder.build());
+    }
+
+    private CrawljaxConfigurationBuilder createCrawlerConfigurationBuilder() {
+        CrawljaxConfigurationBuilder builder = builderFor(this.url);
+        crawlerConfigureBuilder(builder);
+        return builder;
+    }
+
+    private void crawlerConfigureBuilder(CrawljaxConfigurationBuilder builder) {
+        BrowserConfiguration browserConfig = new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1);
+        browserConfig.setHeadless(this.isHeadLess);
+        builder.setBrowserConfig(browserConfig);
+        builder.setMaximumDepth(this.depth);
+        builder.crawlRules().insertRandomDataInInputForms(false);
+        // the State、Time is unlimited
+        builder.setUnlimitedStates();
+        builder.setUnlimitedRuntime();
+        // event and url wait time is 0 second
+        builder.crawlRules().waitAfterEvent(this.eventWaitingTime, TimeUnit.MILLISECONDS);
+        builder.crawlRules().waitAfterReloadUrl(this.pageWaitingTime, TimeUnit.MILLISECONDS);
+        // Click Rules
+        builder.crawlRules().clickDefaultElements();
+        builder.crawlRules().clickOnce(false);
+        // set Crawler Configuration
+        builder.setDQNLearningMode(false);
+        builder.setWrapUninteractiveElement(wrapElement);
+        // set CrawlOverView Plugin
+        if (isRecord)
+            builder.addPlugin(createCrawlOverViewPlugin());
+
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
     }
 
     public void setWrapElementMode(boolean wrapElement) {
@@ -60,18 +104,17 @@ public class CrawlJaxRunnerFactory {
         this.pageWaitingTime = pageWaitingTime;
     }
 
-    private CrawljaxConfigurationBuilder createCrawlJaxBuilder() {
+    private CrawljaxConfigurationBuilder createAgentCrawlJaxBuilder() {
         CrawljaxConfigurationBuilder builder = builderFor(this.url);
-        configureBuilder(builder);
+        agentConfigureBuilder(builder);
         return builder;
     }
-    private void configureBuilder(CrawljaxConfigurationBuilder builder) {
+    private void agentConfigureBuilder(CrawljaxConfigurationBuilder builder) {
         BrowserConfiguration browserConfig = new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1);
         browserConfig.setHeadless(this.isHeadLess);
         builder.setBrowserConfig(browserConfig);
         // the crawling Depth、State、Time is unlimited
-//        builder.setUnlimitedCrawlDepth();
-        builder.setMaximumDepth(4);
+        builder.setUnlimitedCrawlDepth();
         builder.setUnlimitedStates();
         builder.setUnlimitedRuntime();
         // event and url wait time is 0 second
@@ -81,13 +124,13 @@ public class CrawlJaxRunnerFactory {
         builder.crawlRules().clickDefaultElements();
         builder.crawlRules().clickOnce(false);
         // set Crawler Configuration
-        builder.setDQNLearningMode(false);
+        builder.setDQNLearningMode(true);
         builder.setWrapUninteractiveElement(wrapElement);
         // set CrawlOverView Plugin
         if (isRecord)
             builder.addPlugin(createCrawlOverViewPlugin());
         // set DQN Mode
-//        builder.addPlugin(createDQNPlugin());
+        builder.addPlugin(createDQNPlugin());
     }
 
     private DQNLearningModePlugin createDQNPlugin() {

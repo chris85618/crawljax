@@ -12,7 +12,7 @@ public class CrawlJaxRunnerFactoryTest {
     public void createCrawlJaxRunner() {
         CrawlJaxRunnerFactory crawlJaxRunnerFactory = new CrawlJaxRunnerFactory();
         CrawljaxRunner crawljaxRunner = crawlJaxRunnerFactory
-                .createCrawlJaxRunner("", new WaitingLock());
+                .createAgentCrawlJaxRunner("", new WaitingLock());
         assertTrue(crawljaxRunner instanceof CrawljaxRunner);
     }
 }

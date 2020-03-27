@@ -54,6 +54,10 @@ public class StateMachine {
 		        comparatorStrippedDom);
 	}
 
+	public void setCurrentState(StateVertex curState) {
+		this.currentState = curState;
+	}
+
 	/**
 	 * Change the currentState to the nextState if possible. The next state should already be
 	 * present in the graph.

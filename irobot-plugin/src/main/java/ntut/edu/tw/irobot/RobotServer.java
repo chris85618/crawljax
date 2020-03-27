@@ -102,7 +102,7 @@ public class RobotServer {
     }
 
     private void performCrawlJax(String url) {
-        this.crawlJaxRunner = factory.createCrawlJaxRunner(url, this.waitingLock);
+        this.crawlJaxRunner = factory.createAgentCrawlJaxRunner(url, this.waitingLock);
 
         this.crawler = this.executorService.submit(this.crawlJaxRunner);
 

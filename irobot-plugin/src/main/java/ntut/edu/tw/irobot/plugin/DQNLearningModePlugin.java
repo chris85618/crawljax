@@ -37,7 +37,7 @@ import javax.xml.xpath.XPathExpressionException;
 
 public class DQNLearningModePlugin implements PreStateCrawlingPlugin,
 		OnFireEventFailedPlugin, AfterReceiveRobotActionPlugin,
-		OnNewFoundStatePlugin, OnRestartCrawlingStatePlugin, OnHtmlAttributeFilteringPlugin {
+		OnNewFoundStatePlugin, OnRevisitStateWithExtractElementPlugin, OnHtmlAttributeFilteringPlugin {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DQNLearningModePlugin.class);
 
 	private CrawlingInformation crawlingInformation;
