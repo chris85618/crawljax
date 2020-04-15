@@ -123,8 +123,8 @@ public class Crawler {
 		context.setStateMachine(stateMachine);
 		crawlpath = new CrawlPath();
 		context.setCrawlPath(crawlpath);
-		browser.goToUrl(url);
 		plugins.runOnUrlLoadPlugins(context);
+		browser.goToUrl(url);
 		crawlDepth.set(0);
 	}
 
@@ -238,11 +238,14 @@ public class Crawler {
 			// check the current state is in graph
 			if (findState.size() == 0) {
 				LOG.info("Current State is not in graph, keep crawling another candidate element");
-				throw new StateUnreachableException(targetState, "");
+				throw new StateUnreachableException(targetState, "Current State is not in graph");
 			}
 
 			// check current state is target state, if yes then return current state
 			currentState = findState.get(0);
+			int depth = shortestPathTo(context.getSession().getInitialState(), currentState).size();
+			crawlDepth.set(depth);
+			plugins.runOnCountingDepthPlugins(currentState, crawlDepth);
 			stateMachine.setCurrentState(currentState);
 			if (currentState.equals(targetState)) {
 				LOG.info("Target state is arrived, keep firing unfired candidate element");
@@ -253,7 +256,7 @@ public class Crawler {
 			ImmutableList<Eventable> path = shortestPathTo(currentState, targetState);
 			if (path.isEmpty()) {
 				LOG.info("Current state is in graph, but current state can not go to target state, try another candidate element");
-				throw new StateUnreachableException(targetState, "");
+				throw new StateUnreachableException(targetState, "Current state is in graph, but current state can not go to target state, try another candidate element");
 			}
 
 			try {
@@ -574,10 +577,10 @@ public class Crawler {
 //			System.out.println("now depth : " + depth);
 //			System.out.println("==========================================");
 			LOG.info("New DOM is a new state! crawl depth is now {}", depth);
-			if (maxDepth <= depth) {
-				LOG.debug("Maximum depth achived. Not crawling this state any further");
-			} else {
+			if (maxDepth >= depth || maxDepth == 0) {
 				parseCurrentPageForCandidateElements();
+			} else {
+				LOG.debug("Maximum depth achived. Not crawling this state any further");
 			}
 		} else {
 			LOG.debug("New DOM is a clone state. Continuing in that state.");
@@ -652,8 +655,8 @@ public class Crawler {
 			browser.goToUrl(basicAuthUrl);
 		}
 
-		browser.goToUrl(url);
 		plugins.runOnUrlLoadPlugins(context);
+		browser.goToUrl(url);
 		// TODO: when index need to unify the dom, need to add value attribute for learning
 		StateVertex index =
 		        vertexFactory.createIndex(url.toString(), browser.getStrippedDom(),

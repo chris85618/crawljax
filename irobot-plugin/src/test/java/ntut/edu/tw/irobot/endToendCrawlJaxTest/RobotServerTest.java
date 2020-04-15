@@ -3,6 +3,7 @@ package ntut.edu.tw.irobot.endToendCrawlJaxTest;
 import ntut.edu.tw.irobot.CrawlingInformation;
 import ntut.edu.tw.irobot.RobotServer;
 import ntut.edu.tw.irobot.WebSnapShot;
+import ntut.edu.tw.irobot.action.Action;
 import ntut.edu.tw.irobot.lock.WaitingLock;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -155,7 +156,6 @@ public class RobotServerTest {
     }
 
     private void assertCurrentUrl(String url) {
-        executeAction(3, "10");
         WebSnapShot webSnapShot = robotServer.getWebSnapShot();
         assertEquals(url, webSnapShot.getState().getUrl());
     }

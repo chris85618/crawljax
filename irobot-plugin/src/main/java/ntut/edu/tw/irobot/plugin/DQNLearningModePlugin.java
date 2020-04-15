@@ -35,9 +35,9 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.xpath.XPathExpressionException;
 
-public class DQNLearningModePlugin implements PreStateCrawlingPlugin,
-		OnFireEventFailedPlugin, AfterReceiveRobotActionPlugin,
-		OnNewFoundStatePlugin, OnRevisitStateWithExtractElementPlugin, OnHtmlAttributeFilteringPlugin {
+public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEventFailedPlugin,
+		AfterReceiveRobotActionPlugin, OnNewFoundStatePlugin,
+		OnRevisitStateWithExtractElementPlugin, OnHtmlAttributeFilteringPlugin {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DQNLearningModePlugin.class);
 
 	private CrawlingInformation crawlingInformation;
