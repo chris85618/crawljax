@@ -39,8 +39,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlugin, OnCountingDepthPlugin,
-                                        PreStateCrawlingPlugin, PostCrawlingPlugin, OnHtmlAttributeFilteringPlugin {
+                                        PreStateCrawlingPlugin, PostCrawlingPlugin, OnHtmlAttributeFilteringPlugin,
+                                        OnUrlLoadPlugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(AIGuidePlugin.class);
+    private final ServerInstanceManagement serverInstanceManagement;
     private EmbeddedBrowser browser = null;
     private Map<String, Map<String, List<String>>> variableElementList = new HashMap<>();
     private List<StateVertex> inputStates = new LinkedList<>();
@@ -61,12 +63,12 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     private State targetState;
     private StateVertex lastState = null;
     private boolean isDirectiveProcess = false;
-
     private StateFlowGraph stateFlowGraph;
 
-    public AIGuidePlugin(Stack<State> directivePath) {
+    public AIGuidePlugin(Stack<State> directivePath, ServerInstanceManagement serverInstanceManagement) {
         this.directivesStack = directivePath;
         this.targetState = getTopOfDirective();
+        this.serverInstanceManagement = serverInstanceManagement;
         createVariableElementsList();
     }
 
@@ -300,22 +302,32 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         stateFlowGraph = session.getStateFlowGraph();
     }
 
+    @Override
+    public void onUrlLoad(CrawlerContext context) {
+        // TODO: Need remember coverage
+        serverInstanceManagement.recordCoverage();
+        LOGGER.debug("Resetting ServerInstance...");
+        serverInstanceManagement.closeServerInstance();
+        serverInstanceManagement.createServerInstance();
+        LOGGER.debug("Resetting ServerInstance complete, keep crawling new state");
+    }
+
     public StateFlowGraph getStateFlowGraph() {
         return stateFlowGraph;
     }
 
-    public List<Pair<String, List<Action>>> getActionSequenceSet() {
-        List<Pair<String, List<Action>>> result = new LinkedList<>();
+    public List<Pair<String, List<List<Action>>>> getActionSequenceSet() {
+        List<Pair<String, List<List<Action>>>> result = new LinkedList<>();
         StateVertex index = stateFlowGraph.getInitialState();
         if (directiveStateVertexComparisonTable.size() == 0) {
             for (StateVertex inputPage : inputStates) {
-                List<Action> actionSequence = getTwoStateEventPath(index, inputPage);
+                List<List<Action>> actionSequence = getTwoStateEventPath(index, inputPage);
                 LOGGER.debug("Now action sequence are {}", actionSequence);
                 result.add(new Pair<>(String.valueOf(inputPage.getDom().hashCode()), actionSequence));
             }
         } else {
             LOGGER.debug("The last state is {}", lastState);
-            List<Action> indexToLastDirectiveEventPath = getTheEventPathBetweenEachDirectiveToLastDirective();
+            List<List<Action>> indexToLastDirectiveEventPath = getTheEventPathBetweenEachDirectiveToLastDirective();
             LOGGER.debug("Index to last state path are {}", indexToLastDirectiveEventPath);
 
             for (StateVertex inputPage : inputStates) {
@@ -327,11 +339,11 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         return result;
     }
 
-    private void addLastDirectiveToInputPagePathToResult(List<Pair<String, List<Action>>> result, StateVertex inputPage, List<Action> indexToLastDirectiveEventPath) {
+    private void addLastDirectiveToInputPagePathToResult(List<Pair<String, List<List<Action>>>> result, StateVertex inputPage, List<List<Action>> indexToLastDirectiveEventPath) {
         ImmutableList<Eventable> eventPath = stateFlowGraph.getShortestPath(lastState, inputPage);
         if (eventPath.size() != 0) {
             LOGGER.info("Last state can go to input page {}", inputPage);
-            List<Action> completePath = mergeTwoPath(indexToLastDirectiveEventPath, convertToActionList(eventPath));
+            List<List<Action>> completePath = mergeTwoPath(indexToLastDirectiveEventPath, convertToActionList(eventPath));
             result.add(new Pair<>(String.valueOf(inputPage.getDom().hashCode()), completePath));
         }
         else {
@@ -339,13 +351,13 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         }
     }
 
-    private List<Action> getTheEventPathBetweenEachDirectiveToLastDirective() {
+    private List<List<Action>> getTheEventPathBetweenEachDirectiveToLastDirective() {
         Pair<State, StateVertex> directivePair = directiveStateVertexComparisonTable.poll();
         StateVertex lastState = directivePair.getValue();
         StateVertex root = stateFlowGraph.getInitialState();
 
 
-        List<Action> actionSequence = new LinkedList<>(getTwoStateEventPath(root, lastState));
+        List<List<Action>> actionSequence = new LinkedList<>(getTwoStateEventPath(root, lastState));
 
         while(!directiveStateVertexComparisonTable.isEmpty()) {
             directivePair = directiveStateVertexComparisonTable.poll();
@@ -355,7 +367,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         return actionSequence;
     }
 
-    private List<Action> getTwoStateEventPath(StateVertex firstState, StateVertex secondState) {
+    private List<List<Action>> getTwoStateEventPath(StateVertex firstState, StateVertex secondState) {
         if (stateFlowGraph.canGoTo(firstState, secondState)) {
             ImmutableList<Eventable> eventPath = stateFlowGraph.getShortestPath(firstState, secondState);
             return convertToActionList(eventPath);
@@ -364,20 +376,21 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         }
     }
 
-    private List<Action> mergeTwoPath(List<Action> firstPath, List<Action> secondPath) {
-        List<Action> result = new LinkedList<>(firstPath);
+    private List<List<Action>> mergeTwoPath(List<List<Action>> firstPath, List<List<Action>> secondPath) {
+        List<List<Action>> result = new LinkedList<>(firstPath);
         result.addAll(secondPath);
         return result;
     }
 
-    private List<Action> convertToActionList(ImmutableList<Eventable> eventPath) {
-        List<Action> actionSequence = new ArrayList<>(eventPath.size());
+    private List<List<Action>> convertToActionList(ImmutableList<Eventable> eventPath) {
+        List<List<Action>> highLevelActions = new ArrayList<>(eventPath.size());
         for (Eventable event : eventPath) {
             if (event.getEventType() == Eventable.EventType.click) {
                 String xpath = event.getIdentification().getValue();
                 String value = "";
-                actionSequence.add(new Action(xpath, value));
+                highLevelActions.add(Collections.singletonList(new Action(xpath, value)));
             } else if (event.getEventType() == Eventable.EventType.input) {
+                List<Action> actionSequence = new ArrayList<>(eventPath.size());
                 List<FormInput> formInputs = event.getRelatedFormInputs();
                 for (FormInput formInput : formInputs) {
                     if (formInput.getInputValues().size() == 0)
@@ -386,8 +399,9 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                     String value = formInput.getInputValues().iterator().next().getValue();
                     actionSequence.add(new Action(xpath, value));
                 }
+                highLevelActions.add(actionSequence);
             }
         }
-        return actionSequence;
+        return highLevelActions;
     }
 }

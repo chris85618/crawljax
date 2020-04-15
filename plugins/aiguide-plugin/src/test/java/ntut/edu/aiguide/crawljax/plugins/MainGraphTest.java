@@ -4,7 +4,6 @@ import com.crawljax.core.ExitNotifier;
 import com.crawljax.core.state.*;
 import org.junit.Before;
 import org.junit.Test;
-import sun.applet.Main;
 
 import static org.junit.Assert.*;
 

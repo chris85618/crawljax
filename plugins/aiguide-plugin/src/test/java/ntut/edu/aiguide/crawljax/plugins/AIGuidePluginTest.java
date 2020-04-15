@@ -23,7 +23,7 @@ public class AIGuidePluginTest {
     @Before
     public void setUp() throws Exception {
         Stack<State> directives = generateFakeDirectives();
-        aiGuidePlugin = new AIGuidePlugin(directives);
+        aiGuidePlugin = new AIGuidePlugin(directives, null);
     }
 
     private Stack<State> generateFakeDirectives() {
