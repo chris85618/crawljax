@@ -510,6 +510,9 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 			case hover:
 				LOGGER.info("Eventype hover called but this isnt implemented yet");
 				break;
+			case input:
+				LOGGER.info("Eventype input called and do nothing...");
+				return true;
 			default:
 				LOGGER.info("EventType {} not supported in WebDriver.", eventable.getEventType());
 				return false;
@@ -1144,6 +1147,11 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 		} catch (WebDriverException e) {
 			throw wrapWebDriverExceptionIfConnectionException(e);
 		}
+	}
+
+	@Override
+	public void deleteAllCookies() {
+		browser.manage().deleteAllCookies();
 	}
 
 	private void removeCanvasGeneratedByFirefoxDriverForScreenshots() {

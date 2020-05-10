@@ -2,19 +2,14 @@ package ntut.edu.tw.irobot;
 
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.crawljax.core.CandidateElement;
-import com.google.common.collect.ImmutableList;
 import ntut.edu.tw.irobot.action.Action;
-import ntut.edu.tw.irobot.state.State;
 
 
 public class CrawlingInformation {
@@ -103,7 +98,7 @@ public class CrawlingInformation {
      */
     public Map<CandidateElement, String> getTargetElements() {
         LOGGER.info("Get the target elements value Map...");
-        return targetActions;
+        return new HashMap<>(targetActions);
     }
 
     /**

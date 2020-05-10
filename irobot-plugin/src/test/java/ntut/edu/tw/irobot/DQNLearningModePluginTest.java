@@ -12,7 +12,7 @@ import java.nio.file.Paths;
 import static org.junit.Assert.assertEquals;
 
 public class DQNLearningModePluginTest {
-    private static DQNLearningModePlugin dqnPlugin = new DQNLearningModePlugin(new WaitingLock());
+    private static DQNLearningModePlugin dqnPlugin = new DQNLearningModePlugin(new WaitingLock(), 3000);
 
     @Test
     public void filterDom() {

@@ -4,6 +4,12 @@
       "url": "http://test_data",
       "element": "/HTML[1]/BODY[1]/DIV[1]/INPUT[1]",
       "attribute": "id"
+    },
+    {
+      "state": "login",
+      "url": "http://localhost:3000/login/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[3]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[3]/DIV[1]/DIV[2]/DIV[1]/INPUT[1]",
+      "attribute": "value"
     }
   ]
 }

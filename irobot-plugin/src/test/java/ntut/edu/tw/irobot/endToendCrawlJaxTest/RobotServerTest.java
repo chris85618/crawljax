@@ -11,9 +11,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import javax.swing.plaf.synth.SynthTextAreaUI;
+import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -136,9 +135,9 @@ public class RobotServerTest {
 
     private void executeAction(int actionIndex, String value) {
         WebSnapShot webSnapShot = robotServer.getWebSnapShot();
+//        webSnapShot.getActions().forEach(element -> System.out.println(String.valueOf(webSnapShot.getActions().indexOf(element)) + " : " + element));
         robotServer.executeAction(webSnapShot.getActions().get(actionIndex), value);
     }
-
 
     @Test
     public void GivenURLWhenSendSignalToServiceThenResponseOfCrawlJaxIsCorrect() {
@@ -178,6 +177,19 @@ public class RobotServerTest {
 
         ArrayList<String> threadSequence = decorator.getThreadSequence();
         assertThat(threadSequence, satisfyInteractionOrder(FIVE_TIMES));
+    }
+
+    @Test
+    public void GiveTwoInputAndWillInputCorrectly() {
+        WebSnapShot webSnapShot = robotServer.getWebSnapShot();
+        Map<Action, String> actions = new HashMap<>();
+        actions.put(webSnapShot.getActions().get(2), "test@test.com");
+        actions.put(webSnapShot.getActions().get(3), "10");
+        robotServer.executeActions(actions);
+
+        executeAction(1, "");
+
+        assertCurrentUrl("http://localhost:8888/view/concept.html?");
     }
 
     @Test

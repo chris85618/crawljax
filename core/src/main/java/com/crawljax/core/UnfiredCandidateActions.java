@@ -139,11 +139,20 @@ public class UnfiredCandidateActions {
 	 *            The state you are in.
 	 */
 	public void addActions(ImmutableList<CandidateElement> extract, StateVertex currentState) {
+		List<CandidateCrawlAction> actions = createCandidateCrawlActionList(extract);
+		addActions(actions, currentState);
+	}
+
+	private List<CandidateCrawlAction> createCandidateCrawlActionList(ImmutableList<CandidateElement> extract) {
 		List<CandidateCrawlAction> actions = new ArrayList<>(extract.size());
 		for (CandidateElement candidateElement : extract) {
-			actions.add(new CandidateCrawlAction(candidateElement, EventType.click));
+			String tagName = candidateElement.getElement().getTagName();
+			if (tagName.equalsIgnoreCase("input") || tagName.equalsIgnoreCase("text"))
+				actions.add(new CandidateCrawlAction(candidateElement, EventType.input));
+			else
+				actions.add(new CandidateCrawlAction(candidateElement, EventType.click));
 		}
-		addActions(actions, currentState);
+		return actions;
 	}
 
 	/**
@@ -189,14 +198,7 @@ public class UnfiredCandidateActions {
 	public void setActions(ImmutableList<CandidateElement> extract, StateVertex currentState) {
 		LOG.debug("In Leaning Mode...");
 		LOG.info("This part is for learning part, will reconstruct the order in cache.");
-		List<CandidateCrawlAction> actions = new ArrayList<>(extract.size());
-		for (CandidateElement candidateElement : extract) {
-			String tagName = candidateElement.getElement().getTagName();
-			if (tagName.equalsIgnoreCase("input") || tagName.equalsIgnoreCase("text"))
-				actions.add(new CandidateCrawlAction(candidateElement, EventType.input));
-			else
-				actions.add(new CandidateCrawlAction(candidateElement, EventType.click));
-		}
+		List<CandidateCrawlAction> actions = createCandidateCrawlActionList(extract);
 		setActions(actions, currentState);
 	}
 

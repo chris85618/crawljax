@@ -8,8 +8,6 @@ import com.crawljax.core.configuration.BrowserConfiguration;
 import com.crawljax.core.configuration.CrawljaxConfiguration.CrawljaxConfigurationBuilder;
 import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.Plugin;
-import com.crawljax.core.plugin.descriptor.Parameter;
-import com.crawljax.core.plugin.descriptor.PluginDescriptor;
 import com.crawljax.plugins.crawloverview.CrawlOverview;
 import ntut.edu.tw.irobot.fs.WorkDirManager;
 import ntut.edu.tw.irobot.lock.WaitingLock;
@@ -17,8 +15,9 @@ import ntut.edu.tw.irobot.plugin.DQNLearningModePlugin;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.crawljax.core.configuration.CrawljaxConfiguration.builderFor;
 
@@ -27,14 +26,18 @@ public class CrawlJaxRunnerFactory {
     private String url;
     private WaitingLock waitingLock;
     private int depth = 0;
+    private int serverPort;
     private long pageWaitingTime = 1;
     private long eventWaitingTime = 1;
     private boolean isRecord = false;
     private boolean isHeadLess = false;
     private boolean wrapElement = false;
+    private boolean clickOnce = false;
 
     public CrawljaxRunner createAgentCrawlJaxRunner(String url, WaitingLock waitingLock) {
         this.url = url;
+        getServerPort(url);
+
         this.waitingLock = waitingLock;
 
         CrawljaxConfigurationBuilder builder = createAgentCrawlJaxBuilder();
@@ -43,11 +46,19 @@ public class CrawlJaxRunnerFactory {
 
     public CrawljaxRunner createCrawlerCrawlJaxRunner(String url, Plugin... plugins) {
         this.url = url;
+        getServerPort(url);
 
         CrawljaxConfigurationBuilder builder = createCrawlerConfigurationBuilder();
         builder.addPlugin(plugins);
 
         return new CrawljaxRunner(builder.build());
+    }
+
+    private void getServerPort(String url) {
+        Pattern pattern = Pattern.compile("(https?://.*):(\\d*)\\/?(.*)");
+        Matcher matcher = pattern.matcher(url);
+        matcher.find();
+        this.serverPort = Integer.parseInt(matcher.group(2));
     }
 
     private CrawljaxConfigurationBuilder createCrawlerConfigurationBuilder() {
@@ -70,7 +81,7 @@ public class CrawlJaxRunnerFactory {
         builder.crawlRules().waitAfterReloadUrl(this.pageWaitingTime, TimeUnit.MILLISECONDS);
         // Click Rules
         builder.crawlRules().clickDefaultElements();
-        builder.crawlRules().clickOnce(false);
+        builder.crawlRules().clickOnce(clickOnce);
         // set Crawler Configuration
         builder.setDQNLearningMode(false);
         builder.setWrapUninteractiveElement(wrapElement);
@@ -78,6 +89,10 @@ public class CrawlJaxRunnerFactory {
         if (isRecord)
             builder.addPlugin(createCrawlOverViewPlugin());
 
+    }
+
+    public void setClickOnce(boolean clickOnce) {
+        this.clickOnce = clickOnce;
     }
 
     public void setDepth(int depth) {
@@ -109,6 +124,7 @@ public class CrawlJaxRunnerFactory {
         agentConfigureBuilder(builder);
         return builder;
     }
+
     private void agentConfigureBuilder(CrawljaxConfigurationBuilder builder) {
         BrowserConfiguration browserConfig = new BrowserConfiguration(EmbeddedBrowser.BrowserType.CHROME, 1);
         browserConfig.setHeadless(this.isHeadLess);
@@ -122,7 +138,7 @@ public class CrawlJaxRunnerFactory {
         builder.crawlRules().waitAfterReloadUrl(this.pageWaitingTime, TimeUnit.MILLISECONDS);
         // Click Rules
         builder.crawlRules().clickDefaultElements();
-        builder.crawlRules().clickOnce(false);
+        builder.crawlRules().clickOnce(clickOnce);
         // set Crawler Configuration
         builder.setDQNLearningMode(true);
         builder.setWrapUninteractiveElement(wrapElement);
@@ -130,18 +146,7 @@ public class CrawlJaxRunnerFactory {
         if (isRecord)
             builder.addPlugin(createCrawlOverViewPlugin());
         // set DQN Mode
-        builder.addPlugin(createDQNPlugin());
-    }
-
-    private DQNLearningModePlugin createDQNPlugin() {
-        PluginDescriptor descriptor = PluginDescriptor.forPlugin(DQNLearningModePlugin.class);
-        Map<String, String> parameters = new HashMap<>();
-
-        for(Parameter parameter : descriptor.getParameters()) {
-            parameters.put(parameter.getId(), "DQN Plugin");
-        }
-
-        return new DQNLearningModePlugin(waitingLock);
+        builder.addPlugin(new DQNLearningModePlugin(waitingLock, serverPort));
     }
 
     private CrawlOverview createCrawlOverViewPlugin() {

@@ -217,7 +217,10 @@ public class InMemoryStateFlowGraph implements Serializable, StateFlowGraph {
 	public ImmutableList<Eventable> getShortestPath(StateVertex start, StateVertex end) {
 		readLock.lock();
 		try {
-			return ImmutableList.copyOf(DijkstraShortestPath.findPathBetween(sfg, start, end));
+			List<Eventable> eventPath = DijkstraShortestPath.findPathBetween(sfg, start, end);
+			if (eventPath == null)
+				return ImmutableList.copyOf(Collections.emptyList());
+			return ImmutableList.copyOf(eventPath);
 		} finally {
 			readLock.unlock();
 		}

@@ -577,7 +577,7 @@ public class Crawler {
 //			System.out.println("now depth : " + depth);
 //			System.out.println("==========================================");
 			LOG.info("New DOM is a new state! crawl depth is now {}", depth);
-			if (maxDepth >= depth || maxDepth == 0) {
+			if (maxDepth > depth || maxDepth == 0) {
 				parseCurrentPageForCandidateElements();
 			} else {
 				LOG.debug("Maximum depth achived. Not crawling this state any further");
@@ -658,9 +658,10 @@ public class Crawler {
 		plugins.runOnUrlLoadPlugins(context);
 		browser.goToUrl(url);
 		// TODO: when index need to unify the dom, need to add value attribute for learning
+		String strippedDom = plugins.runOnNewFoundStatePlugins(browser.getStrippedDom());
+		String comparatorStrippedDom = stateComparator.getStrippedDom(browser, strippedDom);
 		StateVertex index =
-		        vertexFactory.createIndex(url.toString(), browser.getStrippedDom(),
-		                stateComparator.getStrippedDom(browser, browser.getStrippedDom()));
+		        vertexFactory.createIndex(url.toString(), strippedDom, comparatorStrippedDom);
 		Preconditions.checkArgument(index.getId() == StateVertex.INDEX_ID,
 		        "It seems some the index state is crawled more than once.");
 

@@ -9,6 +9,8 @@ import ntut.edu.tw.irobot.action.Action;
 import ntut.edu.tw.irobot.state.State;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class InformationDecorator extends CrawlingInformation {
     private CrawlingInformation infoDecorator;
@@ -71,6 +73,28 @@ public class InformationDecorator extends CrawlingInformation {
     public void setTargetAction(Action action, String value) {
         this.infoDecorator.setTargetAction(action, value);
     }
+
+    /**
+     * This step will convert Action to CandidateElement
+     *
+     * @param actions
+     *          The target actions which iRobot assigned
+     */
+    @Override
+    public void setTargetActions(Map<Action, String> actions) {
+        this.infoDecorator.setTargetActions(actions);
+    }
+
+    /**
+     * @return targetActions
+     *          The Map of target and value, which target action which has been transfer to {@link com.crawljax.core.CandidateElement}
+     *
+     */
+    @Override
+    public Map<CandidateElement, String> getTargetElements() {
+        return this.infoDecorator.getTargetElements();
+    }
+
 
     /**
      * @return targetAction

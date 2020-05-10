@@ -17,16 +17,17 @@ import org.openqa.selenium.WebElement;
  */
 public interface EmbeddedBrowser {
 
+
+
 	/**
 	 * Browser types.
 	 */
 	public enum BrowserType {
-		FIREFOX, INTERNET_EXPLORER, CHROME, REMOTE, PHANTOMJS, JBD
+		FIREFOX, INTERNET_EXPLORER, CHROME, REMOTE, PHANTOMJS, JBD;
 	}
-
 	/**
 	 * Opens the url in the browser.
-	 * 
+	 *
 	 * @param url
 	 *            the URL.
 	 */
@@ -34,7 +35,7 @@ public interface EmbeddedBrowser {
 
 	/**
 	 * fires the event.
-	 * 
+	 *
 	 * @param event
 	 *            the event.
 	 * @return if fails.
@@ -44,14 +45,14 @@ public interface EmbeddedBrowser {
 
 	/**
 	 * Removes the stripped items from {@link PreCrawlConfiguration#getFilterAttributeNames()}.
-	 * 
+	 *
 	 * @return the DOM string with all the iframe content.
 	 */
 	String getStrippedDom();
 
 	/**
 	 * Removes the stripped items from {@link PreCrawlConfiguration#getFilterAttributeNames()}.
-	 * 
+	 *
 	 * @return The dom without any elements stripped.
 	 * @see WebDriver#getPageSource()
 	 */
@@ -97,7 +98,7 @@ public interface EmbeddedBrowser {
 
 	/**
 	 * Execute JavaScript in the browser.
-	 * 
+	 *
 	 * @param script
 	 *            The script to execute.
 	 * @return The JavaScript return object.
@@ -108,7 +109,7 @@ public interface EmbeddedBrowser {
 
 	/**
 	 * Checks if an element is visible.
-	 * 
+	 *
 	 * @param identification
 	 *            identification to use.
 	 * @return true if the element is visible.
@@ -172,4 +173,8 @@ public interface EmbeddedBrowser {
 	 */
 	byte[] getScreenShot() throws CrawljaxException;
 
+	/**
+	 * Delete all cookies
+	 */
+	void deleteAllCookies();
 }

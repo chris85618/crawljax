@@ -9,11 +9,13 @@ import com.crawljax.core.configuration.ProxyConfiguration.ProxyType;
 import com.crawljax.core.configuration.UnexpectedAlertHandler;
 import com.crawljax.core.plugin.Plugins;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 import com.machinepublishers.jbrowserdriver.JBrowserDriver;
 import com.machinepublishers.jbrowserdriver.ProxyConfig;
 import com.machinepublishers.jbrowserdriver.Settings;
 
+import javafx.stage.DirectoryChooser;
 import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.UnexpectedAlertBehaviour;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -26,6 +28,12 @@ import org.openqa.selenium.phantomjs.PhantomJSDriverService;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.function.BiConsumer;
 
 /**
  * Default implementation of the EmbeddedBrowserBuilder based on Selenium WebDriver API.
@@ -138,6 +146,7 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 			options.addPreference("network.proxy.no_proxies_on", "");
 		}
 		options.addArguments("--whitelisted-ips=\"\"");
+		options.addPreference("network.protocol-handler.warn-external-default", false);
 //		options.addArguments("--disable-popup-blocking");
 
 		if (configuration.getBrowserConfig().isHeadless()) {
@@ -172,6 +181,10 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 
 		optionsChrome.addArguments("--whitelisted-ips=\"\"");
 		optionsChrome.addArguments("--disable-popup-blocking");
+		Map<String, Boolean> protocolBlockMap = new Hashtable<>();
+		protocolBlockMap.put("webcal", false);
+		protocolBlockMap.put("mailto", false);
+		optionsChrome.setExperimentalOption("prefs", ImmutableMap.of("protocol_handler", ImmutableMap.of("excluded_schemes", protocolBlockMap)));
 
 		ChromeDriver driverChrome = new ChromeDriver(optionsChrome);
 		driverChrome.manage().window().maximize();

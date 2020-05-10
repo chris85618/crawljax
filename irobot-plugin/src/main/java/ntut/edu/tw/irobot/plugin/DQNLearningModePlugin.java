@@ -46,13 +46,14 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	private boolean isExecuteSuccess;
 	private EmbeddedBrowser browser;
 	private Map<String, Map<String, List<String>>> variableElementList = new HashMap<>();
+	private final int serverPort;
 
-
-	public DQNLearningModePlugin(WaitingLock waitingLock) {
+	public DQNLearningModePlugin(WaitingLock waitingLock, int serverPort) {
         this.waitingLock =  waitingLock;
         this.crawlingInformation = null;
         this.isRestart = false;
         this.isExecuteSuccess = true;
+        this.serverPort = serverPort;
 		createVariableElementsList();
 	}
 
@@ -70,6 +71,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 			JsonArray VEJson = ((JsonObject) jsonParser.parse(new FileReader(veList.getAbsoluteFile()))).getAsJsonArray("variableList");
 			for(JsonElement jsonElement : VEJson) {
 				String url = jsonElement.getAsJsonObject().get("url").getAsString();
+				url = String.format(url, serverPort);
 
 				Map<String, List<String>> elementPair;
 				if (variableElementList.get(url) != null)
@@ -312,6 +314,11 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		for(int i = 0; i < inputNodes.getLength(); i++) {
 			// get the value from current page, not from stripped dom
 			String xpathExpr = XPathHelper.getXPathExpression(inputNodes.item(i));
+			String url = browser.getCurrentUrl();
+			Map<String, List<String>> variableList = variableElementList.get(url);
+			if (isElementCanSkipAddValue(xpathExpr, variableList))
+				continue;
+
 			Identification item = new Identification(Identification.How.xpath, xpathExpr);
 			WebElement element = browser.getWebElement(item);
 			String value = element.getAttribute("value");
@@ -321,6 +328,34 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 
 			((org.w3c.dom.Element) inputNodes.item(i)).setAttribute("value", value);
 		}
+	}
+
+	private boolean isElementCanSkipAddValue(String xpathExpr, Map<String, List<String>> variableList) {
+		if (isXpathSameAsTargetElementXpath(xpathExpr))
+			return false;
+
+		if (variableList == null)
+			return false;
+
+		for (String type : variableList.keySet())
+			if (variableList.get(type).contains(xpathExpr))
+				return true;
+
+		return false;
+	}
+
+	private boolean isXpathSameAsTargetElementXpath(String xpathExpr) {
+		CandidateElement targetElement = crawlingInformation.getTargetElement();
+		Map<CandidateElement, String> targetElements = crawlingInformation.getTargetElements();
+
+		if (targetElement != null)
+			return targetElement.getIdentification().getValue().equalsIgnoreCase(xpathExpr);
+
+		for (CandidateElement element : targetElements.keySet()) {
+			if (element.getIdentification().getValue().equalsIgnoreCase(xpathExpr))
+				return true;
+		}
+		return false;
 	}
 
 	/**
@@ -357,8 +392,9 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		for (String xpath : xpathList) {
 			try {
 				Element element = DomUtils.getElementByXpath(doc, xpath);
-				element.setAttribute(type, "");
-			} catch (XPathExpressionException e) {
+				element.removeAttribute(type);
+			} catch (XPathExpressionException | NullPointerException e) {
+				LOGGER.info("Can not find element with xpath: {}, keeping wrap other variable element...", xpath);
 				e.printStackTrace();
 			}
 		}

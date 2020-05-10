@@ -4,6 +4,11 @@
       "url": "http://test_data",
       "element": "/HTML[1]/BODY[1]/DIV[1]/INPUT[1]",
       "attribute": "id"
+    },
+    {
+      "url": "http://test_data",
+      "element": "/HTML[1]/BODY[1]/DIV[2]/INPUT[1]",
+      "attribute": "id"
     }
   ]
 }

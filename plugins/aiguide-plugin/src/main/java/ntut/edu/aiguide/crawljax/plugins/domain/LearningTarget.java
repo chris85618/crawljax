@@ -1,0 +1,28 @@
+package ntut.edu.aiguide.crawljax.plugins.domain;
+
+import java.util.List;
+
+public class LearningTarget {
+
+    private final String dom;
+    private final String targetURL;
+    private final List<List<Action>> actionSequence;
+
+    public LearningTarget(String dom, String targetURL, List<List<Action>> actionSet) {
+        this.dom = dom;
+        this.targetURL = targetURL;
+        this.actionSequence = actionSet;
+    }
+
+    public String getDom() {
+        return dom;
+    }
+
+    public String getTargetURL() {
+        return targetURL;
+    }
+
+    public List<List<Action>> getActionSequence() {
+        return actionSequence;
+    }
+}
