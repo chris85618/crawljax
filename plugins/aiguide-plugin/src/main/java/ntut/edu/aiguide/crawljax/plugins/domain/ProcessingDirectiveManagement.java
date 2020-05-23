@@ -1,103 +1,106 @@
 package ntut.edu.aiguide.crawljax.plugins.domain;
 
 import com.crawljax.core.state.StateVertex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class ProcessingDirectiveManagement {
-    private String firstDirectiveID;
-    private String secondDirectiveID;
-    private String targetDirectiveID;
-    private String lastTargetDirectiveID = "";
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessingDirectiveManagement.class);
+    private State firstDirectiveState;
+    private State targetDirectiveState;
+    private State lastTargetDirectiveState = null;
     private Stack<State> directiveStack;
     private Stack<State> processedDirectiveStack = new Stack<>();
     private Map<String, LinkedList<String>> directiveAppendStateNameMap = new HashMap<>();
+    private HashSet<StateVertex> processingState = new HashSet<>();
 
     public ProcessingDirectiveManagement(Stack<State> directivePath) {
         directiveStack = directivePath;
         // put the first directive
-        firstDirectiveID = getFirstDirectiveID();
-        secondDirectiveID = getNextDirectiveID();
-        targetDirectiveID = firstDirectiveID;
+        firstDirectiveState = getFirstDirectiveState();
+        targetDirectiveState = firstDirectiveState;
     }
 
-    private String getFirstDirectiveID() {
+    private State getFirstDirectiveState() {
         if (!directiveStack.isEmpty()) {
-            State firstDirective = directiveStack.pop();
-            return firstDirective.getID();
+            return directiveStack.pop();
         }
-        return "";
+        return null;
     }
 
 
     public boolean isCurrentStateIsDirective(String dom) {
+        if (targetDirectiveState == null)
+            return false;
+//        System.out.println("Current Dom hash is " + dom.hashCode());
+//        System.out.println("Target Dom hash is " + targetDirectiveState.getID());
         String currentDomHash = String.valueOf(dom.hashCode());
-        if (currentDomHash.equalsIgnoreCase(targetDirectiveID)) {
-            lastTargetDirectiveID = targetDirectiveID;
-            targetDirectiveID = getNextDirectiveID();
-            return true;
-        }
-        else if (targetDirectiveID.equalsIgnoreCase(firstDirectiveID) && currentDomHash.equalsIgnoreCase(secondDirectiveID)) {
-            lastTargetDirectiveID = secondDirectiveID;
-            targetDirectiveID = getNextDirectiveID();
+        if (currentDomHash.equalsIgnoreCase(targetDirectiveState.getID())) {
+            LOGGER.debug("Current state is same as directive {}", targetDirectiveState);
+            lastTargetDirectiveState = targetDirectiveState;
+            targetDirectiveState = getNextDirectiveState();
+            LOGGER.debug("lastTargetDirectiveState is {}", lastTargetDirectiveState);
+            LOGGER.debug("targetDirectiveState is {}", targetDirectiveState);
+
             return true;
         }
         return false;
     }
 
-    private String getNextDirectiveID() {
+    private State getNextDirectiveState() {
         if (!directiveStack.isEmpty()) {
             State state = directiveStack.pop();
             processedDirectiveStack.push(state);
-            return state.getID();
+            return state;
         }
-        return "";
+        return null;
     }
 
-    public void recordCurrentState(State targetState, StateVertex currentState) {
-        LinkedList<String> processingStateName = directiveAppendStateNameMap.get(targetState.getID());
+    public void recordCurrentState(StateVertex currentState) {
+        LinkedList<String> processingStateName = directiveAppendStateNameMap.get(lastTargetDirectiveState.getID());
         if (processingStateName == null) {
             processingStateName = new LinkedList<>();
             processingStateName.push(null);
-            directiveAppendStateNameMap.put(targetState.getID(), processingStateName);
+            directiveAppendStateNameMap.put(lastTargetDirectiveState.getID(), processingStateName);
         }
+        processingState.add(currentState);
         processingStateName.addFirst(currentState.getName());
     }
 
-    public void removeLastStateInRecordList(State targetState) {
-        LinkedList<String> processingStateName = directiveAppendStateNameMap.get(targetState.getID());
+    public void removeLastStateInRecordList() {
+        LinkedList<String> processingStateName = directiveAppendStateNameMap.get(lastTargetDirectiveState.getID());
         if (processingStateName == null)
             throw new RuntimeException("Something wrong when get the process directive...");
         processingStateName.removeFirst();
     }
 
     public String getAppendStateName() {
-        LinkedList<String> processingDirective = directiveAppendStateNameMap.get(lastTargetDirectiveID);
-        if (processingDirective == null)
+        LinkedList<String> processingDirective = directiveAppendStateNameMap.get(lastTargetDirectiveState.getID());
+        if (processingDirective == null) {
+            LOGGER.info("Get the append name from {}, is null...", lastTargetDirectiveState.getID());
             return null;
+        }
         String stateName = processingDirective.pollFirst();
         processingDirective.addLast(stateName);
+        LOGGER.info("Get the append name from {}, is {}", lastTargetDirectiveState.getID(), stateName);
         return stateName;
     }
 
-    public void resetTargetDirective() {
-        targetDirectiveID = this.firstDirectiveID;
-        lastTargetDirectiveID = "";
-        while (!processedDirectiveStack.isEmpty()) {
-            directiveStack.push(processedDirectiveStack.pop());
-        }
+    public List<Action> getProcessingStateNextActionSet() {
+        return lastTargetDirectiveState.getNextActionSet();
+    }
 
-        for (LinkedList<String> stateNameList : directiveAppendStateNameMap.values()) {
-            if (stateNameList.getLast() != null) {
-                while (true) {
-                    String stateName = stateNameList.pollFirst();
-                    if (stateName == null) {
-                        stateNameList.addLast(stateName);
-                        break;
-                    }
-                    stateNameList.addLast(stateName);
-                }
-            }
-        }
+    public boolean isProcessingStateHasNextActionSet() {
+        return lastTargetDirectiveState.hasNextActionSet();
+    }
+
+    public List<Action> getProcessingStateLastActionSet() {
+        return lastTargetDirectiveState.getLastActionSet();
+    }
+
+    public boolean isCurrentStateIsProcessingState(StateVertex currentState) {
+        return processingState.contains(currentState);
     }
 }

@@ -249,23 +249,15 @@ public class AIGuidePluginTest {
         aiGuidePlugin.onUrlLoad(null);
         counter.set(0);
 
-        generateDOM = aiGuidePlugin.onNewFoundState("state1_DOM");
-        assertEquals(expectedDOM_1, generateDOM);
         aiGuidePlugin.controlDepth(stateOne, counter);
         assertEquals(0, counter.get());
 
-        generateDOM = aiGuidePlugin.onNewFoundState("state2_DOM");
-        assertEquals(expectedDOM_2, generateDOM);
         aiGuidePlugin.controlDepth(unNecessaryState, counter);
         assertEquals(0, counter.get());
 
-        generateDOM = aiGuidePlugin.onNewFoundState("state4_DOM");
-        assertEquals(expectedDOM_3, generateDOM);
         aiGuidePlugin.controlDepth(unNecessaryState_2, counter);
         assertEquals(0, counter.get());
 
-        generateDOM = aiGuidePlugin.onNewFoundState("state5_DOM");
-        assertEquals(expectedDOM_4, generateDOM);
         aiGuidePlugin.controlDepth(unNecessaryState_3, counter);
         assertEquals(1, counter.get());
     }

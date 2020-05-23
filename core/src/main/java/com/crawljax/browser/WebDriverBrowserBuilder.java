@@ -181,6 +181,12 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 
 		optionsChrome.addArguments("--whitelisted-ips=\"\"");
 		optionsChrome.addArguments("--disable-popup-blocking");
+
+		/**
+		 * Remove the external protocol handler
+		 *
+		 * https://stackoverflow.com/questions/29554564/bypass-external-protocol-request-popup-during-selenium-automation/52717415#52717415
+		 */
 		Map<String, Boolean> protocolBlockMap = new Hashtable<>();
 		protocolBlockMap.put("webcal", false);
 		protocolBlockMap.put("mailto", false);

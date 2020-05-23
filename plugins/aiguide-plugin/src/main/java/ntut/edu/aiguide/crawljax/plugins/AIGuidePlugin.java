@@ -43,46 +43,41 @@ import java.util.stream.Collectors;
 public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlugin, OnCountingDepthPlugin,
                                         PreStateCrawlingPlugin, PostCrawlingPlugin, OnHtmlAttributeFilteringPlugin,
                                         OnUrlLoadPlugin {
+    private Map<String, Map<String, List<String>>> variableElementList = new HashMap<>();
     private static final Logger LOGGER = LoggerFactory.getLogger(AIGuidePlugin.class);
+    private final ProcessingDirectiveManagement processingDirectiveManagement ;
     private final ServerInstanceManagement serverInstanceManagement;
     private final int serverPort;
-    private int resetCounter = 0;
-    private EmbeddedBrowser browser = null;
-    private List<StateVertex> inputStates = new LinkedList<>();
-    private final ProcessingDirectiveManagement processingDirectiveManagement ;
-    private Map<String, Map<String, List<String>>> variableElementList = new HashMap<>();
-
-
-    /**
-     * directive stack perform like following example:
-     *
-     *  | root directive |
-     *  |    directive   |
-     *  |    directive   |
-     *  | leaf directive |
-     *  ------------------
-     */
-    private final Stack<State> directivesStack;
 
     private Queue<Pair<State, StateVertex>> directiveStateVertexComparisonTable = new LinkedList<>();
-    private State targetState;
-    private StateFlowGraph stateFlowGraph;
-    private boolean isDirectiveProcess = false;
     private StateVertex lastDirectiveStateVertex = null;
+    private boolean isDirectiveProcess = false;
+    private EmbeddedBrowser browser = null;
+    private List<StateVertex> inputStates = new LinkedList<>();
+    private StateFlowGraph stateFlowGraph;
+    private int resetCounter = 0;
 
+    /**
+     *
+     *
+     *
+     * @param directivePath
+     *      directive stack perform like following example:
+     *          | root directive |
+     *          |    directive   |
+     *          |    directive   |
+     *          | leaf directive |
+     *          ------------------
+     * @param serverInstanceManagement
+     *      manage the server instance
+     * @param serverPort
+     *      server port is a parameter that wrapped variable element mechanism
+     */
     public AIGuidePlugin(Stack<State> directivePath, ServerInstanceManagement serverInstanceManagement, int serverPort) {
-        this.directivesStack = directivePath;
-        processingDirectiveManagement = new ProcessingDirectiveManagement((Stack<State>) directivePath.clone());
-        this.targetState = getTopOfDirective();
+        processingDirectiveManagement = new ProcessingDirectiveManagement(directivePath);
         this.serverInstanceManagement = serverInstanceManagement;
         this.serverPort = serverPort;
         createVariableElementsList();
-    }
-
-    private State getTopOfDirective() {
-        if (directivesStack.empty())
-            return null;
-        return directivesStack.pop();
     }
 
     private void createVariableElementsList() {
@@ -161,9 +156,11 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     // add element value to dom
     @Override
     public String onNewFoundState(String dom) {
+        System.out.println("In onNewFoundState");
         try {
             Document doc = DomUtils.asDocument(dom);
             String convertDom = DomUtils.getDocumentToString(doc);
+//            System.out.println("Now process is :" + isDirectiveProcess);
             if (isDirectiveProcess) {
                 addValueAttributeToNode(doc);
                 String appendStateName = processingDirectiveManagement.getAppendStateName();
@@ -178,18 +175,10 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 return DomUtils.getDocumentToString(doc);
             }
 
-
-//            if (targetState == null) {
-//                return DomUtils.getDocumentToString(doc);
-//            }
-//            System.out.println("Target state ID : " + targetState.getID());
-//            System.out.println("Current state ID : " + dom.hashCode());
-//            System.out.println("Current state ID (After DomUtils): " + DomUtils.getDocumentToString(doc).hashCode());
-
             if (processingDirectiveManagement.isCurrentStateIsDirective(convertDom))
                 isDirectiveProcess = true;
 
-            return DomUtils.getDocumentToString(doc);
+            return convertDom;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -204,10 +193,8 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
      */
     private void addValueAttributeToNode(Document doc) {
         NodeList inputNodes = doc.getElementsByTagName("INPUT");
-        List<Action> actions =  targetState.getLastActionSet();
-//        System.out.print("Target state actions :");
-//        System.out.println(Arrays.toString(new List[]{actions}));
-//        System.out.println("Current URL is : " + browser.getCurrentUrl());
+        List<Action> actions =  processingDirectiveManagement.getProcessingStateLastActionSet();
+
         for(int i = 0; i < inputNodes.getLength(); i++) {
             // get the value from current page, not from stripped dom
             String xpathExpr = XPathHelper.getXPathExpression(inputNodes.item(i));
@@ -229,7 +216,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     public void controlDepth(StateVertex currentState, AtomicInteger crawlDepth) {
         System.out.println("In Control depth ");
         try {
-            if (!isDirectiveProcess)
+            if (!isDirectiveProcess && !processingDirectiveManagement.isCurrentStateIsProcessingState(currentState))
                 crawlDepth.incrementAndGet();
             LOGGER.info("In AI Plugin, after control Depth is {}", crawlDepth.get());
         } catch (Exception e) {
@@ -240,11 +227,10 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     @Override
     public void preStateCrawling(CrawlerContext context, ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
         System.out.println("In preStateCrawling");
-        if (isDirectiveProcess) {
+        if (isDirectiveProcess || processingDirectiveManagement.isCurrentStateIsDirective(currentState.getStrippedDom())) {
             LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
             isDirectiveProcess = true;
-            processingDirectiveManagement.recordCurrentState(targetState, currentState);
-            //            processingStates.add(currentState);
+            processingDirectiveManagement.recordCurrentState(currentState);
             lastDirectiveStateVertex = currentState;
             changeCandidateElementForCurrentState(candidateElements, currentState);
         }
@@ -270,32 +256,20 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 .collect(Collectors.toList());
         return !isInteractableInputElements.isEmpty();
     }
-
-    private boolean isCurrentStateSameAsTargetState(StateVertex state) {
-        if (targetState == null)
-            return false;
-        if (String.valueOf(state.getDom().hashCode()).equalsIgnoreCase(targetState.getID())) {
-            directiveStateVertexComparisonTable.add(new Pair<>(targetState, state));
-            return true;
-        }
-        return false;
-    }
-
     private void changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
-        List<Action> actionSet = targetState.getNextActionSet();
+        List<Action> actionSet = processingDirectiveManagement.getProcessingStateNextActionSet();
         CandidateElement newElement = null;
+
         if (actionSet == null) {
             isDirectiveProcess = false;
-//            processingStates.remove(currentState);
-            processingDirectiveManagement.removeLastStateInRecordList(targetState);
+            processingDirectiveManagement.removeLastStateInRecordList();
             currentState.setElementsFound(new LinkedList<> (candidateElements));
             return;
         }
 
-        if (!targetState.hasNextActionSet()) {
+        if (!processingDirectiveManagement.isProcessingStateHasNextActionSet()) {
             isDirectiveProcess = false;
-            processingDirectiveManagement.removeLastStateInRecordList(targetState);
-            targetState = getTopOfDirective();
+            processingDirectiveManagement.removeLastStateInRecordList();
         }
 
         for (CandidateElement element : candidateElements) {
@@ -400,8 +374,11 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
     @Override
     public void onUrlLoad(CrawlerContext context) {
-        processingDirectiveManagement.resetTargetDirective();
         resetCounter++;
+        if (resetCounter > 2) {
+            isDirectiveProcess = false;
+//            processingDirectiveManagement.resetTargetDirective();
+        }
         browser.deleteAllCookies();
         LOGGER.debug("Now reset counter is {}", resetCounter);
         serverInstanceManagement.recordCoverage();

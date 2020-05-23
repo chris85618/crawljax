@@ -383,7 +383,6 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 			strippedDOM = DomUtils.getDocumentToString(doc);
 		} catch (IOException e) {
 			LOGGER.warn("Something wrong when removed the attribute....");
-			e.printStackTrace();
 		}
 		return strippedDOM;
 	}
@@ -395,7 +394,6 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 				element.removeAttribute(type);
 			} catch (XPathExpressionException | NullPointerException e) {
 				LOGGER.info("Can not find element with xpath: {}, keeping wrap other variable element...", xpath);
-				e.printStackTrace();
 			}
 		}
 	}
