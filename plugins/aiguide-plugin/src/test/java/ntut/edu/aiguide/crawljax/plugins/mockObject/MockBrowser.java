@@ -2,13 +2,19 @@ package ntut.edu.aiguide.crawljax.plugins.mockObject;
 
 import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.core.CrawljaxException;
+import com.crawljax.core.state.Element;
 import com.crawljax.core.state.Eventable;
 import com.crawljax.core.state.Identification;
 import com.crawljax.forms.FormInput;
+import com.crawljax.util.DomUtils;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.openqa.selenium.ElementNotVisibleException;
 import org.openqa.selenium.WebElement;
+import org.w3c.dom.Node;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 
 public class MockBrowser implements EmbeddedBrowser {

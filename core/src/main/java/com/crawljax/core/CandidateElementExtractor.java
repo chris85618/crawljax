@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.openqa.selenium.NoSuchElementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -225,7 +226,8 @@ public class CandidateElementExtractor {
 			                checkedElements.getEventableConditionChecker());
 
 			for (Element sourceElement : nodeListForCrawlElement) {
-				evaluateElement(results, relatedFrame, crawl, sourceElement);
+					evaluateElement(results, relatedFrame, crawl, sourceElement);
+
 			}
 		} catch (CrawljaxException e) {
 			LOG.warn("Catched exception during NodeList For Tag Element retrieval", e);
@@ -404,8 +406,12 @@ public class CandidateElementExtractor {
 		} else {
 			// just add default element
 			Identification identification = new Identification(Identification.How.xpath, xpath);
-			String value = browser.getWebElement(identification).getAttribute("value");
-			candidateElements.add(new CandidateElement(sourceElement, identification, relatedFrame, value));
+			try {
+				String value = browser.getWebElement(identification).getAttribute("value");
+				candidateElements.add(new CandidateElement(sourceElement, identification, relatedFrame, value));
+			} catch (NoSuchElementException e) {
+				LOG.warn("Can not locate element {}, skip this element and keep going...", xpath);
+			}
 		}
 		for (CandidateElement candidateElement : candidateElements) {
 			if (!clickOnce || checkedElements.markChecked(candidateElement)) {

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.xpath.XPathExpressionException;
@@ -121,10 +122,14 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     // remove all variable list on dom
     @Override
     public String filterDom(String dom, String url) {
-        if (variableElementList.get(url) == null)
-            return dom;
+        Map<String, List<String>> elementPair = variableElementList.get(url);
 
-        return removeTheVariableElements(dom, variableElementList.get(url));
+        if (elementPair == null) {
+            elementPair = variableElementList.get(url + "/");
+            if (elementPair == null)
+                return dom;
+        }
+        return removeTheVariableElements(dom, elementPair);
     }
 
     private String removeTheVariableElements(String dom, Map<String, List<String>> elementPair) {
@@ -180,7 +185,8 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
             return convertDom;
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.warn("There something went wrong when covert to Document...");
+            //            e.printStackTrace();
         }
         return dom;
     }
@@ -238,15 +244,19 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             System.out.println("Current state is Input state");
             LOGGER.info("Current page is input page, not going to crawled");
             currentState.setElementsFound(new LinkedList<>());
-            inputStates.add(currentState);
-            for (StateVertex s : inputStates) {
-                System.out.println(s.getId());
+            if (isAllDirectiveProcessed()) {
+                inputStates.add(currentState);
+                for (StateVertex s : inputStates)
+                    System.out.println(s.getId());
             }
         }
         else {
-            currentState.setElementsFound(new LinkedList<>(candidateElements));
             LOGGER.info("Current page is not input page, moving on...");
         }
+    }
+
+    private boolean isAllDirectiveProcessed() {
+        return processingDirectiveManagement.isAllDirectiveIsProcessed();
     }
 
     private boolean isCurrentStateIsInputPage(ImmutableList<CandidateElement> candidateElements) {
@@ -295,7 +305,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.warn("There something went wrong when create...");
         }
 
         currentState.setElementsFound(new LinkedList<>(Collections.singletonList(newElement)));
@@ -353,17 +363,38 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     private FormInput createOneFormInput(String inputValue, String elementXpath) {
         FormInput formInput = new FormInput();
         if (!inputValue.equalsIgnoreCase("null")) {
-            formInput.setType("text");
+            String type = getElementType(elementXpath);
+            formInput.setType(type);
             formInput.setIdentification(new Identification(Identification.How.xpath, elementXpath));
-            formInput.setInputValues(createValueList(inputValue));
+            formInput.setInputValues(createValueList(type, inputValue));
             LOGGER.info("New Form is create : {}", formInput);
         }
         return formInput;
     }
 
-    private Set<InputValue> createValueList(String value) {
+    private String getElementType(String elementXpath) {
+        WebElement element = browser.getWebElement(new Identification(Identification.How.xpath, elementXpath));
+        if (element.getAttribute("type") != null) {
+            return element.getAttribute("type")
+                    .toLowerCase();
+        } else if (element.getTagName().equalsIgnoreCase("input")) {
+            return "text";
+        } else {
+            return element.getTagName().toLowerCase();
+        }
+    }
+
+    private Set<InputValue> createValueList(String type, String value) {
         Set<InputValue> transformList = new HashSet<InputValue>();
-        transformList.add(new InputValue(value, true));
+        if (type.equalsIgnoreCase("checkbox")) {
+            if (value.equalsIgnoreCase("false"))
+                transformList.add(new InputValue(value, false));
+            else
+                transformList.add(new InputValue(value, true));
+        }
+        else
+            transformList.add(new InputValue(value, true));
+
         return transformList;
     }
 
@@ -412,6 +443,9 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 LOGGER.debug("The total input page size is {}", result.size());
             }
         }
+
+        if (result.isEmpty())
+            processingDirectiveManagement.printRetainDirectives();
         return result;
     }
 

@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import javax.swing.plaf.synth.SynthTextAreaUI;
 import java.util.*;
+import java.util.stream.IntStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -137,6 +138,17 @@ public class RobotServerTest {
         WebSnapShot webSnapShot = robotServer.getWebSnapShot();
 //        webSnapShot.getActions().forEach(element -> System.out.println(String.valueOf(webSnapShot.getActions().indexOf(element)) + " : " + element));
         robotServer.executeAction(webSnapShot.getActions().get(actionIndex), value);
+    }
+
+    private void executeActions(int[] actionIndexs, String[] values) {
+        WebSnapShot webSnapShot = robotServer.getWebSnapShot();
+        System.out.println("");
+        webSnapShot.getActions().forEach(element -> System.out.println(String.valueOf(webSnapShot.getActions().indexOf(element)) + " : " + element));
+        System.out.println("");
+        Map<Action, String> valueSet = new HashMap<>();
+        for (int i = 0; i < actionIndexs.length; i++)
+            valueSet.put(webSnapShot.getActions().get(actionIndexs[i]), values[i]);
+        robotServer.executeActions(valueSet);
     }
 
     @Test

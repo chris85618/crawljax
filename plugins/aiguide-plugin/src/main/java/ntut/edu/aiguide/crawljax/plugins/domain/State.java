@@ -25,10 +25,8 @@ public class State  implements Cloneable{
     public List<Action> getNextActionSet() {
         if (actionSet.isEmpty())
             return null;
-        System.out.println("Before poll action size is : " + actionSet.size());
         lastActionSet.add(actionSet.peek());
         List<Action> result = actionSet.poll();
-        System.out.println("After poll action size is : " + actionSet.size());
         return result;
     }
 

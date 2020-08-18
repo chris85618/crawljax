@@ -213,7 +213,7 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		if (elementValueMap.size() != 0)
 			formInputs = generateMultipleFormInput();
 		else
-			formInputs.add(generateOneFormInput(inputValue, oldElement.getIdentification()));
+			formInputs.add(generateOneFormInput(inputValue, oldElement));
 		return formInputs;
 	}
 
@@ -221,25 +221,45 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 		List<FormInput> formInputs = new ArrayList<FormInput>();
 		for (Map.Entry<CandidateElement, String> candidateElementStringEntry : crawlingInformation.getTargetElements().entrySet()) {
 			formInputs.add(generateOneFormInput(candidateElementStringEntry.getValue(),
-								 candidateElementStringEntry.getKey().getIdentification()));
+								 candidateElementStringEntry.getKey()));
 		}
 		return formInputs;
 	}
 
-	private FormInput generateOneFormInput(String inputValue, Identification elementIdentification) {
+	private FormInput generateOneFormInput(String inputValue, CandidateElement element) {
 		FormInput formInputs = new FormInput();
 		if (!inputValue.equalsIgnoreCase("null")) {
-			formInputs.setType("text");
-			formInputs.setIdentification(elementIdentification);
-			formInputs.setInputValues(createValueList(inputValue));
+			String type = getElementType(element.getElement());
+			formInputs.setType(type);
+			formInputs.setIdentification(element.getIdentification());
+			formInputs.setInputValues(createValueList(type, inputValue));
 			LOGGER.info("New Form is create : {}", formInputs);
 		}
 		return formInputs;
 	}
 
-	private Set<InputValue> createValueList(String value) {
+	private String getElementType(Element node) {
+		if (node.getAttributes().getNamedItem("type") != null) {
+			return node.getAttributes().getNamedItem("type").getNodeValue()
+					.toLowerCase();
+		} else if (node.getNodeName().equalsIgnoreCase("input")) {
+			return "text";
+		} else {
+			return node.getNodeName().toLowerCase();
+		}
+	}
+
+	private Set<InputValue> createValueList(String type, String value) {
 		Set<InputValue> transformList = new HashSet<InputValue>();
-		transformList.add(new InputValue(value, true));
+		if (type.equalsIgnoreCase("checkbox")) {
+			if (value.equalsIgnoreCase("false"))
+				transformList.add(new InputValue(value, false));
+			else
+				transformList.add(new InputValue(value, true));
+		}
+		else
+			transformList.add(new InputValue(value, true));
+
 		return transformList;
 	}
 
@@ -298,6 +318,8 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	}
 
 	private boolean isNoTarget() {
+		if (crawlingInformation == null)
+			return true;
 		LOGGER.debug("Target element which Robot gave is {}", crawlingInformation.getTargetElement());
 		return crawlingInformation.getTargetElement() == null && crawlingInformation.getTargetElements().size() == 0;
 	}
@@ -367,10 +389,14 @@ public class DQNLearningModePlugin implements PreStateCrawlingPlugin, OnFireEven
 	 */
 	@Override
 	public String filterDom(String dom, String url) {
-		if (variableElementList.get(url) == null)
-			return dom;
+		Map<String, List<String>> elementPair = variableElementList.get(url);
 
-		return removeTheVariableElements(dom, variableElementList.get(url));
+		if (elementPair == null) {
+			elementPair = variableElementList.get(url + "/");
+			if (elementPair == null)
+				return dom;
+		}
+		return removeTheVariableElements(dom, elementPair);
 	}
 
 	private String removeTheVariableElements(String dom, Map<String, List<String>> elementPair) {

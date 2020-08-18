@@ -30,6 +30,9 @@ public class ProcessingDirectiveManagement {
         return null;
     }
 
+    public boolean isAllDirectiveIsProcessed() {
+        return directiveStack.isEmpty() && targetDirectiveState == null;
+    }
 
     public boolean isCurrentStateIsDirective(String dom) {
         if (targetDirectiveState == null)
@@ -102,5 +105,15 @@ public class ProcessingDirectiveManagement {
 
     public boolean isCurrentStateIsProcessingState(StateVertex currentState) {
         return processingState.contains(currentState);
+    }
+
+    public void printRetainDirectives() {
+        if (directiveStack.isEmpty()) {
+            System.out.println("There is no input page in this round");
+            LOGGER.info("There is no input page in this round");
+        } else {
+            System.out.println(String.format("Retaining directives size is %s", directiveStack.size()));
+            LOGGER.info("There is something wrong when running this round, retaining directives size is {}", directiveStack.size());
+        }
     }
 }
