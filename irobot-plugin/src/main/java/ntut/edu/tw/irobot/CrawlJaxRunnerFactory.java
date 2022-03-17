@@ -8,6 +8,7 @@ import com.crawljax.core.configuration.BrowserConfiguration;
 import com.crawljax.core.configuration.CrawljaxConfiguration.CrawljaxConfigurationBuilder;
 import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.Plugin;
+import com.crawljax.core.state.StateVertexFactory;
 import com.crawljax.plugins.crawloverview.CrawlOverview;
 import ntut.edu.tw.irobot.fs.WorkDirManager;
 import ntut.edu.tw.irobot.lock.WaitingLock;
@@ -45,12 +46,19 @@ public class CrawlJaxRunnerFactory {
     }
 
     public CrawljaxRunner createCrawlerCrawlJaxRunner(String url, Plugin... plugins) {
+        return createCrawlerCrawlJaxRunner(url, null, plugins);
+    }
+
+    public CrawljaxRunner createCrawlerCrawlJaxRunner(String url, StateVertexFactory stateVertexFactory, Plugin... plugins) {
         this.url = url;
         getServerPort(url);
 
         CrawljaxConfigurationBuilder builder = createCrawlerConfigurationBuilder();
         builder.addPlugin(plugins);
 
+        if (stateVertexFactory != null) {
+            builder.setStateVertexFactory(stateVertexFactory);
+        }
         return new CrawljaxRunner(builder.build());
     }
 
