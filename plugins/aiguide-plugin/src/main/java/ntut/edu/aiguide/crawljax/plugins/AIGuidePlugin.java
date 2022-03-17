@@ -85,7 +85,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         JsonParser jsonParser = new JsonParser();
         try {
             File veList = new File("variableElement/variableElementList.json");
-            System.out.println(veList.getAbsolutePath());
+            LOGGER.debug("The file variableElementList.json path is {}", veList.getAbsolutePath());
             JsonArray VEJson = ((JsonObject) jsonParser.parse(new FileReader(veList.getAbsoluteFile()))).getAsJsonArray("variableList");
             for(JsonElement jsonElement : VEJson) {
                 String url = jsonElement.getAsJsonObject().get("url").getAsString();
@@ -161,11 +161,11 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     // add element value to dom
     @Override
     public String onNewFoundState(String dom) {
-        System.out.println("In onNewFoundState");
+        LOGGER.debug("In onNewFoundState");
         try {
             Document doc = DomUtils.asDocument(dom);
             String convertDom = DomUtils.getDocumentToString(doc);
-//            System.out.println("Now process is :" + isDirectiveProcess);
+            LOGGER.debug("Now process is {}", isDirectiveProcess);
             if (isDirectiveProcess) {
                 addValueAttributeToNode(doc);
                 String appendStateName = processingDirectiveManagement.getAppendStateName();
@@ -220,7 +220,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     // if the directive is not finish, control the crawling depth
     @Override
     public void controlDepth(StateVertex currentState, AtomicInteger crawlDepth) {
-        System.out.println("In Control depth ");
+        LOGGER.debug("In Control depth");
         try {
             if (!isDirectiveProcess && !processingDirectiveManagement.isCurrentStateIsProcessingState(currentState))
                 crawlDepth.incrementAndGet();
@@ -232,7 +232,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
     @Override
     public void preStateCrawling(CrawlerContext context, ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
-        System.out.println("In preStateCrawling");
+        LOGGER.debug("In preStateCrawling");
         if (isDirectiveProcess || processingDirectiveManagement.isCurrentStateIsDirective(currentState.getStrippedDom())) {
             LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
             isDirectiveProcess = true;
@@ -241,13 +241,13 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             changeCandidateElementForCurrentState(candidateElements, currentState);
         }
         else if (isCurrentStateIsInputPage(candidateElements)) {
-            System.out.println("Current state is Input state");
             LOGGER.info("Current page is input page, not going to crawled");
             currentState.setElementsFound(new LinkedList<>());
             if (isAllDirectiveProcessed()) {
                 inputStates.add(currentState);
+                LOGGER.debug("Get id the inputStats");
                 for (StateVertex s : inputStates)
-                    System.out.println(s.getId());
+                    LOGGER.debug("Get id of the inputState is {}", s.getId());
             }
         }
         else {
@@ -355,9 +355,15 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     }
 
     private boolean isLinkOrButton(Action action) {
-        boolean isButton = action.getActionXpath().toUpperCase().contains("BUTTON");
-        boolean isLink = action.getActionXpath().toUpperCase().contains("A");
-        return isButton || isLink;
+        String xpath = action.getActionXpath();
+        String type = this.getElementType(xpath);
+        boolean isButton = xpath.toUpperCase().contains("BUTTON");
+        boolean isLink = xpath.toUpperCase().contains("A");
+        boolean isInputButton = xpath.toUpperCase().contains("INPUT") &&
+                ("button".equalsIgnoreCase(type) || "submit".equalsIgnoreCase(type)
+                        || "reset".equalsIgnoreCase(type) || "image".equalsIgnoreCase(type)
+                        || "file".equalsIgnoreCase(type));
+        return isButton || isLink || isInputButton;
     }
 
     private FormInput createOneFormInput(String inputValue, String elementXpath) {
@@ -430,7 +436,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             for (StateVertex inputPage : inputStates) {
                 List<List<Action>> actionSequence = getTwoStateEventPath(index, inputPage);
                 LOGGER.debug("Now action sequence are {}", actionSequence);
-                result.add(new LearningTarget(inputPage.getDom(), inputPage.getUrl(), actionSequence));
+                result.add(new LearningTarget(inputPage.getStrippedDom(), inputPage.getUrl(), actionSequence));
             }
         } else {
             LOGGER.debug("The last state is {}", lastDirectiveStateVertex);
@@ -454,7 +460,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         if (eventPath.size() != 0) {
             LOGGER.info("Last state can go to input page {}", inputPage);
             List<List<Action>> completePath = mergeTwoPath(indexToLastDirectiveEventPath, convertToActionList(eventPath));
-            result.add(new LearningTarget(inputPage.getDom(), inputPage.getUrl(), completePath));
+            result.add(new LearningTarget(inputPage.getStrippedDom(), inputPage.getUrl(), completePath));
         }
         else {
             LOGGER.info("Last state can not go to input page {}", inputPage);
