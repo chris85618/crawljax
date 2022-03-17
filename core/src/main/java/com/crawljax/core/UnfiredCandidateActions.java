@@ -147,12 +147,19 @@ public class UnfiredCandidateActions {
 		List<CandidateCrawlAction> actions = new ArrayList<>(extract.size());
 		for (CandidateElement candidateElement : extract) {
 			String tagName = candidateElement.getElement().getTagName();
-			if (tagName.equalsIgnoreCase("input") || tagName.equalsIgnoreCase("text"))
+			String type = candidateElement.getElement().getAttribute("type");
+			if ((tagName.equalsIgnoreCase("input") && !isInputActionClick(type))
+					|| tagName.equalsIgnoreCase("textarea"))
 				actions.add(new CandidateCrawlAction(candidateElement, EventType.input));
 			else
 				actions.add(new CandidateCrawlAction(candidateElement, EventType.click));
 		}
 		return actions;
+	}
+
+	private boolean isInputActionClick(String type) {
+		return "button".equalsIgnoreCase(type) || "submit".equalsIgnoreCase(type) || "reset".equalsIgnoreCase(type)
+				|| "image".equalsIgnoreCase(type) || "file".equalsIgnoreCase(type);
 	}
 
 	/**
