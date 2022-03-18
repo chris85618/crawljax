@@ -113,6 +113,7 @@ public class CrawlActionsBuilder {
 		click("a");
 		click("button");
 		click("input");
+		click("textarea");
 		// click("input").withAttribute("type", "submit");
 		// click("input").withAttribute("type", "button");
 	}
