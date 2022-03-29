@@ -158,8 +158,8 @@ public class UnfiredCandidateActions {
 	}
 
 	private boolean isInputActionClick(String type) {
-		return "button".equalsIgnoreCase(type) || "submit".equalsIgnoreCase(type) || "reset".equalsIgnoreCase(type)
-				|| "image".equalsIgnoreCase(type) || "file".equalsIgnoreCase(type);
+		return "button".equalsIgnoreCase(type) || "submit".equalsIgnoreCase(type)
+				|| "reset".equalsIgnoreCase(type) || "image".equalsIgnoreCase(type);
 	}
 
 	/**

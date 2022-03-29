@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import javax.xml.xpath.XPathExpressionException;
@@ -87,27 +86,29 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             File veList = new File("variableElement/variableElementList.json");
             LOGGER.debug("The file variableElementList.json path is {}", veList.getAbsolutePath());
             JsonArray VEJson = ((JsonObject) jsonParser.parse(new FileReader(veList.getAbsoluteFile()))).getAsJsonArray("variableList");
-            for(JsonElement jsonElement : VEJson) {
-                String url = jsonElement.getAsJsonObject().get("url").getAsString();
-                url = String.format(url, serverPort);
-                Map<String, List<String>> elementPair;
-                if (variableElementList.get(url) != null)
-                    elementPair = variableElementList.get(url);
-                else {
-                    elementPair = new HashMap<>();
+            if (VEJson != null) {
+                for (JsonElement jsonElement : VEJson) {
+                    String url = jsonElement.getAsJsonObject().get("url").getAsString();
+                    url = String.format(url, serverPort);
+                    Map<String, List<String>> elementPair;
+                    if (variableElementList.get(url) != null)
+                        elementPair = variableElementList.get(url);
+                    else {
+                        elementPair = new HashMap<>();
+                    }
+
+                    String type = jsonElement.getAsJsonObject().get("attribute").getAsString();
+                    List<String> list;
+                    if (elementPair.get(type) != null)
+                        list = elementPair.get(type);
+                    else
+                        list = new ArrayList<>();
+
+                    String xpath = jsonElement.getAsJsonObject().get("element").getAsString();
+                    list.add(xpath);
+                    elementPair.put(type, list);
+                    variableElementList.put(url, elementPair);
                 }
-
-                String type = jsonElement.getAsJsonObject().get("attribute").getAsString();
-                List<String> list;
-                if (elementPair.get(type) != null)
-                    list = elementPair.get(type);
-                else
-                    list = new ArrayList<>();
-
-                String xpath = jsonElement.getAsJsonObject().get("element").getAsString();
-                list.add(xpath);
-                elementPair.put(type, list);
-                variableElementList.put(url, elementPair);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -242,7 +243,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         }
         else if (isCurrentStateIsInputPage(candidateElements)) {
             LOGGER.info("Current page is input page, not going to crawled");
-            currentState.setElementsFound(new LinkedList<>());
+//            currentState.setElementsFound(new LinkedList<>());
             if (isAllDirectiveProcessed()) {
                 inputStates.add(currentState);
                 LOGGER.debug("Get id the inputStats");
@@ -264,7 +265,11 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 .filter(candidateElement -> candidateElement.getElement().getTagName().equalsIgnoreCase("input"))
                 .filter(candidateElement -> browser.isInteractive(candidateElement.getIdentification().getValue()))
                 .collect(Collectors.toList());
-        return !isInteractableInputElements.isEmpty();
+        List<CandidateElement> isInteractableTextAreaElements = candidateElements.parallelStream()
+                .filter(candidateElement -> candidateElement.getElement().getTagName().equalsIgnoreCase("textare"))
+                .filter(candidateElement -> browser.isInteractive(candidateElement.getIdentification().getValue()))
+                .collect(Collectors.toList());
+        return !isInteractableInputElements.isEmpty() || !isInteractableTextAreaElements.isEmpty();
     }
     private void changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
         List<Action> actionSet = processingDirectiveManagement.getProcessingStateNextActionSet();
@@ -317,6 +322,14 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             findElement = findCorrespondElement(identification, currentState.getDocument(), "a");
             if (findElement == null)
                 findElement = findCorrespondElement(identification, currentState.getDocument(), "button");
+            if (findElement == null) {
+                String type = this.getElementType(identification.getValue());
+                LOGGER.debug("element type is {}", type);
+                if ("button".equalsIgnoreCase(type) || "submit".equalsIgnoreCase(type)
+                        || "reset".equalsIgnoreCase(type) || "image".equalsIgnoreCase(type)) {
+                    findElement = this.findCorrespondElement(identification, currentState.getDocument(), "input");
+                }
+            }
         } catch (IOException e) {
             LOGGER.info("Something wrong when finding target action element");
         }
@@ -361,8 +374,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         boolean isLink = xpath.toUpperCase().contains("A");
         boolean isInputButton = xpath.toUpperCase().contains("INPUT") &&
                 ("button".equalsIgnoreCase(type) || "submit".equalsIgnoreCase(type)
-                        || "reset".equalsIgnoreCase(type) || "image".equalsIgnoreCase(type)
-                        || "file".equalsIgnoreCase(type));
+                        || "reset".equalsIgnoreCase(type) || "image".equalsIgnoreCase(type));
         return isButton || isLink || isInputButton;
     }
 
