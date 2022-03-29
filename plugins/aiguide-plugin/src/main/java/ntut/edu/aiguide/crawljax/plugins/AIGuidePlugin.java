@@ -2,6 +2,7 @@ package ntut.edu.aiguide.crawljax.plugins;
 
 
 import com.crawljax.browser.EmbeddedBrowser;
+import com.crawljax.browser.WebDriverBackedEmbeddedBrowser;
 import com.crawljax.core.CandidateElement;
 import com.crawljax.core.CrawlSession;
 import com.crawljax.core.CrawlerContext;
@@ -21,10 +22,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import javafx.util.Pair;
-import ntut.edu.aiguide.crawljax.plugins.domain.Action;
-import ntut.edu.aiguide.crawljax.plugins.domain.LearningTarget;
-import ntut.edu.aiguide.crawljax.plugins.domain.ProcessingDirectiveManagement;
-import ntut.edu.aiguide.crawljax.plugins.domain.State;
+import ntut.edu.aiguide.crawljax.plugins.domain.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     private StateVertex lastDirectiveStateVertex = null;
     private boolean isDirectiveProcess = false;
     private EmbeddedBrowser browser = null;
-    private List<StateVertex> inputStates = new LinkedList<>();
+    private List<InputPage> inputPages = new LinkedList<>();
     private StateFlowGraph stateFlowGraph;
     private int resetCounter = 0;
 
@@ -245,10 +245,19 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             LOGGER.info("Current page is input page, not going to crawled");
 //            currentState.setElementsFound(new LinkedList<>());
             if (isAllDirectiveProcessed()) {
-                inputStates.add(currentState);
+                EmbeddedBrowser browser = context.getBrowser();
+                WebDriver driver = ((WebDriverBackedEmbeddedBrowser) browser).getBrowser();
+                List<String> formXPaths = new ArrayList<>();
+                WebElement rootElement = browser.getWebElement(new Identification(Identification.How.tag, "html"));
+                for (WebElement formElement : rootElement.findElements(By.tagName("form"))) {
+                    if (formElement.isEnabled() && formElement.isDisplayed()) {
+                        formXPaths.add(XPathGenerator.getAbsoluteXPath(driver, formElement));
+                    }
+                }
+                inputPages.add(new InputPage(currentState, formXPaths));
                 LOGGER.debug("Get id the inputStats");
-                for (StateVertex s : inputStates)
-                    LOGGER.debug("Get id of the inputState is {}", s.getId());
+                for (InputPage s : inputPages)
+                    LOGGER.debug("Get id of the inputState is {}", s.getStateVertex().getId());
             }
         }
         else {
@@ -445,18 +454,19 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         List<LearningTarget> result = new LinkedList<>();
         StateVertex index = stateFlowGraph.getInitialState();
         if (directiveStateVertexComparisonTable.size() == 0) {
-            for (StateVertex inputPage : inputStates) {
-                List<List<Action>> actionSequence = getTwoStateEventPath(index, inputPage);
+            for (InputPage inputPage : inputPages) {
+                StateVertex stateVertex = inputPage.getStateVertex();
+                List<List<Action>> actionSequence = getTwoStateEventPath(index, stateVertex);
                 LOGGER.debug("Now action sequence are {}", actionSequence);
-                result.add(new LearningTarget(inputPage.getStrippedDom(), inputPage.getUrl(), actionSequence));
+                result.add(new LearningTarget(stateVertex.getStrippedDom(), stateVertex.getUrl(), inputPage.getFormXPaths(), actionSequence));
             }
         } else {
             LOGGER.debug("The last state is {}", lastDirectiveStateVertex);
             List<List<Action>> indexToLastDirectiveEventPath = getTheEventPathBetweenEachDirectiveToLastState();
             LOGGER.debug("Index to last state path are {}", indexToLastDirectiveEventPath);
 
-            for (StateVertex inputPage : inputStates) {
-                LOGGER.debug("Adding input page {} to result", inputPage);
+            for (InputPage inputPage : inputPages) {
+                LOGGER.debug("Adding input page {} to result", inputPage.getStateVertex());
                 addLastDirectiveToInputPagePathToResult(result, inputPage, indexToLastDirectiveEventPath);
                 LOGGER.debug("The total input page size is {}", result.size());
             }
@@ -467,12 +477,13 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         return result;
     }
 
-    private void addLastDirectiveToInputPagePathToResult(List<LearningTarget> result, StateVertex inputPage, List<List<Action>> indexToLastDirectiveEventPath) {
-        ImmutableList<Eventable> eventPath = stateFlowGraph.getShortestPath(lastDirectiveStateVertex, inputPage);
+    private void addLastDirectiveToInputPagePathToResult(List<LearningTarget> result, InputPage inputPage, List<List<Action>> indexToLastDirectiveEventPath) {
+        StateVertex stateVertex = inputPage.getStateVertex();
+        ImmutableList<Eventable> eventPath = stateFlowGraph.getShortestPath(lastDirectiveStateVertex, stateVertex);
         if (eventPath.size() != 0) {
             LOGGER.info("Last state can go to input page {}", inputPage);
             List<List<Action>> completePath = mergeTwoPath(indexToLastDirectiveEventPath, convertToActionList(eventPath));
-            result.add(new LearningTarget(inputPage.getStrippedDom(), inputPage.getUrl(), completePath));
+            result.add(new LearningTarget(stateVertex.getStrippedDom(), stateVertex.getUrl(), inputPage.getFormXPaths(), completePath));
         }
         else {
             LOGGER.info("Last state can not go to input page {}", inputPage);
