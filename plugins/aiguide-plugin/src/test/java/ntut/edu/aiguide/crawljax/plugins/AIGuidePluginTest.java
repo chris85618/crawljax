@@ -48,7 +48,7 @@ public class AIGuidePluginTest {
             List<Action> actions_1_2 = new LinkedList<>(Collections.singletonList(new Action("/HTML/INPUT[3]", "3")));
             List<Action> actions_1_3 = new LinkedList<>(Collections.singletonList(new Action("/HTML/INPUT[4]", "4")));
             LinkedList<List<Action>> actionSet_1 = new LinkedList<>(Arrays.asList(actions_1_1, actions_1_2, actions_1_3));
-            State state_1 = new State(String.valueOf(stateHash_1), actionSet_1);
+            State state_1 = new State(String.valueOf(stateHash_1), covertDom_1, actionSet_1);
 
 
             String dom_2 = "state3_DOM";
@@ -57,7 +57,7 @@ public class AIGuidePluginTest {
             int stateHash_2 = covertDom_2.hashCode();
             List<Action> actions_2 = new LinkedList<>(Arrays.asList(new Action("/HTML/BUTTON[0]", "")));
             LinkedList<List<Action>> actionSet_2 = new LinkedList<>(Collections.singletonList(actions_2));
-            State state_2 = new State(String.valueOf(stateHash_2), actionSet_2);
+            State state_2 = new State(String.valueOf(stateHash_2), covertDom_2, actionSet_2);
 
             Stack<State> directives = new Stack<>();
 

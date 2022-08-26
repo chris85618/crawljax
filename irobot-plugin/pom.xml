@@ -52,7 +52,11 @@
       <version>9.4.15.v20190215</version>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-text</artifactId>
+      <version>1.9</version>
+    </dependency>
   </dependencies>
 
 

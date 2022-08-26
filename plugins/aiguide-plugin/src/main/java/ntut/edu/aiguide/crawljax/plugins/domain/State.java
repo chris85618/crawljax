@@ -8,18 +8,24 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class State  implements Cloneable{
+public class State implements Cloneable {
     private final String stateID;
+    private final String dom;
     private final Queue<List<Action>> actionSet;
     private Queue<List<Action>> lastActionSet = new LinkedList<>();
 
-    public State(String hashDom, LinkedList<List<Action>> actionSet) {
+    public State(String hashDom, String dom, LinkedList<List<Action>> actionSet) {
         this.stateID = hashDom;
+        this.dom = dom;
         this.actionSet = actionSet;
     }
 
     public String getID() {
         return stateID;
+    }
+
+    public String getDom() {
+        return dom;
     }
 
     public List<Action> getNextActionSet() {
@@ -32,7 +38,7 @@ public class State  implements Cloneable{
 
     public List<Action> getLastActionSet() {
         if (lastActionSet.isEmpty())
-            return  null;
+            return null;
         return lastActionSet.poll();
     }
 
@@ -46,3 +52,4 @@ public class State  implements Cloneable{
         return (State) super.clone();
     }
 }
+

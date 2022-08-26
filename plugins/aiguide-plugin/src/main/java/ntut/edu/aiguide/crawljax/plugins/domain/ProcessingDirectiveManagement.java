@@ -40,7 +40,7 @@ public class ProcessingDirectiveManagement {
         if (targetDirectiveState == null)
             return false;
         String currentDomHash = String.valueOf(dom.hashCode());
-        if (currentDomHash.equalsIgnoreCase(targetDirectiveState.getID())) {
+        if (currentDomHash.equalsIgnoreCase(targetDirectiveState.getID()) || isSimilarDom(targetDirectiveState.getDom(), dom)) {
             LOGGER.debug("Current state is same as directive {}", targetDirectiveState);
             lastTargetDirectiveState = targetDirectiveState;
             targetDirectiveState = getNextDirectiveState();

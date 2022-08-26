@@ -2,13 +2,12 @@ package ntut.edu.tw.irobot;
 
 import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.core.CrawljaxRunner;
-
-
 import com.crawljax.core.configuration.BrowserConfiguration;
 import com.crawljax.core.configuration.CrawljaxConfiguration.CrawljaxConfigurationBuilder;
 import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.Plugin;
 import com.crawljax.core.state.StateVertexFactory;
+import com.crawljax.oraclecomparator.OracleComparator;
 import com.crawljax.plugins.crawloverview.CrawlOverview;
 import ntut.edu.tw.irobot.fs.WorkDirManager;
 import ntut.edu.tw.irobot.lock.WaitingLock;
@@ -34,6 +33,7 @@ public class CrawlJaxRunnerFactory {
     private boolean isHeadLess = false;
     private boolean wrapElement = false;
     private boolean clickOnce = false;
+    private OracleComparator[] oracleComparators = new OracleComparator[0];
 
     public CrawljaxRunner createAgentCrawlJaxRunner(String url, WaitingLock waitingLock) {
         this.url = url;
@@ -55,12 +55,19 @@ public class CrawlJaxRunnerFactory {
 
         CrawljaxConfigurationBuilder builder = createCrawlerConfigurationBuilder();
         builder.addPlugin(plugins);
-
+        if (oracleComparators != null && oracleComparators.length > 0) {
+            builder.crawlRules().addOracleComparator(oracleComparators);
+        }
         if (stateVertexFactory != null) {
             builder.setStateVertexFactory(stateVertexFactory);
         }
         return new CrawljaxRunner(builder.build());
     }
+
+    public void setOracleComparators(OracleComparator... oracleComparators) {
+        this.oracleComparators = oracleComparators;
+    }
+
 
     private void getServerPort(String url) {
         Pattern pattern = Pattern.compile("(https?://.*):(\\d*)\\/?(.*)");
