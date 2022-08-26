@@ -43,12 +43,11 @@ import java.util.stream.Collectors;
 public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlugin, OnCountingDepthPlugin,
                                         PreStateCrawlingPlugin, PostCrawlingPlugin, OnHtmlAttributeFilteringPlugin,
                                         OnUrlLoadPlugin {
-    private Map<String, Map<String, List<String>>> variableElementList = new HashMap<>();
     private static final Logger LOGGER = LoggerFactory.getLogger(AIGuidePlugin.class);
     private final ProcessingDirectiveManagement processingDirectiveManagement ;
     private final ServerInstanceManagement serverInstanceManagement;
     private final int serverPort;
-
+    private Map<String, Map<String, List<String>>> variableElementList = new HashMap<>();
     private Queue<Pair<State, StateVertex>> directiveStateVertexComparisonTable = new LinkedList<>();
     private StateVertex lastDirectiveStateVertex = null;
     private boolean isDirectiveProcess = false;
@@ -58,9 +57,6 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     private int resetCounter = 0;
 
     /**
-     *
-     *
-     *
      * @param directivePath
      *      directive stack perform like following example:
      *          | root directive |
@@ -187,7 +183,6 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             return convertDom;
         } catch (IOException e) {
             LOGGER.warn("There something went wrong when covert to Document...");
-            //            e.printStackTrace();
         }
         return dom;
     }
@@ -234,17 +229,25 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     @Override
     public void preStateCrawling(CrawlerContext context, ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
         LOGGER.debug("In preStateCrawling");
+        boolean isCurrentStateIsDirective = false;
+        if (!isDirectiveProcess) {
+            isCurrentStateIsDirective = processingDirectiveManagement.isCurrentStateIsDirective(currentState.getStrippedDom());
+        }
+        LOGGER.debug("isDirectiveProcess is {}, isCurrentStateIsDirective is {}", isDirectiveProcess, isCurrentStateIsDirective);
+        LOGGER.debug("StateVertex: Name is {}, Url is {}, ID is {}, Dom.hashCode is {}, StrippedDom.hashCode is {}",
+                currentState.getName(), currentState.getUrl(), currentState.getId(),
+                currentState.getDom().hashCode(), currentState.getStrippedDom().hashCode());
         if (isDirectiveProcess || processingDirectiveManagement.isCurrentStateIsDirective(currentState.getStrippedDom())) {
             LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
             isDirectiveProcess = true;
             processingDirectiveManagement.recordCurrentState(currentState);
             lastDirectiveStateVertex = currentState;
             changeCandidateElementForCurrentState(candidateElements, currentState);
-        }
-        else if (isCurrentStateIsInputPage(candidateElements)) {
+        } else if (isCurrentStateIsInputPage(candidateElements)) {
             LOGGER.info("Current page is input page, not going to crawled");
-//            currentState.setElementsFound(new LinkedList<>());
-            if (isAllDirectiveProcessed()) {
+            if (isSimilarDomInInputPageList(currentState.getStrippedDom())) {
+                currentState.setElementsFound(new LinkedList<>());
+            } else if (isAllDirectiveProcessed()) {
                 EmbeddedBrowser browser = context.getBrowser();
                 WebDriver driver = ((WebDriverBackedEmbeddedBrowser) browser).getBrowser();
                 List<String> formXPaths = new ArrayList<>();
@@ -259,8 +262,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 for (InputPage s : inputPages)
                     LOGGER.debug("Get id of the inputState is {}", s.getStateVertex().getId());
             }
-        }
-        else {
+        } else {
             LOGGER.info("Current page is not input page, moving on...");
         }
     }
@@ -269,17 +271,38 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         return processingDirectiveManagement.isAllDirectiveIsProcessed();
     }
 
+    private boolean isSimilarDomInInputPageList(String dom) {
+        EditDistanceComparator editDistanceComparator = new EditDistanceComparator(0.98D);
+        for (InputPage inputPage: inputPages) {
+            LOGGER.debug("inputPage = {}", inputPage);
+            LOGGER.debug("inputPage.getStateVertex().getStrippedDom().length() = {}", inputPage.getStateVertex().getStrippedDom().length());
+            LOGGER.debug("dom.length() = {}", dom.length());
+            boolean isEquivalent = editDistanceComparator.isEquivalent(inputPage.getStateVertex().getStrippedDom(), dom);
+            LOGGER.debug("isEquivalent = {}", isEquivalent);
+            if (isEquivalent) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean isCurrentStateIsInputPage(ImmutableList<CandidateElement> candidateElements) {
+        candidateElements.forEach(candidateElement -> LOGGER.debug("The candidateElement is {}", candidateElement));
         List<CandidateElement> isInteractableInputElements = candidateElements.parallelStream()
                 .filter(candidateElement -> candidateElement.getElement().getTagName().equalsIgnoreCase("input"))
+                .filter(candidateElement -> candidateElement.getIdentification().getValue().toLowerCase().contains("form"))
                 .filter(candidateElement -> browser.isInteractive(candidateElement.getIdentification().getValue()))
                 .collect(Collectors.toList());
         List<CandidateElement> isInteractableTextAreaElements = candidateElements.parallelStream()
-                .filter(candidateElement -> candidateElement.getElement().getTagName().equalsIgnoreCase("textare"))
+                .filter(candidateElement -> candidateElement.getElement().getTagName().equalsIgnoreCase("textarea"))
+                .filter(candidateElement -> candidateElement.getIdentification().getValue().toLowerCase().contains("form"))
                 .filter(candidateElement -> browser.isInteractive(candidateElement.getIdentification().getValue()))
                 .collect(Collectors.toList());
+        isInteractableInputElements.forEach(candidateElement -> LOGGER.debug("The interactableInputElement is {}", candidateElement));
+        isInteractableTextAreaElements.forEach(candidateElement -> LOGGER.debug("The interactableInputElement is {}", candidateElement));
         return !isInteractableInputElements.isEmpty() || !isInteractableTextAreaElements.isEmpty();
     }
+
     private void changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
         List<Action> actionSet = processingDirectiveManagement.getProcessingStateNextActionSet();
         CandidateElement newElement = null;
@@ -435,7 +458,6 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         resetCounter++;
         if (resetCounter > 2) {
             isDirectiveProcess = false;
-//            processingDirectiveManagement.resetTargetDirective();
         }
         browser.deleteAllCookies();
         LOGGER.debug("Now reset counter is {}", resetCounter);

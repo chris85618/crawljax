@@ -15,12 +15,14 @@ public class ProcessingDirectiveManagement {
     private Stack<State> processedDirectiveStack = new Stack<>();
     private Map<String, LinkedList<String>> directiveAppendStateNameMap = new HashMap<>();
     private HashSet<StateVertex> processingState = new HashSet<>();
+    private EditDistanceComparator editDistanceComparator;
 
     public ProcessingDirectiveManagement(Stack<State> directivePath) {
         directiveStack = directivePath;
         // put the first directive
         firstDirectiveState = getFirstDirectiveState();
         targetDirectiveState = firstDirectiveState;
+        editDistanceComparator = new EditDistanceComparator(0.98D);
     }
 
     private State getFirstDirectiveState() {
@@ -37,8 +39,6 @@ public class ProcessingDirectiveManagement {
     public boolean isCurrentStateIsDirective(String dom) {
         if (targetDirectiveState == null)
             return false;
-//        System.out.println("Current Dom hash is " + dom.hashCode());
-//        System.out.println("Target Dom hash is " + targetDirectiveState.getID());
         String currentDomHash = String.valueOf(dom.hashCode());
         if (currentDomHash.equalsIgnoreCase(targetDirectiveState.getID())) {
             LOGGER.debug("Current state is same as directive {}", targetDirectiveState);
@@ -50,6 +50,10 @@ public class ProcessingDirectiveManagement {
             return true;
         }
         return false;
+    }
+
+    private boolean isSimilarDom(String originalDom, String newDom) {
+        return editDistanceComparator.isEquivalent(originalDom, newDom);
     }
 
     private State getNextDirectiveState() {
