@@ -7,6 +7,7 @@ import com.crawljax.core.CandidateElement;
 import com.crawljax.core.CrawlSession;
 import com.crawljax.core.CrawlerContext;
 import com.crawljax.core.ExitNotifier;
+import com.crawljax.core.configuration.CrawljaxConfiguration;
 import com.crawljax.core.plugin.*;
 import com.crawljax.core.state.Eventable;
 import com.crawljax.core.state.Identification;
@@ -36,6 +37,8 @@ import javax.xml.xpath.XPathExpressionException;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -254,6 +257,20 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 WebElement rootElement = browser.getWebElement(new Identification(Identification.How.tag, "html"));
                 for (WebElement formElement : rootElement.findElements(By.tagName("form"))) {
                     if (formElement.isEnabled() && formElement.isDisplayed()) {
+                        List<WebElement> inputElements = formElement.findElements(By.tagName("input"));
+                        if (inputElements.isEmpty()) {
+                            continue;
+                        }
+
+                        boolean allElementsInvalid = inputElements.stream().allMatch(inputElement ->
+                                (!inputElement.isDisplayed() ||
+                                        !inputElement.isEnabled() ||
+                                        Objects.equals(inputElement.getAttribute("type"), "hidden"))
+                        );
+
+                        if (allElementsInvalid) {
+                            continue;
+                        }
                         formXPaths.add(XPathGenerator.getAbsoluteXPath(driver, formElement));
                     }
                 }
@@ -465,7 +482,30 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         LOGGER.debug("Resetting ServerInstance...");
         serverInstanceManagement.closeServerInstance();
         serverInstanceManagement.createServerInstance();
-        LOGGER.debug("Resetting ServerInstance complete, keep crawling new state");
+        LOGGER.debug("Resetting ServerInstance complete.");
+        performInitialActions();
+    }
+
+    private void performInitialActions() {
+        LOGGER.debug("Perform InitialActions");
+        List<Action> initialActions = processingDirectiveManagement.getInitialActions();
+
+        try {
+            browser.goToUrl(new URI("http://localhost:" + this.serverPort));
+            for (Action action: initialActions) {
+                String actionXpath = action.getActionXpath();
+                String actionValue = action.getValue();
+
+                if (actionValue.isEmpty()) {
+                    browser.fireEventAndWait(new Eventable(new Identification(Identification.How.xpath, actionXpath), Eventable.EventType.click));
+                } else {
+                    browser.input(new Identification(Identification.How.xpath, actionXpath), actionValue);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Perform InitialActions fail", e);
+            e.printStackTrace();
+        }
     }
 
     public StateFlowGraph getStateFlowGraph() {
@@ -479,6 +519,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             for (InputPage inputPage : inputPages) {
                 StateVertex stateVertex = inputPage.getStateVertex();
                 List<List<Action>> actionSequence = getTwoStateEventPath(index, stateVertex);
+                actionSequence.add(0, processingDirectiveManagement.getInitialActions());
                 LOGGER.debug("Now action sequence are {}", actionSequence);
                 result.add(new LearningTarget(stateVertex.getStrippedDom(), stateVertex.getUrl(), inputPage.getFormXPaths(), actionSequence));
             }

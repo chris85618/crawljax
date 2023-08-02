@@ -16,13 +16,32 @@ public class ProcessingDirectiveManagement {
     private Map<String, LinkedList<String>> directiveAppendStateNameMap = new HashMap<>();
     private HashSet<StateVertex> processingState = new HashSet<>();
     private EditDistanceComparator editDistanceComparator;
+    private List<Action> initialActions;
 
     public ProcessingDirectiveManagement(Stack<State> directivePath) {
         directiveStack = directivePath;
+        initialActions = convertDirectiveToInitialActions();
         // put the first directive
         firstDirectiveState = getFirstDirectiveState();
         targetDirectiveState = firstDirectiveState;
         editDistanceComparator = new EditDistanceComparator(0.98D);
+    }
+
+    private List<Action> convertDirectiveToInitialActions() {
+        List<Action> initialActions = new ArrayList<>();
+        State directive;
+
+        while ((directive = getFirstDirectiveState()) != null) {
+            while (directive.hasNextActionSet()) {
+                initialActions.addAll(directive.getNextActionSet());
+            }
+        }
+
+        return initialActions;
+    }
+
+    public List<Action> getInitialActions() {
+        return initialActions;
     }
 
     private State getFirstDirectiveState() {

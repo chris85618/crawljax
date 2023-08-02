@@ -32,8 +32,7 @@ public class State implements Cloneable {
         if (actionSet.isEmpty())
             return null;
         lastActionSet.add(actionSet.peek());
-        List<Action> result = actionSet.poll();
-        return result;
+        return actionSet.poll();
     }
 
     public List<Action> getLastActionSet() {
@@ -43,9 +42,7 @@ public class State implements Cloneable {
     }
 
     public boolean hasNextActionSet() {
-        if (actionSet.isEmpty())
-            return false;
-        return true;
+        return !actionSet.isEmpty();
     }
 
     public State clone() throws CloneNotSupportedException {
