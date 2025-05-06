@@ -354,6 +354,7 @@ public class CandidateElementExtractor {
 		String href = Strings.nullToEmpty(element.getAttribute("href"));
 		return isFileForDownloading(href)
 		        || href.startsWith("mailto:")
+		        || href.startsWith("webcal:")
 			|| (!followExternalLinks && isExternal(href));
 	}
 
