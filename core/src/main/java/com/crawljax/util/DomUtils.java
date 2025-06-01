@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -254,6 +255,109 @@ public final class DomUtils {
 			throw new CrawljaxException("Could not tranform the DOM", e);
 		}
 
+	}
+
+	/**
+	 * @param dom
+	 *            the DOM document.
+	 * @return a list of the DOM elements' string containing type,
+	 *         class, and text.
+	 */
+	public static List<String> getElementFeatureStateList(final Document dom) {
+		final Element root = dom.getDocumentElement();
+		final NodeList nodeList = root.getChildNodes();
+		final List<String> nodeFeatureStates = Lists.newLinkedList();
+
+		// Handle the root element
+		if (root.getNodeType() == Node.ELEMENT_NODE) {
+			nodeFeatureStates.add(getElementFeatureState(root));
+		}
+		// Handle the others
+		for (int nodeIndex = 0; nodeIndex < nodeList.getLength(); nodeIndex++) {
+			final Node node = nodeList.item(nodeIndex);
+			if (node.getNodeType() == Node.ELEMENT_NODE) {
+				final Element element = (Element) node;
+				nodeFeatureStates.add(getElementFeatureState(element));
+			}
+		}
+		return nodeFeatureStates;
+	}
+
+	public static String getElementFeatureState(final Element element) {
+		final String tag = element.getTagName();
+		String className = "None";
+		if (element.hasAttribute("class")) {
+			className = element.getAttribute("class");
+		}
+		final String text = getElementOwnText(element).trim();
+		return String.format("%s %s %s", tag, className, text);
+	}
+
+	public static String getElementOwnText(final Element element) {
+		final StringBuilder textBuilder = new StringBuilder();
+
+		final NodeList children = element.getChildNodes();
+		for (int childIndex = 0; childIndex < children.getLength(); childIndex++) {
+			final Node child = children.item(childIndex);
+			if (child.getNodeType() == Node.TEXT_NODE) {
+				final String text = child.getNodeValue();
+				textBuilder.append(text);
+			}
+		}
+		String result = textBuilder.toString();
+
+		// Remove all whitespace characters
+		Pattern regex = Pattern.compile("\\s");
+		Matcher matcher = regex.matcher(result);
+		String replaced = matcher.replaceAll("");
+		return replaced;
+	}
+
+	/**
+	 * @param dom
+	 *            the DOM document.
+	 * @return a list of all the DOM hierarchy elements' string containing type,
+	 *         class, and text.
+	 */
+	public static List<String> traverseElementFeatureStateList(final Document dom) {
+		final Element root = dom.getDocumentElement();
+		final List<String> featureStateList = traverseElementFeatureStateList(root);
+		return featureStateList;
+	}
+
+	/**
+	 * A private helper method to traverse the DOM tree and collect feature states.
+	 * @param node The root node to process.
+	 * @return a list of all the DOM hierarchy elements' string containing type,
+	 *         class, and text.
+	 */
+	private static List<String> traverseElementFeatureStateList(final Node root) {
+		final List<String> featureStateList = new LinkedList<>();
+		traverseElementFeatureStateList(root, featureStateList);
+		return featureStateList;
+	}
+
+	/**
+	 * A private recursive helper method to traverse the DOM tree and collect feature states.
+	 * @param node The current node to process.
+	 * @param featureStateList The list to which the feature states are added.
+	 */
+	private static void traverseElementFeatureStateList(final Node node, final List<String> featureStateList) {
+		// We only care about Element nodes, not text nodes, comments, etc.
+		if (node.getNodeType() == Node.ELEMENT_NODE) {
+			final Element element = (Element) node;
+
+			// Add the feature state of the current element to the list
+			featureStateList.add(getElementFeatureState(element));
+
+			// Get all children of the current element
+			final NodeList children = element.getChildNodes();
+
+			// Recurse for each child
+			for (int i = 0; i < children.getLength(); i++) {
+				traverseElementFeatureStateList(children.item(i), featureStateList);
+			}
+		}
 	}
 
 	/**
