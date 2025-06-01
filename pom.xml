@@ -44,6 +44,7 @@
 		<guava.version>32.0.1-jre</guava.version>
 		<jetty.version>9.4.6.v20170531</jetty.version>
 		<metrics.version>3.0.2</metrics.version>
+		<langchain4j.version>1.0.1</langchain4j.version>
 	</properties>
 
 	<!-- <scm>
