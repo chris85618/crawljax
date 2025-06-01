@@ -43,6 +43,7 @@ import com.crawljax.forms.FormInput;
 import com.crawljax.oraclecomparator.StateComparator;
 import com.crawljax.util.ElementResolver;
 import com.crawljax.util.UrlUtils;
+import com.crawljax.util.FormSubmissionJudger.FormSubmissionJudgeResultBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import sun.security.ec.point.ProjectivePoint;
@@ -463,11 +464,22 @@ public class Crawler {
 		while (action != null && !exitNotifier.isExitCalled()) {
 			CandidateElement element = action.getCandidateElement();
 			if (element.allConditionsSatisfied(browser)) {
+				final FormSubmissionJudgeResultBuilder formSubmissionJudgeResultBuilder = new FormSubmissionJudgeResultBuilder();
+				if (element.hasToCheckFormFillingResult()) {
+					formSubmissionJudgeResultBuilder.setBeforeDom(browser.getStrippedDom());
+				}
 				Eventable event = new Eventable(element, action.getEventType());
 				handleInputElements(event);
 				waitForRefreshTagIfAny(event);
 
 				boolean fired = fireEvent(event);
+				if (element.hasToCheckFormFillingResult()) {
+					element.setShouldCheckFormFillingResult(false);
+					formSubmissionJudgeResultBuilder.setAfterDom(browser.getStrippedDom());
+					final boolean formSubmissionResult = formSubmissionJudgeResultBuilder.build();
+					LOG.info("Submitting form {} with result: {}", element.getIdentification().getValue(), formSubmissionResult);
+					// TODO: handle the result
+				}
 				if (fired)
 					inspectNewState(event);
 				else if (this.isDQNLearningMode)
