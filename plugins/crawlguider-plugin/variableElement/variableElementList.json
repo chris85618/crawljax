@@ -1,0 +1,97 @@
+{
+  "variableList": [
+    {
+      "url": "http://test_data",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/INPUT[1]",
+      "attribute": "id"
+    },
+    {
+      "url": "http://test_data",
+      "element": "/HTML[1]/BODY[1]/DIV[2]/INPUT[1]",
+      "attribute": "id"
+    },
+    {
+      "url": "http://test_data",
+      "element": "/HTML[1]/BODY[1]/DIV[3]/INPUT[1]",
+      "attribute": "value"
+    },
+    {
+      "url": "http://test_data",
+      "element": "/HTML[1]/BODY[1]/A[1]",
+      "attribute": "href"
+    },
+    {
+      "state": "state230",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[4]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[2]/DIV[1]/DIV[2]/DIV[1]/INPUT[1]",
+      "attribute": "data-date-format"
+    },
+    {
+      "state": "state230",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[4]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[2]/DIV[1]/DIV[2]/DIV[1]/INPUT[1]",
+      "attribute": "value"
+    },
+    {
+      "state": "state28",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[2]/DIV[1]/DIV[3]/DIV[1]/FORM[1]/A[1]",
+      "attribute": "href"
+    },
+    {
+      "state": "state28",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[2]/DIV[1]/DIV[3]/DIV[1]/FORM[1]/INPUT[1]",
+      "attribute": "value"
+    },
+    {
+      "state": "state28",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[2]/DIV[1]/DIV[3]/DIV[2]/FORM[1]/A[1]",
+      "attribute": "href"
+    },
+    {
+      "state": "state28",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[2]/DIV[1]/DIV[3]/DIV[2]/FORM[1]/INPUT[1]",
+      "attribute": "value"
+    },
+
+    {
+      "state": "state230",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[3]/DIV[1]/DIV[3]/DIV[1]/FORM[1]/A[1]",
+      "attribute": "href"
+    },
+    {
+      "state": "state230",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[3]/DIV[1]/DIV[3]/DIV[1]/FORM[1]/INPUT[1]",
+      "attribute": "value"
+    },
+    {
+      "state": "state230",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[3]/DIV[1]/DIV[3]/DIV[2]/FORM[1]/A[1]",
+      "attribute": "href"
+    },
+    {
+      "state": "state230",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[3]/DIV[1]/DIV[3]/DIV[2]/FORM[1]/INPUT[1]",
+      "attribute": "value"
+    },
+    {
+      "state": "state205",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[4]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[3]/DIV[1]/DIV[2]/DIV[1]/INPUT[1]",
+      "attribute": "data-date-format"
+    },
+    {
+      "state": "state205",
+      "url": "http://localhost:%d/calendar/feeds/",
+      "element": "/HTML[1]/BODY[1]/DIV[1]/DIV[4]/DIV[1]/DIV[1]/FORM[1]/DIV[2]/DIV[3]/DIV[1]/DIV[2]/DIV[1]/INPUT[1]",
+      "attribute": "value"
+    }
+  ]
+}
