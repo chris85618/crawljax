@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -62,6 +63,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import ntut.edu.aiguide.crawljax.plugins.domain.FormSubmissionJudger.FormSubmissionJudgeResultBuilder;
+import ntut.edu.aiguide.crawljax.plugins.domain.TableOutput.ITableOutput;
+import ntut.edu.aiguide.crawljax.plugins.domain.TableOutput.SubmitResultBuilder;
+import ntut.edu.aiguide.crawljax.plugins.domain.TableOutput.DummySubmitResultBuilder;
+import ntut.edu.aiguide.crawljax.plugins.adapter.TableOutput.CsvTableOutput;
 
 import org.apache.commons.lang3.tuple.Pair;
 import ntut.edu.aiguide.crawljax.plugins.domain.Action;
@@ -81,6 +86,8 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     private final ProcessingDirectiveManagement processingDirectiveManagement ;
     private final ServerInstanceManagement serverInstanceManagement;
     private FormSubmissionJudgeResultBuilder formSubmissionJudgeResultBuilder;
+    private final SubmitResultBuilder submitResultBuilder;
+    private final SubmitResultBuilder.RowBuilder submitResultRowBuilder;
     private final int serverPort;
     private Map<String, Map<String, List<String>>> variableElementList = new HashMap<>();
     private Queue<Pair<State, StateVertex>> directiveStateVertexComparisonTable = new LinkedList<>();
@@ -104,10 +111,20 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
      * @param serverPort
      *      server port is a parameter that wrapped variable element mechanism
      */
-    public AIGuidePlugin(Stack<State> directivePath, ServerInstanceManagement serverInstanceManagement, int serverPort) {
+    public AIGuidePlugin(Stack<State> directivePath, ServerInstanceManagement serverInstanceManagement, int serverPort, String submitReportPath) {
         processingDirectiveManagement = new ProcessingDirectiveManagement(directivePath);
         this.serverInstanceManagement = serverInstanceManagement;
         this.serverPort = serverPort;
+        if (submitReportPath == null || submitReportPath.isEmpty()) {
+            this.submitResultBuilder = new DummySubmitResultBuilder();
+        } else {
+            final CsvTableOutput csvTableOutput = new CsvTableOutput(submitReportPath);
+            this.submitResultBuilder = new SubmitResultBuilder(csvTableOutput);
+            if (!csvTableOutput.isEmpty()) {
+                this.submitResultBuilder.addTitleRow().writeToFile();
+            }
+        }
+        this.submitResultRowBuilder = submitResultBuilder.getRowBuilder();
         createVariableElementsList();
         this.formSubmissionJudgeResultBuilder = null;
     }
@@ -200,6 +217,10 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 // TODO: Refactor this
                 formSubmissionJudgeResultBuilder.setAfterDom(browser.getStrippedDom()); // Added to record after DOM
                 final boolean formSubmissionResult = formSubmissionJudgeResultBuilder.build();
+                // Add row
+                this.submitResultRowBuilder.setResult(Boolean.toString(formSubmissionResult));
+                this.submitResultRowBuilder.build();
+                this.submitResultBuilder.writeToFile();
             }
         } catch (Exception exception) {
             exception.printStackTrace();
@@ -359,6 +380,9 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 // The last submission failed if the origin this.formSubmissionJudgeResultBuilder existed here
                 // (It's a new submission!!!)
                 final boolean formSubmissionResult = false;
+                this.submitResultRowBuilder.setResult(Boolean.toString(formSubmissionResult));
+                this.submitResultRowBuilder.build();
+                this.submitResultBuilder.writeToFile();
             }
 
             this.formSubmissionJudgeResultBuilder = new FormSubmissionJudgeResultBuilder();
@@ -377,6 +401,9 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             }
             final String actionValue = actionValueBuilder.toString().trim();
 
+            submitResultRowBuilder.setUrl(currentState.getUrl());
+            submitResultRowBuilder.setXpath(actionXpath);
+            submitResultRowBuilder.setValue(actionValue);
         } else if (isCurrentStateIsInputPage(candidateElements)) {
             LOGGER.info("Current page is input page, not going to crawled");
             if (isSimilarDomInInputPageList(currentState.getStrippedDom())) {

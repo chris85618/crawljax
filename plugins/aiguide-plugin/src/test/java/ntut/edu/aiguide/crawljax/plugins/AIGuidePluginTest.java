@@ -34,7 +34,7 @@ public class AIGuidePluginTest {
     @Before
     public void setUp() throws Exception {
         Stack<State> directives = generateFakeDirectives();
-        aiGuidePlugin = new AIGuidePlugin(directives, Mockito.mock(ServerInstanceManagement.class), 3000);
+        aiGuidePlugin = new AIGuidePlugin(directives, Mockito.mock(ServerInstanceManagement.class), 3000, null);
     }
 
     private Stack<State> generateFakeDirectives() {
