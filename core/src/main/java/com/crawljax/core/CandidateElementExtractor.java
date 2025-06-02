@@ -272,8 +272,9 @@ public class CandidateElementExtractor {
 			if (matchesXpath && !checkedElements.isChecked(id)
 			        && !isExcluded(dom, element, eventableConditionChecker)
 					&& isInteractable(element)
+					&& !(isHref(element, crawlElement) && hrefShouldBeIgnored(element))
 			) {
-				addElement(element, result, crawlElement);
+				addElement(element, result);
 			} else {
 				LOG.debug("Element {} was not added", element);
 			}
@@ -341,13 +342,14 @@ public class CandidateElementExtractor {
 		return ImmutableList.<String> of();
 	}
 
-	private void addElement(Element element, Builder<Element> builder, CrawlElement crawlElement) {
-		if ("A".equalsIgnoreCase(crawlElement.getTagName()) && hrefShouldBeIgnored(element)) {
-			return;
-		}
+	private void addElement(Element element, Builder<Element> builder) {
 		builder.add(element);
 		LOG.debug("Adding element {}", element);
 		checkedElements.increaseElementsCounter();
+	}
+
+	private boolean isHref(final Element element, CrawlElement crawlElement) {
+		return "A".equalsIgnoreCase(crawlElement.getTagName()) && element.hasAttribute("href");
 	}
 
 	private boolean hrefShouldBeIgnored(Element element) {
