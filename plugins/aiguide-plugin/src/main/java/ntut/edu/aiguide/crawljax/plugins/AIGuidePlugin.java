@@ -24,6 +24,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import javafx.util.Pair;
 import ntut.edu.aiguide.crawljax.plugins.domain.*;
+import ntut.edu.aiguide.crawljax.plugins.domain.FormSubmissionJudger.FormSubmissionJudgeResultBuilder;
+import ntut.edu.aiguide.crawljax.plugins.domain.TableOutput.ITableOutput;
+import ntut.edu.aiguide.crawljax.plugins.adapter.TableOutput.CsvTableOutput;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -49,6 +53,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     private static final Logger LOGGER = LoggerFactory.getLogger(AIGuidePlugin.class);
     private final ProcessingDirectiveManagement processingDirectiveManagement ;
     private final ServerInstanceManagement serverInstanceManagement;
+    private final ITableOutput<String> tableOutputBuilder;
     private final int serverPort;
     private Map<String, Map<String, List<String>>> variableElementList = new HashMap<>();
     private Queue<Pair<State, StateVertex>> directiveStateVertexComparisonTable = new LinkedList<>();
@@ -76,6 +81,9 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         processingDirectiveManagement = new ProcessingDirectiveManagement(directivePath);
         this.serverInstanceManagement = serverInstanceManagement;
         this.serverPort = serverPort;
+        final String timeString = new java.text.SimpleDateFormat("yyyy_MM_dd_HH_mm").format(new java.util.Date());
+        this.tableOutputBuilder = new CsvTableOutput(timeString + " submit_result.csv")
+                .addRow(Arrays.asList("URL", "XPath", "Value", "Submission Result"));
         createVariableElementsList();
     }
 
@@ -491,17 +499,45 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         List<Action> initialActions = processingDirectiveManagement.getInitialActions();
 
         try {
+            // TODO: 如果是測試用途，忽略接下來的爬行
             browser.goToUrl(new URI("http://localhost:" + this.serverPort));
+            final FormSubmissionJudgeResultBuilder formSubmissionJudgeResultBuilder = new FormSubmissionJudgeResultBuilder();
+            Action beforeAction = null;
             for (Action action: initialActions) {
+                final String formUrl = browser.getCurrentUrl();
                 String actionXpath = action.getActionXpath();
                 String actionValue = action.getValue();
+
+                final Action.DomRecordAction domRecordAction = action.getDomRecordAction();
+                if (domRecordAction == Action.DomRecordAction.RECORD_BEFORE) {
+                    LOGGER.debug("DomRecordAction is RECORD_BEFORE");
+                    formSubmissionJudgeResultBuilder.setBeforeDom(browser.getStrippedDom());
+                    beforeAction = action;
+                }
 
                 if (actionValue.isEmpty()) {
                     browser.fireEventAndWait(new Eventable(new Identification(Identification.How.xpath, actionXpath), Eventable.EventType.click));
                 } else {
                     browser.input(new Identification(Identification.How.xpath, actionXpath), actionValue);
                 }
+
+                if (domRecordAction == Action.DomRecordAction.RECORD_AFTER) {
+                    LOGGER.debug("DomRecordAction is RECORD_AFTER");
+                    final Action afterAction = action;
+                    formSubmissionJudgeResultBuilder.setAfterDom(browser.getStrippedDom()); // Added to record after DOM
+                    if (beforeAction == null) {
+                        throw new IllegalStateException("beforeAction is null, but RECORD_AFTER action is found with xpath: " + afterAction.getActionXpath());
+                    }
+                    final boolean formSubmissionResult = formSubmissionJudgeResultBuilder.build();
+                    LOGGER.info("Submitting form url {} and xpath {} with result: {}", formUrl, actionXpath, formSubmissionResult);
+                    this.tableOutputBuilder.addRow(Arrays.asList(formUrl, actionXpath, actionValue, Boolean.toString(formSubmissionResult)));
+                    // TODO: maybe to do something according to the form submission result
+                    beforeAction.setDomRecordAction(Action.DomRecordAction.NONE);
+                    beforeAction = null;
+                    afterAction.setDomRecordAction(Action.DomRecordAction.NONE);
+                }
             }
+            this.tableOutputBuilder.writeToFile();
         } catch (Exception e) {
             LOGGER.debug("Perform InitialActions fail", e);
             e.printStackTrace();
