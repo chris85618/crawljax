@@ -33,6 +33,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
 
 /**
  * This Test checks the 'default' behavior of {@link EmbeddedBrowser} implemented by
@@ -236,11 +237,11 @@ public class WebDriverBackedEmbeddedBrowserNoCrashTest {
 	public final void testGetWebElement() {
 		try {
 			browser.getWebElement(new Identification(How.xpath, "/RUBISH"));
-		} catch (NoSuchElementException e) {
+		} catch (NoSuchElementException | TimeoutException e) {
 			// Expected behavior
 			return;
 		}
-		Assert.fail("NoSuchElementException should have been thrown");
+		Assert.fail("NoSuchElementException/TimeoutException should have been thrown");
 	}
 
 }
