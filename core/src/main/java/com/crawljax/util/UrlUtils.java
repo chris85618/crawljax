@@ -17,7 +17,7 @@ public class UrlUtils {
 	 * @return The new URL.
 	 */
 	public static URI extractNewUrl(String currentUrl, String href) {
-		if (href == null || isJavascript(href) || href.startsWith("mailto:")
+		if (href == null || isJavascript(href) || href.startsWith("mailto:") || href.startsWith("webcal:")
 				|| href.equals("about:blank")) {
 			throw new IllegalArgumentException(String.format(
 					"%s is not a HTTP url", href));
