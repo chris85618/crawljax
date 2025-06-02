@@ -41,6 +41,7 @@ import com.crawljax.core.CandidateElement;
 import com.crawljax.core.CrawlSession;
 import com.crawljax.core.CrawlerContext;
 import com.crawljax.core.ExitNotifier;
+import com.crawljax.core.plugin.AfterReceiveRobotActionPlugin;
 import com.crawljax.core.plugin.OnBrowserCreatedPlugin;
 import com.crawljax.core.plugin.OnCountingDepthPlugin;
 import com.crawljax.core.plugin.OnHtmlAttributeFilteringPlugin;
@@ -80,7 +81,7 @@ import ntut.edu.aiguide.crawljax.plugins.domain.XPathGenerator;
 
 public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlugin, OnCountingDepthPlugin,
                                         PreStateCrawlingPlugin, PostCrawlingPlugin, OnHtmlAttributeFilteringPlugin,
-                                        OnUrlLoadPlugin {
+                                        OnUrlLoadPlugin, AfterReceiveRobotActionPlugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(AIGuidePlugin.class);
     private static final Set<String> editableTagNameSet =  new HashSet<>(Arrays.asList("input", "textarea", "select"));
     private final ProcessingDirectiveManagement processingDirectiveManagement ;
@@ -89,6 +90,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     private final SubmitResultBuilder submitResultBuilder;
     private final SubmitResultBuilder.RowBuilder submitResultRowBuilder;
     private final int serverPort;
+    private final boolean isRestart;
     private Map<String, Map<String, List<String>>> variableElementList = new HashMap<>();
     private Queue<Pair<State, StateVertex>> directiveStateVertexComparisonTable = new LinkedList<>();
     private StateVertex lastDirectiveStateVertex = null;
@@ -111,7 +113,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
      * @param serverPort
      *      server port is a parameter that wrapped variable element mechanism
      */
-    public AIGuidePlugin(Stack<State> directivePath, ServerInstanceManagement serverInstanceManagement, int serverPort, String submitReportPath) {
+    public AIGuidePlugin(Stack<State> directivePath, ServerInstanceManagement serverInstanceManagement, int serverPort, String submitReportPath, boolean isRestart) {
         processingDirectiveManagement = new ProcessingDirectiveManagement(directivePath);
         this.serverInstanceManagement = serverInstanceManagement;
         this.serverPort = serverPort;
@@ -127,6 +129,24 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         this.submitResultRowBuilder = submitResultBuilder.getRowBuilder();
         createVariableElementsList();
         this.formSubmissionJudgeResultBuilder = null;
+        this.isRestart = isRestart;
+    }
+
+    /**
+     * @param directivePath
+     *      directive stack perform like following example:
+     *          | root directive |
+     *          |    directive   |
+     *          |    directive   |
+     *          | leaf directive |
+     *          ------------------
+     * @param serverInstanceManagement
+     *      manage the server instance
+     * @param serverPort
+     *      server port is a parameter that wrapped variable element mechanism
+     */
+    public AIGuidePlugin(Stack<State> directivePath, ServerInstanceManagement serverInstanceManagement, int serverPort, String submitReportPath) {
+        this(directivePath, serverInstanceManagement, serverPort, submitReportPath, false);
     }
 
     private void createVariableElementsList() {
@@ -636,6 +656,12 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         serverInstanceManagement.closeServerInstance();
         serverInstanceManagement.createServerInstance();
         LOGGER.debug("Resetting ServerInstance complete.");
+    }
+
+    @Override
+    public boolean isRestartOrNot() {
+		LOGGER.info("Get the restart signal : {}", this.isRestart);
+		return this.isRestart;
     }
 
     public StateFlowGraph getStateFlowGraph() {
