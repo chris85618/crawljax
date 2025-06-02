@@ -45,7 +45,9 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.ErrorHandler.UnknownServerException;
 import org.openqa.selenium.remote.HttpCommandExecutor;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
@@ -293,6 +295,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 	private final ImmutableSortedSet<String> filterAttributes;
 	private final WebDriver browser;
+	private final WebDriverWait wait;
 
 	private long crawlWaitEvent;
 	private long crawlWaitReload;
@@ -307,6 +310,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 */
 	private WebDriverBackedEmbeddedBrowser(WebDriver driver, Plugins plugins) {
 		this.browser = driver;
+		this.wait = new WebDriverWait(this.browser, 5);
 		this.plugins = plugins;
 		filterAttributes = ImmutableSortedSet.of();
 	}
@@ -326,6 +330,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	private WebDriverBackedEmbeddedBrowser(WebDriver driver,
 										   ImmutableSortedSet<String> filterAttributes, long crawlWaitReload, long crawlWaitEvent, Plugins plugins) {
 		this.browser = driver;
+		this.wait = new WebDriverWait(this.browser, 5);
 		this.filterAttributes = Preconditions.checkNotNull(filterAttributes);
 		this.crawlWaitEvent = crawlWaitEvent;
 		this.crawlWaitReload = crawlWaitReload;
@@ -668,7 +673,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public boolean input(Identification identification, String text) {
 		try {
-			WebElement field = browser.findElement(identification.getWebDriverBy());
+			WebElement field = this.wait.until(ExpectedConditions.presenceOfElementLocated(identification.getWebDriverBy()));
 			if (field != null) {
 				field.clear();
 				field.sendKeys(text);
@@ -716,9 +721,8 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 				handleChanged = true;
 			}
 
-			WebElement webElement =
-			        browser.findElement(eventable.getIdentification().getWebDriverBy());
-
+			WebElement webElement = this.wait
+					.until(ExpectedConditions.presenceOfElementLocated(eventable.getIdentification().getWebDriverBy()));
 			
 			if (webElement != null) {
 				result = fireEventWait(webElement, eventable);
@@ -770,7 +774,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public boolean isVisible(Identification identification) {
 		try {
-			WebElement el = browser.findElement(identification.getWebDriverBy());
+			WebElement el = this.wait.until(ExpectedConditions.presenceOfElementLocated(identification.getWebDriverBy()));
 			if (el != null) {
 				return el.isDisplayed();
 			}
@@ -792,7 +796,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public boolean isInteractive(String identification) {
 		try {
-			WebElement el = browser.findElement(By.xpath(identification.replaceAll("/BODY\\[1\\]/", "/BODY/")));
+			WebElement el = this.wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(identification.replaceAll("/BODY\\[1\\]/", "/BODY/"))));
 			if (el != null) {
 				return el.isDisplayed() && el.isEnabled();
 			}
@@ -991,7 +995,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 		WebElement webElement;
 		try {
-			webElement = browser.findElement(input.getIdentification().getWebDriverBy());
+			webElement = this.wait.until(ExpectedConditions.presenceOfElementLocated(input.getIdentification().getWebDriverBy()));
 			if (!webElement.isDisplayed()) {
 				return null;
 			}
@@ -1064,7 +1068,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public boolean elementExists(Identification identification) {
 		try {
-			WebElement el = browser.findElement(identification.getWebDriverBy());
+			WebElement el = this.wait.until(ExpectedConditions.presenceOfElementLocated(identification.getWebDriverBy()));
 			// TODO Stefan; I think el will never be null as a
 			// NoSuchElementExcpetion will be
 			// thrown, catched below.
@@ -1083,7 +1087,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public WebElement getWebElement(Identification identification) {
 		try {
-			return browser.findElement(identification.getWebDriverBy());
+			return this.wait.until(ExpectedConditions.presenceOfElementLocated(identification.getWebDriverBy()));
 		} catch (WebDriverException e) {
 			throw wrapWebDriverExceptionIfConnectionException(e);
 		}
