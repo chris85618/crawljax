@@ -497,47 +497,41 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     private void performInitialActions() {
         LOGGER.debug("Perform InitialActions");
         List<Action> initialActions = processingDirectiveManagement.getInitialActions();
+        final State initialDirective = processingDirectiveManagement.getInitialDirective();
+        final boolean isToCheckFormFillingResult = initialDirective.getToCheckFormFillingResult();
 
         try {
             // TODO: 如果是測試用途，忽略接下來的爬行
             browser.goToUrl(new URI("http://localhost:" + this.serverPort));
             final FormSubmissionJudgeResultBuilder formSubmissionJudgeResultBuilder = new FormSubmissionJudgeResultBuilder();
-            Action beforeAction = null;
-            for (Action action: initialActions) {
-                final String formUrl = browser.getCurrentUrl();
-                String actionXpath = action.getActionXpath();
-                String actionValue = action.getValue();
+            if (isToCheckFormFillingResult) {
+                LOGGER.debug("isToCheckFormFillingResult is true");
+                formSubmissionJudgeResultBuilder.setBeforeDom(browser.getStrippedDom());
+            }
 
-                final Action.DomRecordAction domRecordAction = action.getDomRecordAction();
-                if (domRecordAction == Action.DomRecordAction.RECORD_BEFORE) {
-                    LOGGER.debug("DomRecordAction is RECORD_BEFORE");
-                    formSubmissionJudgeResultBuilder.setBeforeDom(browser.getStrippedDom());
-                    beforeAction = action;
-                }
+            String formUrl = "";
+            String actionXpath = "";
+            String actionValue = "";
+            for (Action action: initialActions) {
+                formUrl = browser.getCurrentUrl();
+                actionXpath = action.getActionXpath();
+                actionValue = action.getValue();
 
                 if (actionValue.isEmpty()) {
                     browser.fireEventAndWait(new Eventable(new Identification(Identification.How.xpath, actionXpath), Eventable.EventType.click));
                 } else {
                     browser.input(new Identification(Identification.How.xpath, actionXpath), actionValue);
                 }
-
-                if (domRecordAction == Action.DomRecordAction.RECORD_AFTER) {
-                    LOGGER.debug("DomRecordAction is RECORD_AFTER");
-                    final Action afterAction = action;
-                    formSubmissionJudgeResultBuilder.setAfterDom(browser.getStrippedDom()); // Added to record after DOM
-                    if (beforeAction == null) {
-                        throw new IllegalStateException("beforeAction is null, but RECORD_AFTER action is found with xpath: " + afterAction.getActionXpath());
-                    }
-                    final boolean formSubmissionResult = formSubmissionJudgeResultBuilder.build();
-                    LOGGER.info("Submitting form url {} and xpath {} with result: {}", formUrl, actionXpath, formSubmissionResult);
-                    this.tableOutputBuilder.addRow(Arrays.asList(formUrl, actionXpath, actionValue, Boolean.toString(formSubmissionResult)));
-                    // TODO: maybe to do something according to the form submission result
-                    beforeAction.setDomRecordAction(Action.DomRecordAction.NONE);
-                    beforeAction = null;
-                    afterAction.setDomRecordAction(Action.DomRecordAction.NONE);
-                }
             }
-            this.tableOutputBuilder.writeToFile();
+            if (isToCheckFormFillingResult) {
+                formSubmissionJudgeResultBuilder.setAfterDom(browser.getStrippedDom()); // Added to record after DOM
+                final boolean formSubmissionResult = formSubmissionJudgeResultBuilder.build();
+                LOGGER.info("Submitting form url {} and xpath {} with result: {}", formUrl, actionXpath, formSubmissionResult);
+                this.tableOutputBuilder.addRow(Arrays.asList(formUrl, actionXpath, actionValue, Boolean.toString(formSubmissionResult)));
+                initialDirective.resetToCheckFormFillingResult(); // Reset the flag
+                // TODO: maybe to do something according to the form submission result
+                this.tableOutputBuilder.writeToFile();
+            }
         } catch (Exception e) {
             LOGGER.debug("Perform InitialActions fail", e);
             e.printStackTrace();

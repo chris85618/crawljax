@@ -13,45 +13,19 @@ public class State implements Cloneable {
     private final String dom;
     private final Queue<List<Action>> actionSet;
     private Queue<List<Action>> lastActionSet = new LinkedList<>();
-	private boolean shouldCheckFormFillingResult;
+	private boolean isIgnoreCrawling;
+	private boolean isToCheckFormFillingResult;
 
-    public State(String hashDom, String dom, LinkedList<List<Action>> actionSet, boolean shouldCheckFormFillingResult) {
-        // Handle shouldCheckFormFillingResult
-        if (shouldCheckFormFillingResult) {
-            final int sizeOfActionSet = actionSet.size();
-            if (sizeOfActionSet > 0) {
-                final int lastIndexOfActionSet = sizeOfActionSet - 1;
-                this.lastActionSet.add(actionSet.get(lastIndexOfActionSet));
-                // Set the first action
-                for (List<Action> actionList : actionSet) {
-                    if (!actionList.isEmpty()) {
-                        actionList.get(0).setDomRecordAction(Action.DomRecordAction.RECORD_BEFORE);
-                        break;
-                    }
-                }
-                // Set the last action
-                for (int i = lastIndexOfActionSet; i >= 0; i--) {
-                    List<Action> actionList = actionSet.get(i);
-                    if (!actionList.isEmpty()) {
-                        final int sizeOfActionList = actionList.size();
-                        if (sizeOfActionList > 0) {
-                            final int lastIndex = sizeOfActionList - 1;
-                            actionList.get(lastIndex).setDomRecordAction(Action.DomRecordAction.RECORD_AFTER);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        // Initialization
+    public State(String hashDom, String dom, LinkedList<List<Action>> actionSet, boolean isIgnoreCrawling, boolean isToCheckFormFillingResult) {
         this.stateID = hashDom;
         this.dom = dom;
         this.actionSet = actionSet;
-		this.shouldCheckFormFillingResult = shouldCheckFormFillingResult;
+        this.isIgnoreCrawling = isIgnoreCrawling;
+		this.isToCheckFormFillingResult = isToCheckFormFillingResult;
     }
 
     public State(String hashDom, String dom, LinkedList<List<Action>> actionSet) {
-        this(hashDom, dom, actionSet, false);
+        this(hashDom, dom, actionSet, false, false);
     }
 
     public String getID() {
@@ -62,8 +36,20 @@ public class State implements Cloneable {
         return dom;
     }
 
-	public boolean getShouldCheckFormFillingResult() {
-		return shouldCheckFormFillingResult;
+	public boolean getIgnoreCrawling() {
+		return isIgnoreCrawling;
+	}
+
+	public void resetIgnoreCrawling() {
+		isIgnoreCrawling = false;
+	}
+
+	public boolean getToCheckFormFillingResult() {
+		return isToCheckFormFillingResult;
+	}
+
+	public void resetToCheckFormFillingResult() {
+		isToCheckFormFillingResult = false;
 	}
 
     public List<Action> getNextActionSet() {
