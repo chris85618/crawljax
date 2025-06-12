@@ -45,7 +45,9 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.ErrorHandler.UnknownServerException;
 import org.openqa.selenium.remote.HttpCommandExecutor;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
@@ -293,6 +295,9 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 	private final ImmutableSortedSet<String> filterAttributes;
 	private final WebDriver browser;
+	private final WebDriverWait wait;
+	private final WebDriverWait waitReload;
+	private final WebDriverWait waitEvent;
 
 	private long crawlWaitEvent;
 	private long crawlWaitReload;
@@ -307,6 +312,9 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	 */
 	private WebDriverBackedEmbeddedBrowser(WebDriver driver, Plugins plugins) {
 		this.browser = driver;
+		this.wait = new WebDriverWait(this.browser, 5);
+		this.waitReload = this.wait;
+		this.waitEvent = this.wait;
 		this.plugins = plugins;
 		filterAttributes = ImmutableSortedSet.of();
 	}
@@ -326,6 +334,9 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	private WebDriverBackedEmbeddedBrowser(WebDriver driver,
 										   ImmutableSortedSet<String> filterAttributes, long crawlWaitReload, long crawlWaitEvent, Plugins plugins) {
 		this.browser = driver;
+		this.wait = new WebDriverWait(this.browser, 5);
+		this.waitReload = new WebDriverWait(this.browser, (long) (crawlWaitReload / 1000. + 0.5));
+		this.waitEvent = new WebDriverWait(this.browser, (long) (crawlWaitEvent / 1000. + 0.5));
 		this.filterAttributes = Preconditions.checkNotNull(filterAttributes);
 		this.crawlWaitEvent = crawlWaitEvent;
 		this.crawlWaitReload = crawlWaitReload;
@@ -423,14 +434,10 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	public void goToUrl(URI url) {
 		try {
 			browser.navigate().to(url.toString());
-			Thread.sleep(this.crawlWaitReload);
+			this.waitForPageToBeStable();
 			handlePopups();
 		} catch (WebDriverException e) {
 			throwIfConnectionException(e);
-			return;
-		} catch (InterruptedException e) {
-			LOGGER.debug("goToUrl got interrupted while waiting for the page to be loaded", e);
-			Thread.currentThread().interrupt();
 			return;
 		}
 	}
@@ -518,7 +525,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 				return false;
 		}
 
-		Thread.sleep(this.crawlWaitEvent);
+		this.waitForPageToBeStable();
 		return true;
 	}
 
@@ -668,7 +675,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public boolean input(Identification identification, String text) {
 		try {
-			WebElement field = browser.findElement(identification.getWebDriverBy());
+			WebElement field = this.wait.until(ExpectedConditions.presenceOfElementLocated(identification.getWebDriverBy()));
 			if (field != null) {
 				field.clear();
 				field.sendKeys(text);
@@ -694,7 +701,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public synchronized boolean fireEventAndWait(Eventable eventable)
 	        throws ElementNotVisibleException,
-	        NoSuchElementException, InterruptedException {
+	        NoSuchElementException, org.openqa.selenium.TimeoutException, InterruptedException {
 		try {
 
 			boolean handleChanged = false;
@@ -716,9 +723,8 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 				handleChanged = true;
 			}
 
-			WebElement webElement =
-			        browser.findElement(eventable.getIdentification().getWebDriverBy());
-
+			WebElement webElement = this.wait
+					.until(ExpectedConditions.presenceOfElementLocated(eventable.getIdentification().getWebDriverBy()));
 			
 			if (webElement != null) {
 				result = fireEventWait(webElement, eventable);
@@ -728,7 +734,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 				browser.switchTo().defaultContent();
 			}
 			return result;
-		} catch (ElementNotVisibleException | NoSuchElementException e) {
+		} catch (ElementNotVisibleException | NoSuchElementException | org.openqa.selenium.TimeoutException e) {
 			throw e;
 		} catch (WebDriverException e) {
 			throwIfConnectionException(e);
@@ -770,7 +776,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public boolean isVisible(Identification identification) {
 		try {
-			WebElement el = browser.findElement(identification.getWebDriverBy());
+			WebElement el = this.wait.until(ExpectedConditions.presenceOfElementLocated(identification.getWebDriverBy()));
 			if (el != null) {
 				return el.isDisplayed();
 			}
@@ -792,7 +798,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public boolean isInteractive(String identification) {
 		try {
-			WebElement el = browser.findElement(By.xpath(identification.replaceAll("/BODY\\[1\\]/", "/BODY/")));
+			WebElement el = this.wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(identification.replaceAll("/BODY\\[1\\]/", "/BODY/"))));
 			if (el != null) {
 				return el.isDisplayed() && el.isEnabled();
 			}
@@ -991,7 +997,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 		WebElement webElement;
 		try {
-			webElement = browser.findElement(input.getIdentification().getWebDriverBy());
+			webElement = this.wait.until(ExpectedConditions.presenceOfElementLocated(input.getIdentification().getWebDriverBy()));
 			if (!webElement.isDisplayed()) {
 				return null;
 			}
@@ -1064,7 +1070,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public boolean elementExists(Identification identification) {
 		try {
-			WebElement el = browser.findElement(identification.getWebDriverBy());
+			WebElement el = this.wait.until(ExpectedConditions.presenceOfElementLocated(identification.getWebDriverBy()));
 			// TODO Stefan; I think el will never be null as a
 			// NoSuchElementExcpetion will be
 			// thrown, catched below.
@@ -1083,7 +1089,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public WebElement getWebElement(Identification identification) {
 		try {
-			return browser.findElement(identification.getWebDriverBy());
+			return this.wait.until(ExpectedConditions.presenceOfElementLocated(identification.getWebDriverBy()));
 		} catch (WebDriverException e) {
 			throw wrapWebDriverExceptionIfConnectionException(e);
 		}
@@ -1215,5 +1221,187 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 				t.setPriority(Thread.NORM_PRIORITY);
 			return t;
 		}
+	}
+
+    private boolean hasLoadingIndicator() {
+		// Check if the page is still loading via AJAX
+        try {
+            final WebElement html = browser.findElement(By.tagName("html"));
+            final String htmlClass = html.getAttribute("class");
+            if (htmlClass != null && (
+                    htmlClass.contains("nprogress-busy") ||	// NProgress.js
+                    htmlClass.contains("pace-running") ||	// Pace.js
+                    htmlClass.contains("pace-active") ||	// Pace.js
+                    htmlClass.contains("loading") ||		// common/Alpine/Vue
+                    htmlClass.contains("v-loading")			// Vue.js
+            )) {
+                return true;
+            }
+        } catch (NoSuchElementException ignored) {
+		}
+
+
+		// Check for visible loading indicators.
+   		final String selector = String.join(",",
+				// NProgress, Pace, Topbar
+				"[class*='nprogress']",
+				"[class*='pace']",
+				"[class*='topbar']",
+
+				// Common spinner/loading
+				"[class*='spinner']",
+				"[class*='spin']",
+				"[class*='loading']",
+				"[class*='loader']",
+				"[class*='progress']",
+
+				// Ladda, Button state
+				"[class*='ladda']",
+				"[class*='btn-loading']",
+
+				// Vue
+				"[class*='vld']",
+				"[class*='v-loading']",
+				"[class*='loading-mask']",
+				"[class*='loading-wrapper']",
+				"[class*='vue-loading']",
+
+				// Angular
+				"[class*='ngx-spinner']",
+				"[class*='mat-progress-spinner']",
+				"[class*='mat-spinner']",
+
+				// Bootstrap modal/backdrop/spinner
+				"[class*='modal-backdrop']",
+				"[class*='spinner-border']",
+				"[class*='spinner-grow']",
+				"[class*='fade'][class*='show']",
+				"[class*='disabled']",
+
+				// Alpine.js state class
+				"[class*='x-loading']",
+				"[class*='opacity-50']",
+				"[class*='pointer-events-none']",
+
+				// Common overlay classes
+				"[class*='overlay']",
+				"[class*='page-mask']",
+				"[class*='backdrop']"
+	  	);
+		final List<WebElement> loaders = browser.findElements(By.cssSelector(selector));
+        for (WebElement element : loaders) {
+            try {
+                if (element.isDisplayed()) {
+					return true;
+				}
+            } catch (StaleElementReferenceException ignored) {
+			}
+        }
+
+        return false;
+    }
+
+	public void waitForPageToBeStable() {
+		this.waitForPageToBeStable(this.crawlWaitReload);
+	}
+
+	@Override
+	public void waitForPageToBeStable(final long totalWaitMiliseconds) {
+		this.waitForPageToBeStable(totalWaitMiliseconds, 100);
+	}
+
+	public void waitForPageToBeStable(final long totalWaitMiliseconds, final long waitMilisecondsPerTimes) {
+        // Wait for the page's readyState complete
+        this.wait.until(browser ->
+            ((JavascriptExecutor) browser)
+                .executeScript("return document.readyState")
+                .equals("complete"));
+
+		// Set DOM MutationObserver
+		this.setDomMutationObserver();
+		long previousMutationCount = getMutationCount();
+
+        // Observe the length of innerHTML
+        long previousLength = this.getCurrentLength();
+		long waitMiliseconds = 0;
+
+        for (waitMiliseconds = 0; waitMiliseconds < totalWaitMiliseconds; waitMiliseconds += waitMilisecondsPerTimes) {
+			try {
+				Thread.sleep(waitMilisecondsPerTimes);
+			} catch (InterruptedException e) {
+				LOGGER.debug("Interrupted while waiting for the page to be stable.");
+				Thread.currentThread().interrupt();
+			}
+			// Check for page length.
+			final long currentLength = this.getCurrentLength();
+			if (currentLength != previousLength) {
+				previousLength = currentLength;
+				continue; // The page is still loading.
+			}
+			// Check DOM MutationObserver for whether DOM changed
+			long currentMutationCount = this.getMutationCount();
+			if (currentMutationCount != previousMutationCount) {
+				previousMutationCount = currentMutationCount;
+				continue;
+			}
+			// Check for loading indicators.
+			if (this.hasLoadingIndicator()) {
+				continue;
+			}
+			// Check for jQuery AJAX
+			if (!this.isAjaxIdle()) {
+				continue; 
+			}
+			// The page is stable.
+			LOGGER.info("The page is stable after {} seconds.", (waitMiliseconds + waitMilisecondsPerTimes) / 1000.);
+			return;
+		}
+		LOGGER.warn("The page did not become stable after {} seconds.", waitMiliseconds / 1000.);
+	}
+
+	private long getCurrentLength() {
+		return ((Number) ((JavascriptExecutor) browser)
+				.executeScript("return document.body.innerHTML.length")).longValue();
+	}
+
+	private boolean isAjaxIdle() {
+		try {
+			Object result = ((JavascriptExecutor) browser)
+					.executeScript("return window.jQuery ? jQuery.active : 0;");
+			if (result instanceof Number) {
+				return ((Number) result).intValue() == 0;
+			}
+		} catch (Exception e) {
+			LOGGER.debug("Error checking jQuery.active: {}", e.getMessage());
+		}
+		// No jQuery
+		return true;
+	}
+
+	private void setDomMutationObserver() {
+		try {
+			((JavascriptExecutor) browser).executeScript(
+				"if (!window.__mutationCount) {" +
+				"  window.__mutationCount = 0;" +
+				"  const observer = new MutationObserver(() => window.__mutationCount++);" +
+				"  observer.observe(document.body, {childList: true, subtree: true});" +
+				"}"
+			);
+		} catch (Exception e) {
+			LOGGER.warn("Failed to inject MutationObserver: {}", e.getMessage());
+		}
+	}
+
+	private long getMutationCount() {
+		try {
+			Object result = ((JavascriptExecutor) browser)
+					.executeScript("return window.__mutationCount || 0;");
+			if (result instanceof Number) {
+				return ((Number) result).longValue();
+			}
+		} catch (Exception e) {
+			LOGGER.debug("Error getting mutation count: {}", e.getMessage());
+		}
+		return 0;
 	}
 }

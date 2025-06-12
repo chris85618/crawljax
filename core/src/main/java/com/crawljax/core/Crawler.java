@@ -17,6 +17,7 @@ import javax.inject.Provider;
 
 import org.openqa.selenium.ElementNotVisibleException;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -366,7 +367,7 @@ public class Crawler {
 		boolean isFired = false;
 		try {
 			isFired = browser.fireEventAndWait(eventToFire);
-		} catch (ElementNotVisibleException | NoSuchElementException e) {
+		} catch (ElementNotVisibleException | NoSuchElementException | TimeoutException e) {
 			if (crawlRules.isCrawlHiddenAnchors() && eventToFire.getElement() != null
 			        && "A".equals(eventToFire.getElement().getTag())) {
 				isFired = visitAnchorHrefIfPossible(eventToFire);
@@ -606,12 +607,7 @@ public class Crawler {
 			for (Entry<String, String> e : eventable.getElement().getAttributes().entrySet()) {
 				Matcher m = p.matcher(e.getValue());
 				long waitTime = parseWaitTimeOrReturnDefault(m);
-				try {
-					Thread.sleep(waitTime);
-				} catch (InterruptedException ex) {
-					LOG.info("Crawler timed out while waiting for page to reload");
-					Thread.currentThread().interrupt();
-				}
+				browser.waitForPageToBeStable(waitTime);
 			}
 		}
 	}
