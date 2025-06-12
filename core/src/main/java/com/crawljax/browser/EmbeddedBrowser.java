@@ -177,4 +177,10 @@ public interface EmbeddedBrowser {
 	 * Delete all cookies
 	 */
 	void deleteAllCookies();
+
+	/**
+	 * Wait for the page to be stable for a specified duration.
+	 * @param totalWaitMilliseconds the total time to wait in milliseconds
+	 */
+	void waitForPageToBeStable(final long totalWaitMilliseconds);
 }
