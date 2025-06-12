@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import javax.xml.xpath.XPathExpressionException;
 
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -412,7 +413,7 @@ public class CandidateElementExtractor {
 			try {
 				String value = browser.getWebElement(identification).getAttribute("value");
 				candidateElements.add(new CandidateElement(sourceElement, identification, relatedFrame, value));
-			} catch (NoSuchElementException e) {
+			} catch (NoSuchElementException | TimeoutException e) {
 				LOG.warn("Can not locate element {}, skip this element and keep going...", xpath);
 			}
 		}

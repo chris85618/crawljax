@@ -122,4 +122,9 @@ public class MockBrowser implements EmbeddedBrowser {
     public void deleteAllCookies() {
 
     }
+
+	@Override
+	public void waitForPageToBeStable(final long totalWaitMiliseconds) {
+
+    }
 }
