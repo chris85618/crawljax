@@ -240,7 +240,8 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         LOGGER.debug("StateVertex: Name is {}, Url is {}, ID is {}, Dom.hashCode is {}, StrippedDom.hashCode is {}",
                 currentState.getName(), currentState.getUrl(), currentState.getId(),
                 currentState.getDom().hashCode(), currentState.getStrippedDom().hashCode());
-        if (isDirectiveProcess || processingDirectiveManagement.isCurrentStateIsDirective(currentState.getStrippedDom())) {
+
+        if (isDirectiveProcess || isCurrentStateIsDirective) {
             LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
             isDirectiveProcess = true;
             processingDirectiveManagement.recordCurrentState(currentState);
@@ -257,20 +258,6 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 WebElement rootElement = browser.getWebElement(new Identification(Identification.How.tag, "html"));
                 for (WebElement formElement : rootElement.findElements(By.tagName("form"))) {
                     if (formElement.isEnabled() && formElement.isDisplayed()) {
-                        List<WebElement> inputElements = formElement.findElements(By.tagName("input"));
-                        if (inputElements.isEmpty()) {
-                            continue;
-                        }
-
-                        boolean allElementsInvalid = inputElements.stream().allMatch(inputElement ->
-                                (!inputElement.isDisplayed() ||
-                                        !inputElement.isEnabled() ||
-                                        Objects.equals(inputElement.getAttribute("type"), "hidden"))
-                        );
-
-                        if (allElementsInvalid) {
-                            continue;
-                        }
                         formXPaths.add(XPathGenerator.getAbsoluteXPath(driver, formElement));
                     }
                 }
