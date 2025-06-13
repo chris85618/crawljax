@@ -1,10 +1,16 @@
 package ntut.edu.aiguide.crawljax.plugins.domain;
 
-import com.crawljax.core.state.StateVertex;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import com.crawljax.core.state.StateVertex;
 
 public class ProcessingDirectiveManagement {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessingDirectiveManagement.class);
@@ -16,32 +22,13 @@ public class ProcessingDirectiveManagement {
     private Map<String, LinkedList<String>> directiveAppendStateNameMap = new HashMap<>();
     private HashSet<StateVertex> processingState = new HashSet<>();
     private EditDistanceComparator editDistanceComparator;
-    private List<Action> initialActions;
 
     public ProcessingDirectiveManagement(Stack<State> directivePath) {
         directiveStack = directivePath;
-        initialActions = convertDirectiveToInitialActions();
         // put the first directive
         firstDirectiveState = getFirstDirectiveState();
         targetDirectiveState = firstDirectiveState;
         editDistanceComparator = new EditDistanceComparator(0.98D);
-    }
-
-    private List<Action> convertDirectiveToInitialActions() {
-        List<Action> initialActions = new ArrayList<>();
-        State directive;
-
-        while ((directive = getFirstDirectiveState()) != null) {
-            while (directive.hasNextActionSet()) {
-                initialActions.addAll(directive.getNextActionSet());
-            }
-        }
-
-        return initialActions;
-    }
-
-    public List<Action> getInitialActions() {
-        return initialActions;
     }
 
     private State getFirstDirectiveState() {
