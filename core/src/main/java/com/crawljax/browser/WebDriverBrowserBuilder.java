@@ -180,7 +180,8 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 
 		optionsChrome.addArguments("--whitelisted-ips=\"\"");
 		optionsChrome.addArguments("--disable-popup-blocking");
-
+        optionsChrome.addArguments("--disable-features=PasswordLeakDetection,PasswordCheck,AccountConsistency,SafeBrowsingEnhancedProtection");
+		optionsChrome.addArguments("--disable-default-apps");
 		/**
 		 * Remove the external protocol handler
 		 *
