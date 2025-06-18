@@ -8,9 +8,9 @@ public class LearningTarget {
     private final String dom;
     private final String targetURL;
     private final List<String> formXPaths;
-    private final List<List<Action>> actionSequence;
+    private final List<HighLevelAction> actionSequence;
 
-    public LearningTarget(String dom, String targetURL, List<String> formXPaths, List<List<Action>> actionSet) {
+    public LearningTarget(String dom, String targetURL, List<String> formXPaths, List<HighLevelAction> actionSet) {
         this.dom = dom;
         this.targetURL = targetURL;
         this.formXPaths = new ArrayList<>(formXPaths);
@@ -30,6 +30,10 @@ public class LearningTarget {
     }
 
     public List<List<Action>> getActionSequence() {
-        return actionSequence;
+        final List<List<Action>> result = new ArrayList<>();
+        for (HighLevelAction highLevelAction : this.actionSequence) {
+            result.add(highLevelAction.getActionSequence());
+        }
+        return result;
     }
 }

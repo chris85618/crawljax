@@ -64,6 +64,7 @@ import com.google.gson.JsonParser;
 
 import org.apache.commons.lang3.tuple.Pair;
 import ntut.edu.aiguide.crawljax.plugins.domain.Action;
+import ntut.edu.aiguide.crawljax.plugins.domain.HighLevelAction;
 import ntut.edu.aiguide.crawljax.plugins.domain.EditDistanceComparator;
 import ntut.edu.aiguide.crawljax.plugins.domain.InputPage;
 import ntut.edu.aiguide.crawljax.plugins.domain.LearningTarget;
@@ -575,13 +576,13 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         if (directiveStateVertexComparisonTable.size() == 0) {
             for (InputPage inputPage : inputPages) {
                 StateVertex stateVertex = inputPage.getStateVertex();
-                List<List<Action>> actionSequence = getTwoStateEventPath(index, stateVertex);
+                List<HighLevelAction> actionSequence = getTwoStateEventPath(index, stateVertex);
                 LOGGER.debug("Now action sequence are {}", actionSequence);
                 result.add(new LearningTarget(stateVertex.getStrippedDom(), stateVertex.getUrl(), inputPage.getFormXPaths(), actionSequence));
             }
         } else {
             LOGGER.debug("The last state is {}", lastDirectiveStateVertex);
-            List<List<Action>> indexToLastDirectiveEventPath = getTheEventPathBetweenEachDirectiveToLastState();
+            List<HighLevelAction> indexToLastDirectiveEventPath = getTheEventPathBetweenEachDirectiveToLastState();
             LOGGER.debug("Index to last state path are {}", indexToLastDirectiveEventPath);
 
             for (InputPage inputPage : inputPages) {
@@ -596,12 +597,12 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         return result;
     }
 
-    private void addLastDirectiveToInputPagePathToResult(List<LearningTarget> result, InputPage inputPage, List<List<Action>> indexToLastDirectiveEventPath) {
+    private void addLastDirectiveToInputPagePathToResult(List<LearningTarget> result, InputPage inputPage, List<HighLevelAction> indexToLastDirectiveEventPath) {
         StateVertex stateVertex = inputPage.getStateVertex();
         ImmutableList<Eventable> eventPath = stateFlowGraph.getShortestPath(lastDirectiveStateVertex, stateVertex);
         if (eventPath.size() != 0) {
             LOGGER.info("Last state can go to input page {}", inputPage);
-            List<List<Action>> completePath = mergeTwoPath(indexToLastDirectiveEventPath, convertToActionList(eventPath));
+            List<HighLevelAction> completePath = mergeTwoPath(indexToLastDirectiveEventPath, convertToActionList(eventPath));
             result.add(new LearningTarget(stateVertex.getStrippedDom(), stateVertex.getUrl(), inputPage.getFormXPaths(), completePath));
         }
         else {
@@ -609,23 +610,23 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         }
     }
 
-    private List<List<Action>> getTheEventPathBetweenEachDirectiveToLastState() {
+    private List<HighLevelAction> getTheEventPathBetweenEachDirectiveToLastState() {
         Pair<State, StateVertex> directivePair = directiveStateVertexComparisonTable.poll();
         StateVertex lastDirectiveState = directivePair.getValue();
         StateVertex root = stateFlowGraph.getInitialState();
 
-        List<List<Action>> actionSequence = new LinkedList<>(getTwoStateEventPath(root, lastDirectiveState));
+        final List<HighLevelAction> actionSequence = new LinkedList<>(getTwoStateEventPath(root, lastDirectiveState));
         LOGGER.debug("Find index to directive : {} path is {}", lastDirectiveState, actionSequence);
         while(!directiveStateVertexComparisonTable.isEmpty()) {
             directivePair = directiveStateVertexComparisonTable.poll();
-            List<List<Action>> betweenDirectivesPath = getTwoStateEventPath(lastDirectiveState, directivePair.getValue());
+            List<HighLevelAction> betweenDirectivesPath = getTwoStateEventPath(lastDirectiveState, directivePair.getValue());
             LOGGER.debug("Find directive : {} to directive : {} path is {}", lastDirectiveState, directivePair.getValue(), betweenDirectivesPath);
             actionSequence.addAll(betweenDirectivesPath);
             LOGGER.debug("Now total Path is {}", actionSequence);
             lastDirectiveState = directivePair.getValue();
         }
 
-        List<List<Action>> betweenDirectivesPath = getTwoStateEventPath(lastDirectiveState, lastDirectiveStateVertex);
+        List<HighLevelAction> betweenDirectivesPath = getTwoStateEventPath(lastDirectiveState, lastDirectiveStateVertex);
         LOGGER.debug("Find directive : {} to directive : {} path is {}", lastDirectiveState, lastDirectiveStateVertex, betweenDirectivesPath);
         actionSequence.addAll(betweenDirectivesPath);
         LOGGER.debug("Now total Path is {}", actionSequence);
@@ -633,7 +634,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         return actionSequence;
     }
 
-    private List<List<Action>> getTwoStateEventPath(StateVertex firstState, StateVertex secondState) {
+    private List<HighLevelAction> getTwoStateEventPath(StateVertex firstState, StateVertex secondState) {
         ImmutableList<Eventable> eventPath = stateFlowGraph.getShortestPath(firstState, secondState);
         if (eventPath.size() != 0) {
             return convertToActionList(eventPath);
@@ -642,23 +643,24 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         }
     }
 
-    private List<List<Action>> mergeTwoPath(List<List<Action>> firstPath, List<List<Action>> secondPath) {
-        List<List<Action>> result = new LinkedList<>(firstPath);
+    private List<HighLevelAction> mergeTwoPath(List<HighLevelAction> firstPath, List<HighLevelAction> secondPath) {
+        List<HighLevelAction> result = new LinkedList<>(firstPath);
         result.addAll(secondPath);
         return result;
     }
 
-    private List<List<Action>> convertToActionList(ImmutableList<Eventable> eventPath) {
-        List<List<Action>> highLevelActions = new ArrayList<>(eventPath.size());
+    private List<HighLevelAction> convertToActionList(ImmutableList<Eventable> eventPath) {
+        List<HighLevelAction> highLevelActions = new ArrayList<>(eventPath.size());
         for (Eventable event : eventPath) {
             if (event.getEventType() == Eventable.EventType.click) {
                 String xpath = event.getIdentification().getValue();
                 String value = "";
                 LOGGER.info("Now action is eventType is Click, action Xpath is : {}", xpath);
-                highLevelActions.add(Collections.singletonList(new Action(xpath, value)));
+                final HighLevelAction newHighLevelAction = new HighLevelAction(new Action(xpath, value));
+                highLevelActions.add(newHighLevelAction);
             } else if (event.getEventType() == Eventable.EventType.input) {
-                List<Action> actionSequence = new ArrayList<>(eventPath.size());
                 List<FormInput> formInputs = event.getRelatedFormInputs();
+                final HighLevelAction actionSequence = new HighLevelAction(formInputs.size());
                 for (FormInput formInput : formInputs) {
                     if (formInput.getInputValues().size() == 0)
                         continue;
