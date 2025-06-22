@@ -1,9 +1,5 @@
 package ntut.edu.aiguide.crawljax.plugins.domain;
 
-import com.google.common.collect.Queues;
-import sun.awt.image.ImageWatched;
-
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;

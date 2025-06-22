@@ -55,7 +55,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import javafx.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import ntut.edu.aiguide.crawljax.plugins.domain.Action;
 import ntut.edu.aiguide.crawljax.plugins.domain.EditDistanceComparator;
 import ntut.edu.aiguide.crawljax.plugins.domain.InputPage;

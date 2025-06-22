@@ -45,7 +45,6 @@ import com.crawljax.util.ElementResolver;
 import com.crawljax.util.UrlUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import sun.security.ec.point.ProjectivePoint;
 
 public class Crawler {
 

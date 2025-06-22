@@ -1,6 +1,5 @@
 package ntut.edu.tw.irobot.lock;
 
-import com.sun.corba.se.impl.orbutil.closure.Future;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
