@@ -23,7 +23,7 @@ import com.crawljax.web.model.CrawlRecords;
 import com.crawljax.web.model.NameValuePair;
 import com.crawljax.web.model.Plugin;
 import com.crawljax.web.model.Plugins;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.MDC;
 
 import com.crawljax.condition.Condition;
