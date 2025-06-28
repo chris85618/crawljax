@@ -61,6 +61,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import ntut.edu.aiguide.crawljax.plugins.domain.FormSubmissionJudger.FormSubmissionJudgeResultBuilder;
 
 import org.apache.commons.lang3.tuple.Pair;
 import ntut.edu.aiguide.crawljax.plugins.domain.Action;
@@ -79,6 +80,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     private static final Set<String> editableTagNameSet =  new HashSet<>(Arrays.asList("input", "textarea", "select"));
     private final ProcessingDirectiveManagement processingDirectiveManagement ;
     private final ServerInstanceManagement serverInstanceManagement;
+    private FormSubmissionJudgeResultBuilder formSubmissionJudgeResultBuilder;
     private final int serverPort;
     private Map<String, Map<String, List<String>>> variableElementList = new HashMap<>();
     private Queue<Pair<State, StateVertex>> directiveStateVertexComparisonTable = new LinkedList<>();
@@ -107,6 +109,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         this.serverInstanceManagement = serverInstanceManagement;
         this.serverPort = serverPort;
         createVariableElementsList();
+        this.formSubmissionJudgeResultBuilder = null;
     }
 
     private void createVariableElementsList() {
@@ -192,6 +195,17 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     @Override
     public String onNewFoundState(String dom) {
         LOGGER.debug("In onNewFoundState");
+        try {
+            if (this.formSubmissionJudgeResultBuilder != null) {
+                // TODO: Refactor this
+                formSubmissionJudgeResultBuilder.setAfterDom(browser.getStrippedDom()); // Added to record after DOM
+                final boolean formSubmissionResult = formSubmissionJudgeResultBuilder.build();
+            }
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        } finally {
+            this.formSubmissionJudgeResultBuilder = null;
+        }
         try {
             Document doc = DomUtils.asDocument(dom);
             String convertDom = DomUtils.getDocumentToString(doc);
@@ -337,7 +351,32 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             isDirectiveProcess = true;
             processingDirectiveManagement.recordCurrentState(currentState);
             lastDirectiveStateVertex = currentState;
-            changeCandidateElementForCurrentState(candidateElements, currentState);
+
+            final List<Action> actionSet = changeCandidateElementForCurrentState(candidateElements, currentState);
+
+            // TODO: refactor this
+            if (this.formSubmissionJudgeResultBuilder != null) {
+                // The last submission failed if the origin this.formSubmissionJudgeResultBuilder existed here
+                // (It's a new submission!!!)
+                final boolean formSubmissionResult = false;
+            }
+
+            this.formSubmissionJudgeResultBuilder = new FormSubmissionJudgeResultBuilder();
+            this.formSubmissionJudgeResultBuilder.setBeforeDom(browser.getStrippedDom());
+            // Form XPath
+            String actionXpath = "";
+            // Get Action Input Value
+            final StringBuilder actionValueBuilder = new StringBuilder();
+            if (actionSet != null && !actionSet.isEmpty()) {
+                for (Action action : actionSet) {
+                    final String actionString = action.toString();
+                    actionValueBuilder.append(actionString).append(" ");
+                }
+
+                actionXpath = actionSet.get(0).getActionXpath();
+            }
+            final String actionValue = actionValueBuilder.toString().trim();
+
         } else if (isCurrentStateIsInputPage(candidateElements)) {
             LOGGER.info("Current page is input page, not going to crawled");
             if (isSimilarDomInInputPageList(currentState.getStrippedDom())) {
@@ -392,7 +431,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         return !isInteractableElements.isEmpty();
     }
 
-    private void changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
+    private List<Action> changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
         List<Action> actionSet = processingDirectiveManagement.getProcessingStateNextActionSet();
         CandidateElement newElement = null;
 
@@ -400,7 +439,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             isDirectiveProcess = false;
             processingDirectiveManagement.removeLastStateInRecordList();
             currentState.setElementsFound(new LinkedList<> (candidateElements));
-            return;
+            return actionSet;
         }
 
         if (!processingDirectiveManagement.isProcessingStateHasNextActionSet()) {
@@ -444,6 +483,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         }
 
         currentState.setElementsFound(new LinkedList<>(Collections.singletonList(newElement)));
+        return actionSet;
     }
 
     private Element findElementInCurrentState(Identification identification, StateVertex currentState) {
