@@ -4,6 +4,8 @@ package ntut.edu.aiguide.crawljax.plugins;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.NoSuchElementException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,6 +17,8 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.xml.xpath.XPathExpressionException;
@@ -26,7 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 
 import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.browser.WebDriverBackedEmbeddedBrowser;
@@ -50,6 +56,7 @@ import com.crawljax.forms.InputValue;
 import com.crawljax.util.DomUtils;
 import com.crawljax.util.XPathHelper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -68,6 +75,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                                         PreStateCrawlingPlugin, PostCrawlingPlugin, OnHtmlAttributeFilteringPlugin,
                                         OnUrlLoadPlugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(AIGuidePlugin.class);
+    private static final Set<String> editableTagNameSet =  new HashSet<>(Arrays.asList("input", "textarea", "select"));
     private final ProcessingDirectiveManagement processingDirectiveManagement ;
     private final ServerInstanceManagement serverInstanceManagement;
     private final int serverPort;
@@ -218,22 +226,83 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
      *      which convert dom to doc
      */
     private void addValueAttributeToNode(Document doc) {
-        NodeList inputNodes = doc.getElementsByTagName("INPUT");
-        List<Action> actions =  processingDirectiveManagement.getProcessingStateLastActionSet();
+        final List<Action> actions =  processingDirectiveManagement.getProcessingStateLastActionSet();
+        // handle select
+        {
+            final NodeList nodes = doc.getElementsByTagName("select");
+            for(int i = 0; i < nodes.getLength(); i++) {
+                // get the value from current page, not from stripped dom
+                final Node node = nodes.item(i);
+                final String xpathExpr = XPathHelper.getXPathExpression(node);
+                if (!isElementInActionSet(xpathExpr, actions))
+                    continue;
+                final Identification item = new Identification(Identification.How.xpath, xpathExpr);
+                // get browser's element
+                final WebElement element = browser.getWebElement(item);
+                if (element == null)
+                    continue;
+                // get all selected options
+                final List<WebElement> optionList = element.findElements(By.tagName("option"));
+                // TODO: if there are multiple options with same value due to toSet(), the result may be wrong.
+                //       This also means the web's design is weird.
+                final Set<String> selectedValueSet = optionList.stream()
+                                                                .filter(WebElement::isSelected)
+                                                                .map(option -> option.getAttribute("value"))
+                                                                .collect(Collectors.toSet());
+                // set the value into doc
+                final org.w3c.dom.Element docSelectElement = (org.w3c.dom.Element) node;
+                final NodeList docOptionNodes = docSelectElement.getElementsByTagName("option");
+                for (int j = 0; j < docOptionNodes.getLength(); j++) {
+                    final Element domOptionElement = (Element) docOptionNodes.item(j);
+                    if (selectedValueSet.contains(domOptionElement.getAttribute("value"))) {
+                        domOptionElement.setAttribute("selected", "selected");
+                    } else {
+                        domOptionElement.removeAttribute("selected");
+                    }
+                }
+            }
+        }
+        // handle the other tags
+        {
+            final Map<String,Function<WebElement,String>> getValue = ImmutableMap.of(
+                "input", element -> element.getAttribute("value"),
+                "textarea", element -> element.getText()
+            );
 
-        for(int i = 0; i < inputNodes.getLength(); i++) {
-            // get the value from current page, not from stripped dom
-            String xpathExpr = XPathHelper.getXPathExpression(inputNodes.item(i));
-            if (!isElementInActionSet(xpathExpr, actions))
-                continue;
-            Identification item = new Identification(Identification.How.xpath, xpathExpr);
-            WebElement element = browser.getWebElement(item);
-            String value = element.getAttribute("value");
+            final Map<String,BiConsumer<Element,String>> setValue = ImmutableMap.of(
+                "input", (element, value) -> { element.setAttribute("value", value); },
+                "textarea", (element, value) -> {
+                // Clear the origin text
+                while (element.hasChildNodes()) {
+                    element.removeChild(element.getFirstChild());
+                }
+                // Add value into textarea as a TextNode
+                final Text textNode = doc.createTextNode(value);
+                element.appendChild(textNode);
+                }
+            );
 
-            if (value.isEmpty())
-                continue;
-
-            ((org.w3c.dom.Element) inputNodes.item(i)).setAttribute("value", value);
+            final Set<String> editableTagNameSetWithoutSelect = new HashSet<>(Arrays.asList("input", "textarea"));
+            for (String editableTagName : editableTagNameSetWithoutSelect) {
+                final NodeList nodes = doc.getElementsByTagName(editableTagName);
+                for(int i = 0; i < nodes.getLength(); i++) {
+                    // get the value from current page, not from stripped dom
+                    final Node node = nodes.item(i); 
+                    final String xpathExpr = XPathHelper.getXPathExpression(node);
+                    if (!isElementInActionSet(xpathExpr, actions))
+                        continue;
+                    final Identification item = new Identification(Identification.How.xpath, xpathExpr);
+                    final WebElement element = browser.getWebElement(item);
+                    if (element == null)
+                        continue;
+                    final Function<WebElement, String> getValueFunc = getValue.get(editableTagName);
+                    final String value = getValueFunc.apply(element);
+                    // set the value into doc
+                    final Element docElement = (Element) node;
+                    final BiConsumer<Element, String> setValueFunc = setValue.get(editableTagName);
+                    setValueFunc.accept(docElement, value);
+                }
+            }
         }
     }
 
@@ -313,19 +382,13 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
     private boolean isCurrentStateIsInputPage(ImmutableList<CandidateElement> candidateElements) {
         candidateElements.forEach(candidateElement -> LOGGER.debug("The candidateElement is {}", candidateElement));
-        List<CandidateElement> isInteractableInputElements = candidateElements.parallelStream()
-                .filter(candidateElement -> candidateElement.getElement().getTagName().equalsIgnoreCase("input"))
+        List<CandidateElement> isInteractableElements = candidateElements.parallelStream()
+                .filter(candidateElement -> editableTagNameSet.stream().anyMatch(candidateElement.getElement().getTagName()::equalsIgnoreCase))
                 .filter(candidateElement -> candidateElement.getIdentification().getValue().toLowerCase().contains("form"))
                 .filter(candidateElement -> browser.isInteractive(candidateElement.getIdentification().getValue()))
                 .collect(Collectors.toList());
-        List<CandidateElement> isInteractableTextAreaElements = candidateElements.parallelStream()
-                .filter(candidateElement -> candidateElement.getElement().getTagName().equalsIgnoreCase("textarea"))
-                .filter(candidateElement -> candidateElement.getIdentification().getValue().toLowerCase().contains("form"))
-                .filter(candidateElement -> browser.isInteractive(candidateElement.getIdentification().getValue()))
-                .collect(Collectors.toList());
-        isInteractableInputElements.forEach(candidateElement -> LOGGER.debug("The interactableInputElement is {}", candidateElement));
-        isInteractableTextAreaElements.forEach(candidateElement -> LOGGER.debug("The interactableInputElement is {}", candidateElement));
-        return !isInteractableInputElements.isEmpty() || !isInteractableTextAreaElements.isEmpty();
+        isInteractableElements.forEach(candidateElement -> LOGGER.debug("The interactableInputElement is {}", candidateElement));
+        return !isInteractableElements.isEmpty();
     }
 
     private void changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
@@ -359,7 +422,16 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                     newElement = new CandidateElement(element, identification, "", new ArrayList<>(), actionSet.get(0).getValue());
                 }
                 else {
-                    element = findCorrespondElement(identification, currentState.getDocument(), "input");
+                    for (String editableTagName : editableTagNameSet) {
+                        element = findCorrespondElement(identification, currentState.getDocument(), editableTagName);
+                        if (element != null) {
+                            break;
+                        }
+                    }
+                    if (element == null) {
+    					LOGGER.error("CandidateElement with null element detected with {}: {}", identification.getHow(), identification.getValue());
+                        throw new NoSuchElementException("CandidateElement with null element detected with " + identification.getHow() + ": " + identification.getValue());
+                    }
                     List<FormInput> formInputs = new ArrayList<FormInput>();
                     for (Action action : actionSet)
                         formInputs.add(createOneFormInput(action.getValue(), action.getActionXpath()));
@@ -449,10 +521,10 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
     private String getElementType(String elementXpath) {
         WebElement element = browser.getWebElement(new Identification(Identification.How.xpath, elementXpath));
-        if (element.getAttribute("type") != null) {
-            return element.getAttribute("type")
-                    .toLowerCase();
-        } else if (element.getTagName().equalsIgnoreCase("input")) {
+        final String typeName = element.getAttribute("type");
+        if (typeName != null) {
+            return typeName.toLowerCase();
+        } else if (editableTagNameSet.stream().anyMatch(element.getTagName()::equalsIgnoreCase)) {
             return "text";
         } else {
             return element.getTagName().toLowerCase();
