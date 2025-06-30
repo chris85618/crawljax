@@ -512,6 +512,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             }
         } catch (Exception e) {
             LOGGER.warn("There something went wrong when create...");
+            throw new RuntimeException(e);
         }
 
         currentState.setElementsFound(new LinkedList<>(Collections.singletonList(newElement)));
