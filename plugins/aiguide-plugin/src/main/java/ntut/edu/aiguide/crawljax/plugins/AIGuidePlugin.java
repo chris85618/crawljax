@@ -26,6 +26,7 @@ import javax.xml.xpath.XPathExpressionException;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -505,26 +506,29 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 }
                 else {
                     for (String editableTagName : editableTagNameSet) {
-                        element = findCorrespondElement(identification, currentState.getDocument(), editableTagName);
-                        if (element != null) {
+                        try {
+                            element = findCorrespondElement(identification, currentState.getDocument(), editableTagName);
+                        } catch (WebDriverException ignored) {} // element not found
+                        if (element != null)
                             break;
-                        }
                     }
-                    if (element == null) {
-    					LOGGER.error("CandidateElement with null element detected with {}: {}", identification.getHow(), identification.getValue());
-                        throw new NoSuchElementException("CandidateElement with null element detected with " + identification.getHow() + ": " + identification.getValue());
+                    if (element != null) {
+                        List<FormInput> formInputs = new ArrayList<FormInput>();
+                        for (Action action : actionSet)
+                            formInputs.add(createOneFormInput(action.getValue(), action.getActionXpath()));
+                        newElement = new CandidateElement(element, identification, "",formInputs, actionSet.get(0).getValue());
                     }
-                    List<FormInput> formInputs = new ArrayList<FormInput>();
-                    for (Action action : actionSet)
-                        formInputs.add(createOneFormInput(action.getValue(), action.getActionXpath()));
-                    newElement = new CandidateElement(element, identification, "",formInputs, actionSet.get(0).getValue());
                 }
             }
         } catch (Exception e) {
             LOGGER.warn("There something went wrong when create...");
         }
-
-        currentState.setElementsFound(new LinkedList<>(Collections.singletonList(newElement)));
+        if (newElement == null) {
+            // No any CandidateElement
+            currentState.setElementsFound(new LinkedList<CandidateElement>());
+        } else {
+            currentState.setElementsFound(new LinkedList<CandidateElement>(Collections.singletonList(newElement)));
+        }
         return actionSet;
     }
 
