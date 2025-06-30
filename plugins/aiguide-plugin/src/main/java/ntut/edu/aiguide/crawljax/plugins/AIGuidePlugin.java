@@ -496,7 +496,12 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                         }
                     }
                     if (element == null) {
-    					LOGGER.error("CandidateElement with null element detected with {}: {}", identification.getHow(), identification.getValue());
+                        LOGGER.error("No corresponding legal Element found in: URL ( {}: {}", identification.getHow(), identification.getValue());
+                        LOGGER.error("  in URL: {}", currentState.getUrl());
+                        LOGGER.error("  with locator {}: {}", identification.getHow(), identification.getValue());
+                        // LOGGER.error("=====================================");
+                        // LOGGER.debug("Page DOM: {}", currentState.getDom());
+                        // LOGGER.error("=====================================");
                         throw new NoSuchElementException("CandidateElement with null element detected with " + identification.getHow() + ": " + identification.getValue());
                     }
                     List<FormInput> formInputs = new ArrayList<FormInput>();
