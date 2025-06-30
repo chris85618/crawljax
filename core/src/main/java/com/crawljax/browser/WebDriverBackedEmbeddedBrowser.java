@@ -856,13 +856,17 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 		try {
 			String current = browser.getWindowHandle();
 			for (String handle : browser.getWindowHandles()) {
-				if (!handle.equals(browser.getWindowHandle())) {
+				if (current.equals(browser.getWindowHandle()))
+					continue;
+				try {
 					browser.switchTo().window(handle);
 					// LOGGER.debug("Closing other window with title \"{}\"", browser.getTitle());
 					browser.close();
-					browser.switchTo().window(current);
+				} catch (NoSuchWindowException e) {
+					LOGGER.warn("Window already closed: {}", handle);
 				}
 			}
+			browser.switchTo().window(current);
 		} catch (UnhandledAlertException e) {
 			LOGGER.warn("While closing the window, an alert got ignored: {}", e.getMessage());
 		} catch (WebDriverException e) {
