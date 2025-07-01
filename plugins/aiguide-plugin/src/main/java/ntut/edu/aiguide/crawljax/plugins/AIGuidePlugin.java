@@ -466,7 +466,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             isDirectiveProcess = false;
             processingDirectiveManagement.removeLastStateInRecordList();
             currentState.setElementsFound(new LinkedList<> (candidateElements));
-            return actionSet;
+            return Collections.emptyList();
         }
 
         if (!processingDirectiveManagement.isProcessingStateHasNextActionSet()) {
@@ -485,13 +485,14 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             if (newElement == null) {
                 Identification identification = new Identification(Identification.How.xpath, actionSet.get(0).getActionXpath());
                 Element element = findElementInCurrentState(identification, currentState);
-                if (element != null) {
+                if (element != null && !isUploadButton(element)) {
                     newElement = new CandidateElement(element, identification, "", new ArrayList<>(), actionSet.get(0).getValue());
                 }
-                else {
+                if (newElement == null) {
                     for (String editableTagName : editableTagNameSet) {
-                        element = findCorrespondElement(identification, currentState.getDocument(), editableTagName);
-                        if (element != null) {
+                        final Element correspondElement = findCorrespondElement(identification, currentState.getDocument(), editableTagName);
+                        if (correspondElement != null && !isUploadButton(correspondElement)) {
+                            element = correspondElement;
                             break;
                         }
                     }
@@ -512,11 +513,23 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             }
         } catch (Exception e) {
             LOGGER.warn("There something went wrong when create...");
-            throw new RuntimeException(e);
         }
-
-        currentState.setElementsFound(new LinkedList<>(Collections.singletonList(newElement)));
+        if (newElement != null)
+            currentState.setElementsFound(new LinkedList<>(Collections.singletonList(newElement)));
+        else 
+            currentState.setElementsFound(new LinkedList<>(Collections.emptyList()));
         return actionSet;
+    }
+
+    // TODO: change place for this method
+    private boolean isUploadButton(final Element element) {
+        final String tag = element.getTagName();
+        final String type = element.getAttribute("type");
+        if (type == null) {
+            return false;
+        }
+        // input[type=file]
+        return "input".equalsIgnoreCase(tag) && "file".equalsIgnoreCase(type);
     }
 
     private Element findElementInCurrentState(Identification identification, StateVertex currentState) {

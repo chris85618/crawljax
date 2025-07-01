@@ -97,6 +97,8 @@ public class CrawlJaxRunnerFactory {
         // Click Rules
         builder.crawlRules().clickDefaultElements();
         builder.crawlRules().clickOnce(clickOnce);
+        // Ignore input fields for upload file
+        builder.crawlRules().dontClick("input").withAttribute("type", "file");
         // set Crawler Configuration
         builder.setDQNLearningMode(false);
         builder.setWrapUninteractiveElement(wrapElement);
