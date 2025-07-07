@@ -26,7 +26,6 @@ import com.crawljax.condition.browserwaiter.WaitConditionChecker;
 import com.crawljax.core.configuration.CrawlRules;
 import com.crawljax.core.configuration.CrawlScope;
 import com.crawljax.core.configuration.CrawljaxConfiguration;
-import com.crawljax.core.exception.SkipStateCrawlingException;
 import com.crawljax.core.plugin.Plugins;
 import com.crawljax.core.state.CrawlPath;
 import com.crawljax.core.state.Element;
@@ -553,10 +552,7 @@ public class Crawler {
 		LOG.debug("Put the target action on the top of action list which in the cache");
 		StateVertex state = stateMachine.getCurrentState();
 		ImmutableList<CandidateElement> extract = candidateExtractor.extract(state);
-		final boolean preStatusCrawlingResult =  plugins.runPreStateCrawlingPlugins(context, extract, state);
-		if (preStatusCrawlingResult == false) {
-			return;
-		}
+		plugins.runPreStateCrawlingPlugins(context, extract, state);
 		candidateActionCache.setActions(state.getCandidateElements(), state);
 	}
 
@@ -600,10 +596,7 @@ public class Crawler {
 		LOG.debug("Parsing DOM of state {} for candidate elements", currentState.getName());
 		ImmutableList<CandidateElement> extract = candidateExtractor.extract(currentState);
 
-		final boolean preStatusCrawlingResult = plugins.runPreStateCrawlingPlugins(context, extract, currentState);
-		if (preStatusCrawlingResult == false) {
-			return;
-		}
+		plugins.runPreStateCrawlingPlugins(context, extract, currentState);
 		candidateActionCache.addActions(currentState.getCandidateElements(), currentState);
 	}
 
@@ -670,10 +663,7 @@ public class Crawler {
 		LOG.debug("Parsing the index for candidate elements");
 		ImmutableList<CandidateElement> extract = candidateExtractor.extract(index);
 
-		final boolean preStatusCrawlingResult = plugins.runPreStateCrawlingPlugins(context, extract, index);
-		if (preStatusCrawlingResult == false) {
-			return index;
-		}
+		plugins.runPreStateCrawlingPlugins(context, extract, index);
 
 		candidateActionCache.addActions(index.getCandidateElements(), index);
 

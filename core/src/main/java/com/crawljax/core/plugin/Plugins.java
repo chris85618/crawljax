@@ -20,7 +20,6 @@ import com.crawljax.condition.invariant.Invariant;
 import com.crawljax.core.CandidateElement;
 import com.crawljax.core.CrawlSession;
 import com.crawljax.core.CrawlerContext;
-import com.crawljax.core.exception.SkipStateCrawlingException;
 import com.crawljax.core.ExitNotifier.ExitStatus;
 import com.crawljax.core.configuration.CrawljaxConfiguration;
 import com.crawljax.core.state.Eventable;
@@ -343,7 +342,7 @@ public class Plugins {
 	 * @param state
 	 *            The state being violated.
 	 */
-	public boolean runPreStateCrawlingPlugins(CrawlerContext context,
+	public void runPreStateCrawlingPlugins(CrawlerContext context,
 	        ImmutableList<CandidateElement> candidateElements, StateVertex state) {
 		LOGGER.debug("Running PreStateCrawlingPlugins...");
 		counters.get(PreStateCrawlingPlugin.class).inc();
@@ -353,17 +352,11 @@ public class Plugins {
 				try {
 					((PreStateCrawlingPlugin) plugin).preStateCrawling(context,
 					        candidateElements, state);
-				} catch (SkipStateCrawlingException e) {
-					LOGGER.info("Plugin requested to skip crawling state {}: {}", state.getName(), e.getMessage());
-					// By catching the exception and doing nothing, the method will simply end,
-					// and the main loop will proceed to the next item in the crawl queue.
-					return false;
 				} catch (RuntimeException e) {
 					reportFailingPlugin(plugin, e);
 				}
 			}
 		}
-		return true;
 	}
 
 	/**

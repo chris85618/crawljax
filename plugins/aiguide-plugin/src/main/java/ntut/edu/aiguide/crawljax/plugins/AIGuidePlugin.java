@@ -37,17 +37,18 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.browser.WebDriverBackedEmbeddedBrowser;
+import com.crawljax.condition.invariant.Invariant;
 import com.crawljax.core.CandidateElement;
 import com.crawljax.core.CrawlSession;
 import com.crawljax.core.CrawlerContext;
 import com.crawljax.core.exception.BrowserConnectionException;
-import com.crawljax.core.exception.SkipStateCrawlingException;
 import com.crawljax.core.ExitNotifier;
 import com.crawljax.core.plugin.OnBrowserCreatedPlugin;
 import com.crawljax.core.plugin.OnCountingDepthPlugin;
+import com.crawljax.core.plugin.OnFireEventFailedPlugin;
 import com.crawljax.core.plugin.OnHtmlAttributeFilteringPlugin;
+import com.crawljax.core.plugin.OnInvariantViolationPlugin;
 import com.crawljax.core.plugin.OnNewFoundStatePlugin;
-import com.crawljax.core.plugin.OnRevisitStatePlugin;
 import com.crawljax.core.plugin.OnUrlLoadPlugin;
 import com.crawljax.core.plugin.PostCrawlingPlugin;
 import com.crawljax.core.plugin.PreStateCrawlingPlugin;
@@ -81,9 +82,9 @@ import ntut.edu.aiguide.crawljax.plugins.domain.ProcessingDirectiveManagement;
 import ntut.edu.aiguide.crawljax.plugins.domain.State;
 import ntut.edu.aiguide.crawljax.plugins.domain.XPathGenerator;
 
-public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlugin, OnRevisitStatePlugin, OnCountingDepthPlugin,
+public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlugin, OnCountingDepthPlugin,
                                         PreStateCrawlingPlugin, PostCrawlingPlugin, OnHtmlAttributeFilteringPlugin,
-                                        OnUrlLoadPlugin {
+                                        OnUrlLoadPlugin, OnInvariantViolationPlugin, OnFireEventFailedPlugin  {
     private static final Logger LOGGER = LoggerFactory.getLogger(AIGuidePlugin.class);
     private static final Set<String> editableTagNameSet =  new HashSet<>(Arrays.asList("input", "textarea", "select"));
     private final ProcessingDirectiveManagement processingDirectiveManagement ;
@@ -231,7 +232,12 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     }
 
     @Override
-    public void onRevisitState(CrawlerContext context, StateVertex currentState) {
+    public void onInvariantViolation(Invariant invariant, CrawlerContext context) {
+        this.collectSubmitResult();
+    }
+
+    @Override
+    public void onFireEventFailed(CrawlerContext context, Eventable eventable, List<Eventable> pathToFailure) {
         this.collectSubmitResult();
     }
 
@@ -239,7 +245,6 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     @Override
     public String onNewFoundState(String dom) {
         LOGGER.debug("In onNewFoundState");
-        this.collectSubmitResult();
         try {
             Document doc = DomUtils.asDocument(dom);
             String convertDom = DomUtils.getDocumentToString(doc);
@@ -382,26 +387,23 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
         if (isDirectiveProcess || isCurrentStateIsDirective) {
             LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
-            isDirectiveProcess = true;
-            final boolean isToCrawl = processingDirectiveManagement.isLastDirectiveToContinueCrawling();
-            if ((!isToCrawl) && isAllDirectiveProcessed()) {
+            // isDirectiveProcess = true isCurrentStateIsDirective=false => not 
+            final boolean notToContinueCrawling = isDirectiveProcess && (isCurrentStateIsDirective == false);
+            if (notToContinueCrawling && isAllDirectiveProcessed()) {
+                // Skip the following crawling by clean the CandidateElement List.
+                isDirectiveProcess = false;
+                currentState.setElementsFound(new LinkedList<CandidateElement>());
                 this.collectSubmitResult();
-                throw new SkipStateCrawlingException("Skipping state " + currentState.getName() + " because isToCrawl is" + isToCrawl+ ".");
+                return;
             }
+            isDirectiveProcess = true;
             processingDirectiveManagement.recordCurrentState(currentState);
             lastDirectiveStateVertex = currentState;
 
-            final List<Action> actionSet = changeCandidateElementForCurrentState(candidateElements, currentState, isToCrawl);
+            final List<Action> actionSet = changeCandidateElementForCurrentState(candidateElements, currentState);
 
             // TODO: refactor this
-            if (this.formSubmissionJudgeResultBuilder != null) {
-                // The last submission failed if the origin this.formSubmissionJudgeResultBuilder existed here
-                // (It's a new submission!!!)
-                final boolean formSubmissionResult = false;
-                this.submitResultRowBuilder.setResult(Boolean.toString(formSubmissionResult));
-                this.submitResultRowBuilder.build();
-                this.submitResultBuilder.writeToFile();
-            }
+            this.collectSubmitResult();
 
             this.formSubmissionJudgeResultBuilder = new FormSubmissionJudgeResultBuilder();
             this.formSubmissionJudgeResultBuilder.setBeforeDom(browser.getStrippedDom());
@@ -490,7 +492,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         return !isInteractableElements.isEmpty();
     }
 
-    private List<Action> changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState, boolean isToCrawl) {
+    private List<Action> changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
         List<Action> actionSet = processingDirectiveManagement.getProcessingStateNextActionSet();
         CandidateElement newElement = null;
 
@@ -503,12 +505,12 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
         if (!processingDirectiveManagement.isProcessingStateHasNextActionSet()) {
             // This is the last directive this run
-            if (isToCrawl) {
+            if (processingDirectiveManagement.isLastDirectiveToContinueCrawling()) {
                 isDirectiveProcess = false;
             }
             processingDirectiveManagement.removeLastStateInRecordList();
         }
-
+        // If there is corresponding relevant CandidateElement found in Directive's actionSet, just do it according to the Directive.
         for (CandidateElement element : candidateElements) {
             if (isElementInActionSet(element.getIdentification().getValue(), actionSet)) {
                 newElement = createNewCandidateElementWithFormInput(element, actionSet);
