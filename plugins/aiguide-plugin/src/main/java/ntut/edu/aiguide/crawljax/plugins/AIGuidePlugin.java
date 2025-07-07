@@ -88,7 +88,6 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     private static final Set<String> editableTagNameSet =  new HashSet<>(Arrays.asList("input", "textarea", "select"));
     private final ProcessingDirectiveManagement processingDirectiveManagement ;
     private final ServerInstanceManagement serverInstanceManagement;
-    private final boolean notToCrawl;
     private FormSubmissionJudgeResultBuilder formSubmissionJudgeResultBuilder;
     private final SubmitResultBuilder submitResultBuilder;
     private final SubmitResultBuilder.RowBuilder submitResultRowBuilder;
@@ -116,24 +115,6 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
      *      server port is a parameter that wrapped variable element mechanism
      */
     public AIGuidePlugin(Stack<State> directivePath, ServerInstanceManagement serverInstanceManagement, int serverPort, String submitReportPath) {
-        this(directivePath, serverInstanceManagement, serverPort, submitReportPath, false);
-    }
-
-    /**
-     * @param directivePath
-     *      directive stack perform like following example:
-     *          | root directive |
-     *          |    directive   |
-     *          |    directive   |
-     *          | leaf directive |
-     *          ------------------
-     * @param serverInstanceManagement
-     *      manage the server instance
-     * @param serverPort
-     *      server port is a parameter that wrapped variable element mechanism
-     */
-    public AIGuidePlugin(Stack<State> directivePath, ServerInstanceManagement serverInstanceManagement, int serverPort, String submitReportPath, boolean notToCrawl) {
-        this.notToCrawl = notToCrawl;
         processingDirectiveManagement = new ProcessingDirectiveManagement(directivePath);
         this.serverInstanceManagement = serverInstanceManagement;
         this.serverPort = serverPort;
@@ -399,49 +380,48 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 currentState.getName(), currentState.getUrl(), currentState.getId(),
                 currentState.getDom().hashCode(), currentState.getStrippedDom().hashCode());
 
-        if (isDirectiveProcess) {
-            if (this.notToCrawl && isAllDirectiveProcessed()) {
+        if (isDirectiveProcess || isCurrentStateIsDirective) {
+            LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
+            isDirectiveProcess = true;
+            final boolean isToCrawl = processingDirectiveManagement.isLastDirectiveToContinueCrawling();
+            if ((!isToCrawl) && isAllDirectiveProcessed()) {
                 this.collectSubmitResult();
-                throw new SkipStateCrawlingException("Skipping state " + currentState.getName() + " because notToCrawl is" + this.notToCrawl + ".");
+                throw new SkipStateCrawlingException("Skipping state " + currentState.getName() + " because isToCrawl is" + isToCrawl+ ".");
             }
-            else if (isCurrentStateIsDirective) {
-                LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
-                isDirectiveProcess = true;
-                processingDirectiveManagement.recordCurrentState(currentState);
-                lastDirectiveStateVertex = currentState;
+            processingDirectiveManagement.recordCurrentState(currentState);
+            lastDirectiveStateVertex = currentState;
 
-                final List<Action> actionSet = changeCandidateElementForCurrentState(candidateElements, currentState);
+            final List<Action> actionSet = changeCandidateElementForCurrentState(candidateElements, currentState, isToCrawl);
 
-                // TODO: refactor this
-                if (this.formSubmissionJudgeResultBuilder != null) {
-                    // The last submission failed if the origin this.formSubmissionJudgeResultBuilder existed here
-                    // (It's a new submission!!!)
-                    final boolean formSubmissionResult = false;
-                    this.submitResultRowBuilder.setResult(Boolean.toString(formSubmissionResult));
-                    this.submitResultRowBuilder.build();
-                    this.submitResultBuilder.writeToFile();
+            // TODO: refactor this
+            if (this.formSubmissionJudgeResultBuilder != null) {
+                // The last submission failed if the origin this.formSubmissionJudgeResultBuilder existed here
+                // (It's a new submission!!!)
+                final boolean formSubmissionResult = false;
+                this.submitResultRowBuilder.setResult(Boolean.toString(formSubmissionResult));
+                this.submitResultRowBuilder.build();
+                this.submitResultBuilder.writeToFile();
+            }
+
+            this.formSubmissionJudgeResultBuilder = new FormSubmissionJudgeResultBuilder();
+            this.formSubmissionJudgeResultBuilder.setBeforeDom(browser.getStrippedDom());
+            // Form XPath
+            String actionXpath = "";
+            // Get Action Input Value
+            final StringBuilder actionValueBuilder = new StringBuilder();
+            if (actionSet != null && !actionSet.isEmpty()) {
+                for (Action action : actionSet) {
+                    final String actionString = action.toString();
+                    actionValueBuilder.append(actionString).append(" ");
                 }
 
-                this.formSubmissionJudgeResultBuilder = new FormSubmissionJudgeResultBuilder();
-                this.formSubmissionJudgeResultBuilder.setBeforeDom(browser.getStrippedDom());
-                // Form XPath
-                String actionXpath = "";
-                // Get Action Input Value
-                final StringBuilder actionValueBuilder = new StringBuilder();
-                if (actionSet != null && !actionSet.isEmpty()) {
-                    for (Action action : actionSet) {
-                        final String actionString = action.toString();
-                        actionValueBuilder.append(actionString).append(" ");
-                    }
-
-                    actionXpath = actionSet.get(0).getActionXpath();
-                }
-                final String actionValue = actionValueBuilder.toString().trim();
-
-                submitResultRowBuilder.setUrl(currentState.getUrl());
-                submitResultRowBuilder.setXpath(actionXpath);
-                submitResultRowBuilder.setValue(actionValue);
+                actionXpath = actionSet.get(0).getActionXpath();
             }
+            final String actionValue = actionValueBuilder.toString().trim();
+
+            submitResultRowBuilder.setUrl(currentState.getUrl());
+            submitResultRowBuilder.setXpath(actionXpath);
+            submitResultRowBuilder.setValue(actionValue);
         } else if (isCurrentStateIsInputPage(candidateElements)) {
             LOGGER.info("Current page is input page, not going to crawled");
             if (isSimilarDomInInputPageList(currentState.getStrippedDom())) {
@@ -510,7 +490,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         return !isInteractableElements.isEmpty();
     }
 
-    private List<Action> changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
+    private List<Action> changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState, boolean isToCrawl) {
         List<Action> actionSet = processingDirectiveManagement.getProcessingStateNextActionSet();
         CandidateElement newElement = null;
 
@@ -523,7 +503,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
         if (!processingDirectiveManagement.isProcessingStateHasNextActionSet()) {
             // This is the last directive this run
-            if (!this.notToCrawl) {
+            if (isToCrawl) {
                 isDirectiveProcess = false;
             }
             processingDirectiveManagement.removeLastStateInRecordList();

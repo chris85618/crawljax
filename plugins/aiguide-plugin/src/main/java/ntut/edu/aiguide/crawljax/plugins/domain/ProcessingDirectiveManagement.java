@@ -71,6 +71,10 @@ public class ProcessingDirectiveManagement {
         return null;
     }
 
+    public boolean isLastDirectiveToContinueCrawling() {
+        return this.lastTargetDirectiveState.isToCrawl();
+    }
+
     public void recordCurrentState(StateVertex currentState) {
         LinkedList<String> processingStateName = directiveAppendStateNameMap.get(lastTargetDirectiveState.getID());
         if (processingStateName == null) {
