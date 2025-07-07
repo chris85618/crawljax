@@ -1,29 +1,28 @@
 package ntut.edu.aiguide.crawljax.plugins;
 
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.NoSuchElementException;
-import java.util.Arrays;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import javax.xml.xpath.XPathExpressionException;
-
+import org.apache.commons.lang3.tuple.Pair;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -34,20 +33,14 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
-
 import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.browser.WebDriverBackedEmbeddedBrowser;
 import com.crawljax.core.CandidateElement;
-import com.crawljax.core.CrawlSession;
+import com.crawljax.core.configuration.CrawljaxConfiguration;
 import com.crawljax.core.CrawlerContext;
+import com.crawljax.core.CrawlSession;
 import com.crawljax.core.ExitNotifier;
-import com.crawljax.core.plugin.OnBrowserCreatedPlugin;
-import com.crawljax.core.plugin.OnCountingDepthPlugin;
-import com.crawljax.core.plugin.OnHtmlAttributeFilteringPlugin;
-import com.crawljax.core.plugin.OnNewFoundStatePlugin;
-import com.crawljax.core.plugin.OnUrlLoadPlugin;
-import com.crawljax.core.plugin.PostCrawlingPlugin;
-import com.crawljax.core.plugin.PreStateCrawlingPlugin;
+import com.crawljax.core.plugin.*;
 import com.crawljax.core.state.Eventable;
 import com.crawljax.core.state.Identification;
 import com.crawljax.core.state.StateFlowGraph;
@@ -62,21 +55,21 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import ntut.edu.aiguide.crawljax.plugins.domain.FormSubmissionJudger.FormSubmissionJudgeResultBuilder;
-import ntut.edu.aiguide.crawljax.plugins.domain.TableOutput.ITableOutput;
-import ntut.edu.aiguide.crawljax.plugins.domain.TableOutput.SubmitResultBuilder;
-import ntut.edu.aiguide.crawljax.plugins.domain.TableOutput.DummySubmitResultBuilder;
 import ntut.edu.aiguide.crawljax.plugins.adapter.TableOutput.CsvTableOutput;
-
-import org.apache.commons.lang3.tuple.Pair;
+import ntut.edu.aiguide.crawljax.plugins.domain.*;
 import ntut.edu.aiguide.crawljax.plugins.domain.Action;
-import ntut.edu.aiguide.crawljax.plugins.domain.HighLevelAction;
 import ntut.edu.aiguide.crawljax.plugins.domain.EditDistanceComparator;
+import ntut.edu.aiguide.crawljax.plugins.domain.FormSubmissionJudger.FormSubmissionJudgeResultBuilder;
+import ntut.edu.aiguide.crawljax.plugins.domain.HighLevelAction;
 import ntut.edu.aiguide.crawljax.plugins.domain.InputPage;
 import ntut.edu.aiguide.crawljax.plugins.domain.LearningTarget;
 import ntut.edu.aiguide.crawljax.plugins.domain.ProcessingDirectiveManagement;
 import ntut.edu.aiguide.crawljax.plugins.domain.State;
+import ntut.edu.aiguide.crawljax.plugins.domain.TableOutput.DummySubmitResultBuilder;
+import ntut.edu.aiguide.crawljax.plugins.domain.TableOutput.ITableOutput;
+import ntut.edu.aiguide.crawljax.plugins.domain.TableOutput.SubmitResultBuilder;
 import ntut.edu.aiguide.crawljax.plugins.domain.XPathGenerator;
+
 
 public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlugin, OnCountingDepthPlugin,
                                         PreStateCrawlingPlugin, PostCrawlingPlugin, OnHtmlAttributeFilteringPlugin,
@@ -637,6 +630,29 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         serverInstanceManagement.closeServerInstance();
         serverInstanceManagement.createServerInstance();
         LOGGER.debug("Resetting ServerInstance complete.");
+        performInitialActions();
+    }
+
+    private void performInitialActions() {
+        LOGGER.debug("Perform InitialActions");
+        HighLevelAction initialActions = processingDirectiveManagement.getInitialHighLevelAction();
+
+        try {
+            browser.goToUrl(new URI("http://localhost:" + this.serverPort));
+            for (Action action: initialActions.getActionSequence()) {
+                String actionXpath = action.getActionXpath();
+                String actionValue = action.getValue();
+
+                if (actionValue.isEmpty()) {
+                    browser.fireEventAndWait(new Eventable(new Identification(Identification.How.xpath, actionXpath), Eventable.EventType.click));
+                } else {
+                    browser.input(new Identification(Identification.How.xpath, actionXpath), actionValue);
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Perform InitialActions fail", e);
+            e.printStackTrace();
+        }
     }
 
     public StateFlowGraph getStateFlowGraph() {
@@ -650,6 +666,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             for (InputPage inputPage : inputPages) {
                 StateVertex stateVertex = inputPage.getStateVertex();
                 List<HighLevelAction> actionSequence = getTwoStateEventPath(index, stateVertex);
+                actionSequence.add(0, processingDirectiveManagement.getInitialHighLevelAction());
                 LOGGER.debug("Now action sequence are {}", actionSequence);
                 result.add(new LearningTarget(stateVertex.getStrippedDom(), stateVertex.getUrl(), inputPage.getFormXPaths(), actionSequence));
             }

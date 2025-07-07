@@ -1,16 +1,10 @@
 package ntut.edu.aiguide.crawljax.plugins.domain;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
-
+import com.crawljax.core.state.StateVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.crawljax.core.state.StateVertex;
+import java.util.*;
 
 public class ProcessingDirectiveManagement {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessingDirectiveManagement.class);
@@ -22,13 +16,32 @@ public class ProcessingDirectiveManagement {
     private Map<String, LinkedList<String>> directiveAppendStateNameMap = new HashMap<>();
     private HashSet<StateVertex> processingState = new HashSet<>();
     private EditDistanceComparator editDistanceComparator;
+    private HighLevelAction initialActions;
 
     public ProcessingDirectiveManagement(Stack<State> directivePath) {
         directiveStack = directivePath;
+        initialActions = convertDirectiveToInitialActions();
         // put the first directive
         firstDirectiveState = getFirstDirectiveState();
         targetDirectiveState = firstDirectiveState;
         editDistanceComparator = new EditDistanceComparator(0.98D);
+    }
+
+    private HighLevelAction convertDirectiveToInitialActions() {
+        HighLevelAction initialActions = new HighLevelAction();
+        State directive;
+
+        while ((directive = getFirstDirectiveState()) != null) {
+            while (directive.hasNextActionSet()) {
+                initialActions.add(directive.getNextActionSet());
+            }
+        }
+
+        return initialActions;
+    }
+
+    public HighLevelAction getInitialHighLevelAction() {
+        return initialActions;
     }
 
     private State getFirstDirectiveState() {
