@@ -35,18 +35,19 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
-
 import com.crawljax.browser.EmbeddedBrowser;
 import com.crawljax.browser.WebDriverBackedEmbeddedBrowser;
 import com.crawljax.core.CandidateElement;
 import com.crawljax.core.CrawlSession;
 import com.crawljax.core.CrawlerContext;
 import com.crawljax.core.exception.BrowserConnectionException;
+import com.crawljax.core.exception.SkipStateCrawlingException;
 import com.crawljax.core.ExitNotifier;
 import com.crawljax.core.plugin.OnBrowserCreatedPlugin;
 import com.crawljax.core.plugin.OnCountingDepthPlugin;
 import com.crawljax.core.plugin.OnHtmlAttributeFilteringPlugin;
 import com.crawljax.core.plugin.OnNewFoundStatePlugin;
+import com.crawljax.core.plugin.OnRevisitStatePlugin;
 import com.crawljax.core.plugin.OnUrlLoadPlugin;
 import com.crawljax.core.plugin.PostCrawlingPlugin;
 import com.crawljax.core.plugin.PreStateCrawlingPlugin;
@@ -80,13 +81,14 @@ import ntut.edu.aiguide.crawljax.plugins.domain.ProcessingDirectiveManagement;
 import ntut.edu.aiguide.crawljax.plugins.domain.State;
 import ntut.edu.aiguide.crawljax.plugins.domain.XPathGenerator;
 
-public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlugin, OnCountingDepthPlugin,
+public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlugin, OnRevisitStatePlugin, OnCountingDepthPlugin,
                                         PreStateCrawlingPlugin, PostCrawlingPlugin, OnHtmlAttributeFilteringPlugin,
                                         OnUrlLoadPlugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(AIGuidePlugin.class);
     private static final Set<String> editableTagNameSet =  new HashSet<>(Arrays.asList("input", "textarea", "select"));
     private final ProcessingDirectiveManagement processingDirectiveManagement ;
     private final ServerInstanceManagement serverInstanceManagement;
+    private final boolean notToCrawl;
     private FormSubmissionJudgeResultBuilder formSubmissionJudgeResultBuilder;
     private final SubmitResultBuilder submitResultBuilder;
     private final SubmitResultBuilder.RowBuilder submitResultRowBuilder;
@@ -114,6 +116,24 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
      *      server port is a parameter that wrapped variable element mechanism
      */
     public AIGuidePlugin(Stack<State> directivePath, ServerInstanceManagement serverInstanceManagement, int serverPort, String submitReportPath) {
+        this(directivePath, serverInstanceManagement, serverPort, submitReportPath, false);
+    }
+
+    /**
+     * @param directivePath
+     *      directive stack perform like following example:
+     *          | root directive |
+     *          |    directive   |
+     *          |    directive   |
+     *          | leaf directive |
+     *          ------------------
+     * @param serverInstanceManagement
+     *      manage the server instance
+     * @param serverPort
+     *      server port is a parameter that wrapped variable element mechanism
+     */
+    public AIGuidePlugin(Stack<State> directivePath, ServerInstanceManagement serverInstanceManagement, int serverPort, String submitReportPath, boolean notToCrawl) {
+        this.notToCrawl = notToCrawl;
         processingDirectiveManagement = new ProcessingDirectiveManagement(directivePath);
         this.serverInstanceManagement = serverInstanceManagement;
         this.serverPort = serverPort;
@@ -210,10 +230,8 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         }
     }
 
-    // add element value to dom
-    @Override
-    public String onNewFoundState(String dom) {
-        LOGGER.debug("In onNewFoundState");
+    private void collectSubmitResult() {
+        // TODO: Refactor this
         try {
             if (this.formSubmissionJudgeResultBuilder != null) {
                 // TODO: Refactor this
@@ -229,6 +247,18 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         } finally {
             this.formSubmissionJudgeResultBuilder = null;
         }
+    }
+
+    @Override
+    public void onRevisitState(CrawlerContext context, StateVertex currentState) {
+        this.collectSubmitResult();
+    }
+
+    // add element value to dom
+    @Override
+    public String onNewFoundState(String dom) {
+        LOGGER.debug("In onNewFoundState");
+        this.collectSubmitResult();
         try {
             Document doc = DomUtils.asDocument(dom);
             String convertDom = DomUtils.getDocumentToString(doc);
@@ -369,43 +399,49 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 currentState.getName(), currentState.getUrl(), currentState.getId(),
                 currentState.getDom().hashCode(), currentState.getStrippedDom().hashCode());
 
-        if (isDirectiveProcess || isCurrentStateIsDirective) {
-            LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
-            isDirectiveProcess = true;
-            processingDirectiveManagement.recordCurrentState(currentState);
-            lastDirectiveStateVertex = currentState;
-
-            final List<Action> actionSet = changeCandidateElementForCurrentState(candidateElements, currentState);
-
-            // TODO: refactor this
-            if (this.formSubmissionJudgeResultBuilder != null) {
-                // The last submission failed if the origin this.formSubmissionJudgeResultBuilder existed here
-                // (It's a new submission!!!)
-                final boolean formSubmissionResult = false;
-                this.submitResultRowBuilder.setResult(Boolean.toString(formSubmissionResult));
-                this.submitResultRowBuilder.build();
-                this.submitResultBuilder.writeToFile();
+        if (isDirectiveProcess) {
+            if (this.notToCrawl && isAllDirectiveProcessed()) {
+                this.collectSubmitResult();
+                throw new SkipStateCrawlingException("Skipping state " + currentState.getName() + " because notToCrawl is" + this.notToCrawl + ".");
             }
+            else if (isCurrentStateIsDirective) {
+                LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
+                isDirectiveProcess = true;
+                processingDirectiveManagement.recordCurrentState(currentState);
+                lastDirectiveStateVertex = currentState;
 
-            this.formSubmissionJudgeResultBuilder = new FormSubmissionJudgeResultBuilder();
-            this.formSubmissionJudgeResultBuilder.setBeforeDom(browser.getStrippedDom());
-            // Form XPath
-            String actionXpath = "";
-            // Get Action Input Value
-            final StringBuilder actionValueBuilder = new StringBuilder();
-            if (actionSet != null && !actionSet.isEmpty()) {
-                for (Action action : actionSet) {
-                    final String actionString = action.toString();
-                    actionValueBuilder.append(actionString).append(" ");
+                final List<Action> actionSet = changeCandidateElementForCurrentState(candidateElements, currentState);
+
+                // TODO: refactor this
+                if (this.formSubmissionJudgeResultBuilder != null) {
+                    // The last submission failed if the origin this.formSubmissionJudgeResultBuilder existed here
+                    // (It's a new submission!!!)
+                    final boolean formSubmissionResult = false;
+                    this.submitResultRowBuilder.setResult(Boolean.toString(formSubmissionResult));
+                    this.submitResultRowBuilder.build();
+                    this.submitResultBuilder.writeToFile();
                 }
 
-                actionXpath = actionSet.get(0).getActionXpath();
-            }
-            final String actionValue = actionValueBuilder.toString().trim();
+                this.formSubmissionJudgeResultBuilder = new FormSubmissionJudgeResultBuilder();
+                this.formSubmissionJudgeResultBuilder.setBeforeDom(browser.getStrippedDom());
+                // Form XPath
+                String actionXpath = "";
+                // Get Action Input Value
+                final StringBuilder actionValueBuilder = new StringBuilder();
+                if (actionSet != null && !actionSet.isEmpty()) {
+                    for (Action action : actionSet) {
+                        final String actionString = action.toString();
+                        actionValueBuilder.append(actionString).append(" ");
+                    }
 
-            submitResultRowBuilder.setUrl(currentState.getUrl());
-            submitResultRowBuilder.setXpath(actionXpath);
-            submitResultRowBuilder.setValue(actionValue);
+                    actionXpath = actionSet.get(0).getActionXpath();
+                }
+                final String actionValue = actionValueBuilder.toString().trim();
+
+                submitResultRowBuilder.setUrl(currentState.getUrl());
+                submitResultRowBuilder.setXpath(actionXpath);
+                submitResultRowBuilder.setValue(actionValue);
+            }
         } else if (isCurrentStateIsInputPage(candidateElements)) {
             LOGGER.info("Current page is input page, not going to crawled");
             if (isSimilarDomInInputPageList(currentState.getStrippedDom())) {
@@ -486,7 +522,10 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         }
 
         if (!processingDirectiveManagement.isProcessingStateHasNextActionSet()) {
-            isDirectiveProcess = false;
+            // This is the last directive this run
+            if (!this.notToCrawl) {
+                isDirectiveProcess = false;
+            }
             processingDirectiveManagement.removeLastStateInRecordList();
         }
 
