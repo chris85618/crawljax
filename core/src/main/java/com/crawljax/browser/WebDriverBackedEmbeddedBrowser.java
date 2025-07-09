@@ -12,12 +12,12 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.lang.InterruptedException;
@@ -63,7 +63,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 	private static final int BROWSER_CLOSE_TIMEOUT_SECS = 3;
 	private static final int BROWSER_CLOSE_2ND_TIMEOUT_SECS = 2;
-	private static ExecutorService closeBrowserExecutor;
+	private final AtomicBoolean isQuitted = new AtomicBoolean(false);
 	private final Plugins plugins;
 
 	/**
@@ -534,22 +534,22 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public void close() {
 		LOGGER.debug("Closing the browser...");
-		// close browser and close every associated window.
-		Future<?> closeTask = getCloseBrowserExecutor().submit(browser::quit);
-		try {
-			awaitForCloseTask(closeTask, BROWSER_CLOSE_TIMEOUT_SECS);
-		} catch (InterruptedException e) {
-			LOGGER.debug("Interrupted while waiting for the browser to close.");
+		if (isQuitted.compareAndSet(false, true)) {
+			LOGGER.info("Browser close requested. Proceeding with shutdown...");
 			try {
-				// Give some more time anyway, we want to wait for
-				// the process to terminate before returning.
-				awaitForCloseTask(closeTask, BROWSER_CLOSE_2ND_TIMEOUT_SECS);
-			} catch (InterruptedException ignore) {
-				LOGGER.debug("Interrupted, a 2nd time, while waiting for the browser to close.");
+				browser.quit();
+			} catch (NoSuchSessionException e) {
+				LOGGER.warn("Attempted to close an already closed session. Ignoring. Message: {}", e.getMessage());
+			} catch (WebDriverException e) {
+				LOGGER.error("An exception occurred while closing the browser:", e);
+				throw wrapWebDriverExceptionIfConnectionException(e);
+			} catch (Exception e) {
+				LOGGER.error("An unexpected exception occurred during shutdown. Ignoring to ensure stability.", e);
 			}
-			Thread.currentThread().interrupt();
+			LOGGER.info("Browser closed.");
+		} else {
+			LOGGER.warn("Duplicate close() call detected. Browser is already closed.");
 		}
-		LOGGER.debug("Browser closed: {}", closeTask.isDone());
 	}
 
 	private void awaitForCloseTask(Future<?> closeTask, int timeoutSeconds) throws InterruptedException {
@@ -563,19 +563,6 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 				throw wrapWebDriverExceptionIfConnectionException((WebDriverException) cause);
 			}
 			LOGGER.error("An exception occurred while closing the browser:", cause);
-		}
-	}
-
-	private static ExecutorService getCloseBrowserExecutor() {
-		if (closeBrowserExecutor == null) {
-			createCloseBrowserExecutor();
-		}
-		return closeBrowserExecutor;
-	}
-
-	private static synchronized void createCloseBrowserExecutor() {
-		if (closeBrowserExecutor == null) {
-			closeBrowserExecutor = Executors.newCachedThreadPool(new CloseBrowserThreadFactory());
 		}
 	}
 
