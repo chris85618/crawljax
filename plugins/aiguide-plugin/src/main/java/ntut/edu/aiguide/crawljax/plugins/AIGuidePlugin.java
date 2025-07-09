@@ -51,6 +51,7 @@ import com.crawljax.core.plugin.OnInvariantViolationPlugin;
 import com.crawljax.core.plugin.OnNewFoundStatePlugin;
 import com.crawljax.core.plugin.OnUrlLoadPlugin;
 import com.crawljax.core.plugin.PostCrawlingPlugin;
+import com.crawljax.core.plugin.PostStateCrawlingPlugin;
 import com.crawljax.core.plugin.PreStateCrawlingPlugin;
 import com.crawljax.core.state.Eventable;
 import com.crawljax.core.state.Identification;
@@ -84,7 +85,7 @@ import ntut.edu.aiguide.crawljax.plugins.domain.XPathGenerator;
 
 public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlugin, OnCountingDepthPlugin,
                                         PreStateCrawlingPlugin, PostCrawlingPlugin, OnHtmlAttributeFilteringPlugin,
-                                        OnUrlLoadPlugin, OnInvariantViolationPlugin, OnFireEventFailedPlugin  {
+                                        OnUrlLoadPlugin, OnInvariantViolationPlugin, OnFireEventFailedPlugin, PostStateCrawlingPlugin  {
     private static final Logger LOGGER = LoggerFactory.getLogger(AIGuidePlugin.class);
     private static final Set<String> editableTagNameSet =  new HashSet<>(Arrays.asList("input", "textarea", "select"));
     private final ProcessingDirectiveManagement processingDirectiveManagement ;
@@ -238,6 +239,12 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
     @Override
     public void onFireEventFailed(CrawlerContext context, Eventable eventable, List<Eventable> pathToFailure) {
+        this.collectSubmitResult();
+    }
+
+    @Override
+    public void postStateCrawling(CrawlerContext context, StateVertex currentState, ImmutableList<Eventable> events) {
+        browser.waitForPageToBeStable(5000);
         this.collectSubmitResult();
     }
 

@@ -54,7 +54,7 @@ public class Plugins {
 					LoginPlugin.class, OnAlertPresentedPlugin.class,
 					OnCloneStatePlugin.class, AfterReceiveRobotActionPlugin.class,
 					OnNewFoundStatePlugin.class, OnRevisitStateWithExtractElementPlugin.class,
-					OnHtmlAttributeFilteringPlugin.class, OnCountingDepthPlugin.class);
+					OnHtmlAttributeFilteringPlugin.class, OnCountingDepthPlugin.class, PostStateCrawlingPlugin.class);
 
 	private final ImmutableListMultimap<Class<? extends Plugin>, Plugin> plugins;
 
@@ -355,6 +355,30 @@ public class Plugins {
 				} catch (RuntimeException e) {
 					reportFailingPlugin(plugin, e);
 				}
+			}
+		}
+	}
+
+	/**
+	 * load and run the PreStateCrawlingPlugins. Method that is called before the current state is
+	 * crawled (before firing events on the current DOM state). Example: filter candidate elements.
+	 * Warning the session and candidateElements are not clones, changes will result in changed
+	 * behaviour.
+	 * 
+	 * @param context
+	 *            the current {@link CrawlerContext} for this crawler.
+	 * @param candidateElements
+	 *            the elements which crawljax is about to crawl
+	 * @param state
+	 *            The state being violated.
+	 */
+	public void runPostStateCrawlingPlugins(CrawlerContext context, StateVertex currentState, ImmutableList<Eventable> events) {
+		LOGGER.debug("Running PostStateCrawlingPlugins...");
+		counters.get(PostStateCrawlingPlugin.class).inc();
+		for (Plugin plugin : plugins.get(PostStateCrawlingPlugin.class)) {
+			if (plugin instanceof PostStateCrawlingPlugin) {
+				LOGGER.debug("Calling plugin {}", plugin);
+				((PostStateCrawlingPlugin) plugin).postStateCrawling(context, currentState, events);
 			}
 		}
 	}

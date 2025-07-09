@@ -162,6 +162,7 @@ public class Crawler {
 			LOG.info("The crawler left the domain. No biggy, we'll just go somewhere else.");
 			LOG.debug("Domain escape was {}", e.getMessage());
 		}
+		plugins.runPostStateCrawlingPlugins(context, crawlTask, eventables);
 	}
 
 	private ImmutableList<Eventable> shortestPathTo(StateVertex startState, StateVertex endState) {
