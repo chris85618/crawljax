@@ -29,6 +29,16 @@ public class MockBrowser implements EmbeddedBrowser {
     }
 
     @Override
+    public WebElement getInteractiveWebElement(Identification identification) {
+        return null;
+    }
+
+    @Override
+    public WebElement getVisibleWebElement(Identification identification) {
+        return null;
+    }
+
+    @Override
     public void goToUrl(URI url) {
 
     }

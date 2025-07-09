@@ -159,6 +159,20 @@ public interface EmbeddedBrowser {
 	WebElement getWebElement(Identification identification);
 
 	/**
+	 * @param identification
+	 *            the identification of the element to be found.
+	 * @return the corresponding WebElement from the browser.
+	 */
+	WebElement getInteractiveWebElement(Identification identification);
+
+	/**
+	 * @param identification
+	 *            the identification of the element to be found.
+	 * @return the corresponding WebElement from the browser.
+	 */
+	WebElement getVisibleWebElement(Identification identification);
+
+	/**
 	 * @param file
 	 *            the file to write the screenshot to (png).
 	 * @throws CrawljaxException

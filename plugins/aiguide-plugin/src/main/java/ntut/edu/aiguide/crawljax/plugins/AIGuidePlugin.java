@@ -40,6 +40,7 @@ import com.crawljax.browser.WebDriverBackedEmbeddedBrowser;
 import com.crawljax.core.CandidateElement;
 import com.crawljax.core.CrawlSession;
 import com.crawljax.core.CrawlerContext;
+import com.crawljax.core.exception.BrowserConnectionException;
 import com.crawljax.core.ExitNotifier;
 import com.crawljax.core.plugin.OnBrowserCreatedPlugin;
 import com.crawljax.core.plugin.OnCountingDepthPlugin;
@@ -412,10 +413,24 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 EmbeddedBrowser browser = context.getBrowser();
                 WebDriver driver = ((WebDriverBackedEmbeddedBrowser) browser).getBrowser();
                 List<String> formXPaths = new ArrayList<>();
+                boolean isTimeout = false;
                 WebElement rootElement = browser.getWebElement(new Identification(Identification.How.tag, "html"));
                 for (WebElement formElement : rootElement.findElements(By.tagName("form"))) {
-                    if (formElement.isEnabled() && formElement.isDisplayed()) {
-                        formXPaths.add(XPathGenerator.getAbsoluteXPath(driver, formElement));
+                    if (!isTimeout) {
+                        try {
+                            final String xpath = XPathGenerator.getAbsoluteXPath(driver, formElement);
+                            if (browser.isInteractive(xpath)) {
+                                formXPaths.add(xpath);
+                            }
+                        } catch (BrowserConnectionException e) {
+                            isTimeout = true;
+                        }
+                    } else {
+                        // If it has been timeout before, just check the elements directly to avoid wait for too long.
+                        if (formElement.isEnabled() && formElement.isDisplayed()) {
+                            final String xpath = XPathGenerator.getAbsoluteXPath(driver, formElement);
+                            formXPaths.add(xpath);
+                        }
                     }
                 }
                 inputPages.add(new InputPage(currentState, formXPaths));

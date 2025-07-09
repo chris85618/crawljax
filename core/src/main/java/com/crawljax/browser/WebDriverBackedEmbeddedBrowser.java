@@ -677,7 +677,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public boolean input(Identification identification, String text) {
 		try {
-			WebElement field = this.wait.until(ExpectedConditions.presenceOfElementLocated(identification.getWebDriverBy()));
+			WebElement field = this.wait.until(ExpectedConditions.elementToBeClickable(identification.getWebDriverBy()));
 			if (field != null) {
 				field.clear();
 				field.sendKeys(text);
@@ -778,7 +778,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public boolean isVisible(Identification identification) {
 		try {
-			WebElement el = this.wait.until(ExpectedConditions.presenceOfElementLocated(identification.getWebDriverBy()));
+			WebElement el = this.wait.until(ExpectedConditions.visibilityOfElementLocated(identification.getWebDriverBy()));
 			if (el != null) {
 				return el.isDisplayed();
 			}
@@ -800,7 +800,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public boolean isInteractive(String identification) {
 		try {
-			WebElement el = this.wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(identification.replaceAll("/BODY\\[1\\]/", "/BODY/"))));
+			WebElement el = this.wait.until(ExpectedConditions.elementToBeClickable(By.xpath(identification.replaceAll("/BODY\\[1\\]/", "/BODY/"))));
 			if (el != null) {
 				return el.isDisplayed() && el.isEnabled();
 			}
@@ -999,7 +999,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 		WebElement webElement;
 		try {
-			webElement = this.wait.until(ExpectedConditions.presenceOfElementLocated(input.getIdentification().getWebDriverBy()));
+			webElement = this.wait.until(ExpectedConditions.visibilityOfElementLocated(input.getIdentification().getWebDriverBy()));
 			if (!webElement.isDisplayed()) {
 				return null;
 			}
@@ -1092,6 +1092,34 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	public WebElement getWebElement(Identification identification) {
 		try {
 			return this.wait.until(ExpectedConditions.presenceOfElementLocated(identification.getWebDriverBy()));
+		} catch (WebDriverException e) {
+			throw wrapWebDriverExceptionIfConnectionException(e);
+		}
+	}
+
+	/**
+	 * @param identification
+	 *            the identification of the element.
+	 * @return the found element.
+	 */
+	@Override
+	public WebElement getInteractiveWebElement(Identification identification) {
+		try {
+			return this.wait.until(ExpectedConditions.elementToBeClickable(identification.getWebDriverBy()));
+		} catch (WebDriverException e) {
+			throw wrapWebDriverExceptionIfConnectionException(e);
+		}
+	}
+
+	/**
+	 * @param identification
+	 *            the identification of the element.
+	 * @return the found element.
+	 */
+	@Override
+	public WebElement getVisibleWebElement(Identification identification) {
+		try {
+			return this.wait.until(ExpectedConditions.visibilityOfElementLocated(identification.getWebDriverBy()));
 		} catch (WebDriverException e) {
 			throw wrapWebDriverExceptionIfConnectionException(e);
 		}

@@ -99,7 +99,7 @@ public class FormHandler {
 
                 check = Math.random() >= HALF;
             }
-            WebElement inputElement = browser.getWebElement(input.getIdentification());
+            WebElement inputElement = browser.getInteractiveWebElement(input.getIdentification());
             if (check && !inputElement.isSelected()) {
                 inputElement.click();
             } else if (!check && inputElement.isSelected()) {
@@ -111,7 +111,7 @@ public class FormHandler {
     private void handleRadioSwitches(FormInput input) {
         for (InputValue inputValue : input.getInputValues()) {
             if (inputValue.isChecked()) {
-                WebElement inputElement = browser.getWebElement(input.getIdentification());
+                WebElement inputElement = browser.getInteractiveWebElement(input.getIdentification());
                 inputElement.click();
             }
         }
@@ -119,15 +119,14 @@ public class FormHandler {
 
     private void handleSelectBoxes(FormInput input) {
         for (InputValue inputValue : input.getInputValues()) {
-            WebElement inputElement = browser.getWebElement(input.getIdentification());
-            inputElement.sendKeys(inputValue.getValue());
+			final String targetInputValue = inputValue.getValue();
+			browser.input(input.getIdentification(), targetInputValue);
         }
     }
 
     private void handleText(FormInput input) {
         String text = input.getInputValues().iterator().next().getValue();
-		WebElement inputElement = browser.getWebElement(input.getIdentification());
-		inputElement.clear();
+		browser.input(input.getIdentification(), text);
 
 //        if (null == text || text.length() == 0) {
 //            return;
@@ -138,8 +137,6 @@ public class FormHandler {
 //		String onkeyUpCommand = ".onkeyup()";
 //		browser.executeJavaScript(element + setValueCommand);
 //		browser.executeJavaScript(element + onkeyUpCommand);
-
-        inputElement.sendKeys(text);
     }
 
 	/**
