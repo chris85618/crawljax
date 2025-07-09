@@ -394,13 +394,11 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
         if (isDirectiveProcess || isCurrentStateIsDirective) {
             LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
-            // isDirectiveProcess = true isCurrentStateIsDirective=false => not 
             final boolean notToContinueCrawling = isDirectiveProcess && (isCurrentStateIsDirective == false);
             if (notToContinueCrawling && isAllDirectiveProcessed()) {
                 // Skip the following crawling by clean the CandidateElement List.
                 isDirectiveProcess = false;
                 currentState.setElementsFound(new LinkedList<CandidateElement>());
-                this.collectSubmitResult();
                 return;
             }
             isDirectiveProcess = true;
@@ -510,7 +508,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             return actionSet;
         }
 
-        if (!processingDirectiveManagement.isProcessingStateHasNextActionSet()) {
+        if ((processingDirectiveManagement.isAllDirectiveIsProcessed()) && (!processingDirectiveManagement.isProcessingStateHasNextActionSet())) {
             // This is the last directive this run
             if (processingDirectiveManagement.isLastDirectiveToContinueCrawling()) {
                 isDirectiveProcess = false;
