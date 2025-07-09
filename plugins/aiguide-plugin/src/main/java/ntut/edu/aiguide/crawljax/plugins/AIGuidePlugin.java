@@ -499,6 +499,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
     private List<Action> changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
         List<Action> actionSet = processingDirectiveManagement.getProcessingStateNextActionSet();
+        LOGGER.debug("Directive ActionSet for this attempt: {}", actionSet);
         CandidateElement newElement = null;
 
         if (actionSet == null || actionSet.isEmpty()) {
@@ -515,12 +516,20 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             }
             processingDirectiveManagement.removeLastStateInRecordList();
         }
+
         // If there is corresponding relevant CandidateElement found in Directive's actionSet, just do it according to the Directive.
         for (CandidateElement element : candidateElements) {
-            if (isElementInActionSet(element.getIdentification().getValue(), actionSet)) {
+            final List<Action> actionList = this.getActionsByXpathFromActionSet(element.getIdentification().getValue(), actionSet);
+            for (Action action : actionList) {
+                if (!isLinkOrButton(action)) {
+                    continue;
+                }
                 newElement = createNewCandidateElementWithFormInput(element, actionSet);
+                LOGGER.error("Find submit button by createNewCandidateElementWithFormInput({}, {}): {}", element, actionSet, element);
                 break;
             }
+            if (newElement != null)
+                break;
         }
 
         try {
@@ -528,12 +537,14 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 Identification identification = new Identification(Identification.How.xpath, actionSet.get(0).getActionXpath());
                 Element element = findElementInCurrentState(identification, currentState);
                 if (element != null) {
+                    LOGGER.error("Find candidate button by findElementInCurrentState({}, {}}): {}", identification, currentState, element);
                     newElement = new CandidateElement(element, identification, "", new ArrayList<>(), actionSet.get(0).getValue());
                 }
                 else {
                     for (String editableTagName : editableTagNameSet) {
                         try {
                             element = findCorrespondElement(identification, currentState.getDocument(), editableTagName);
+                            LOGGER.error("Find candidate button by findCorrespondElement({}}, c, {}}): {}", identification, editableTagName, element);
                         } catch (WebDriverException ignored) {} // element not found
                         if (element != null)
                             break;
@@ -551,8 +562,10 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         }
         if (newElement == null) {
             // No any CandidateElement
-            currentState.setElementsFound(new LinkedList<CandidateElement>());
+    LOGGER.error("Failed to find or create a CandidateElement for submission. The action set was: {}", actionSet);
+             currentState.setElementsFound(new LinkedList<CandidateElement>());
         } else {
+    LOGGER.error("CandidateElement button is: {}", newElement);
             currentState.setElementsFound(new LinkedList<CandidateElement>(Collections.singletonList(newElement)));
         }
         return actionSet;
@@ -589,14 +602,20 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         return null;
     }
 
-    private boolean isElementInActionSet(String elementXpath, List<Action> actions) {
-        if (actions == null)
-            return false;
+    private List<Action> getActionsByXpathFromActionSet(final String elementXpath, final List<Action> actions) {
+        final List<Action> resultActionList = new ArrayList<>();
+
+        if (actions == null || actions == null)
+            return resultActionList;
 
         for (Action action : actions)
             if (action.getActionXpath().equalsIgnoreCase(elementXpath))
-                return true;
-        return false;
+                resultActionList.add(action);
+        return resultActionList;
+    }
+
+    private boolean isElementInActionSet(String elementXpath, List<Action> actions) {
+        return this.getActionsByXpathFromActionSet(elementXpath, actions).size() > 0;
     }
 
     private CandidateElement createNewCandidateElementWithFormInput(CandidateElement element, List<Action> actions) {
