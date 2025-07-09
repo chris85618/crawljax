@@ -501,7 +501,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         List<Action> actionSet = processingDirectiveManagement.getProcessingStateNextActionSet();
         CandidateElement newElement = null;
 
-        if (actionSet == null) {
+        if (actionSet == null || actionSet.isEmpty()) {
             isDirectiveProcess = false;
             processingDirectiveManagement.removeLastStateInRecordList();
             currentState.setElementsFound(new LinkedList<> (candidateElements));
