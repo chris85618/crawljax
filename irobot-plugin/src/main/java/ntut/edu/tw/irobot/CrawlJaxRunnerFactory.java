@@ -10,6 +10,7 @@ import com.crawljax.core.plugin.HostInterfaceImpl;
 import com.crawljax.core.plugin.Plugin;
 import com.crawljax.core.state.StateVertexFactory;
 import com.crawljax.oraclecomparator.OracleComparator;
+import com.crawljax.oraclecomparator.comparators.EditDistanceComparator;
 import com.crawljax.plugins.crawloverview.CrawlOverview;
 import ntut.edu.tw.irobot.fs.WorkDirManager;
 import ntut.edu.tw.irobot.lock.WaitingLock;
@@ -102,6 +103,9 @@ public class CrawlJaxRunnerFactory {
         // set Crawler Configuration
         builder.setDQNLearningMode(false);
         builder.setWrapUninteractiveElement(wrapElement);
+        // Set page comparator
+        builder.crawlRules().addOracleComparator(new OracleComparator("edit-distance-oracle",
+                                                                      new EditDistanceComparator(0.95D)));
         // Wait for page to be stable
         try {
             builder.crawlRules().addWaitCondition(new WaitCondition("", Math.toIntExact(this.pageWaitingTime),
