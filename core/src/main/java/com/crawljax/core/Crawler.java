@@ -506,6 +506,11 @@ public class Crawler {
 			resetCache();
 			Thread.currentThread().interrupt();
 		}
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	private void resetCache() {
