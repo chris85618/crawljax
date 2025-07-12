@@ -1323,15 +1323,16 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
     }
 
 	public void waitForPageToBeStable() {
-		this.waitForPageToBeStable(this.crawlWaitReload);
+		this.waitForPageToBeStable(this.crawlWaitReload, 150, 600);
 	}
 
 	@Override
 	public void waitForPageToBeStable(final long totalWaitMiliseconds) {
-		this.waitForPageToBeStable(totalWaitMiliseconds, 100);
+		// For external use. For example, page might changed during this, so it needs more requiredQuietMiliseconds to ensure stability.
+		this.waitForPageToBeStable(totalWaitMiliseconds, 250, 1000);
 	}
 
-	public void waitForPageToBeStable(final long totalWaitMiliseconds, final long waitMilisecondsPerTimes) {
+	public void waitForPageToBeStable(final long totalWaitMiliseconds, final long waitMilisecondsPerTimes, final long requiredQuietMiliseconds) {
 		long waitMiliseconds = 0;
         // Wait for the page's readyState complete
         while (waitMiliseconds < totalWaitMiliseconds) {
@@ -1363,36 +1364,48 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
         // Observe the length of innerHTML
         long previousLength = this.getCurrentLength();
 
-        for (; waitMiliseconds < totalWaitMiliseconds; waitMiliseconds += waitMilisecondsPerTimes) {
+		final int requiredQuietPeriods = (int)(requiredQuietMiliseconds / (double) waitMilisecondsPerTimes + 0.5);
+		int quietPeriods = 0;
+
+		while ((quietPeriods > 0) || (waitMiliseconds < totalWaitMiliseconds)) {
 			try {
 				Thread.sleep(waitMilisecondsPerTimes);
 			} catch (InterruptedException e) {
 				LOGGER.debug("Interrupted while waiting for the page to be stable.");
 				Thread.currentThread().interrupt();
 			}
+			// Timer increasing
+			waitMiliseconds += waitMilisecondsPerTimes;
 			// Check for page length.
 			final long currentLength = this.getCurrentLength();
 			if (currentLength != previousLength) {
 				previousLength = currentLength;
+				quietPeriods = 0;
 				continue; // The page is still loading.
 			}
 			// Check DOM MutationObserver for whether DOM changed
 			long currentMutationCount = this.getMutationCount();
 			if (currentMutationCount != previousMutationCount) {
 				previousMutationCount = currentMutationCount;
+				quietPeriods = 0;
 				continue;
 			}
 			// Check for loading indicators.
 			if (this.hasLoadingIndicator()) {
+				quietPeriods = 0;
 				continue;
 			}
 			// Check for jQuery AJAX
 			if (!this.isAjaxIdle()) {
+				quietPeriods = 0;
 				continue; 
 			}
-			// The page is stable.
-			LOGGER.info("The page is stable after {} seconds.", (waitMiliseconds + waitMilisecondsPerTimes) / 1000.);
-			return;
+			quietPeriods += 1;
+			if (quietPeriods >= requiredQuietPeriods) {
+				// The page is stable.
+				LOGGER.info("The page is stable after {} seconds.", (waitMiliseconds) / 1000.);
+				return;
+			}
 		}
 		LOGGER.warn("The page did not become stable after {} seconds.", waitMiliseconds / 1000.);
 	}
