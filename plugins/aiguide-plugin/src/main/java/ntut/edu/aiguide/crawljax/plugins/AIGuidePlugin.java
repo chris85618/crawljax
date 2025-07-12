@@ -394,8 +394,9 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
         if (isDirectiveProcess || isCurrentStateIsDirective) {
             LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
-            final boolean notToContinueCrawling = isDirectiveProcess && (isCurrentStateIsDirective == false);
-            if (notToContinueCrawling && isAllDirectiveProcessed()) {
+            final boolean isToContinueCrawling = processingDirectiveManagement.isLastDirectiveToContinueCrawling();
+            final boolean isNotToContinueCrawling = !isToContinueCrawling;
+            if (isNotToContinueCrawling && isAllDirectiveProcessed()) {
                 // Skip the following crawling by clean the CandidateElement List.
                 isDirectiveProcess = false;
                 currentState.setElementsFound(new LinkedList<CandidateElement>());
@@ -499,7 +500,6 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
     private List<Action> changeCandidateElementForCurrentState(ImmutableList<CandidateElement> candidateElements, StateVertex currentState) {
         List<Action> actionSet = processingDirectiveManagement.getProcessingStateNextActionSet();
-        LOGGER.debug("Directive ActionSet for this attempt: {}", actionSet);
         CandidateElement newElement = null;
 
         if (actionSet == null || actionSet.isEmpty()) {
@@ -519,17 +519,11 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
         // If there is corresponding relevant CandidateElement found in Directive's actionSet, just do it according to the Directive.
         for (CandidateElement element : candidateElements) {
-            final List<Action> actionList = this.getActionsByXpathFromActionSet(element.getIdentification().getValue(), actionSet);
-            for (Action action : actionList) {
-                if (!isLinkOrButton(action)) {
-                    continue;
-                }
+            if (isElementInActionSet(element.getIdentification().getValue(), actionSet)) {
                 newElement = createNewCandidateElementWithFormInput(element, actionSet);
                 LOGGER.error("Find submit button by createNewCandidateElementWithFormInput({}, {}): {}", element, actionSet, element);
                 break;
             }
-            if (newElement != null)
-                break;
         }
 
         try {
@@ -558,7 +552,8 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 }
             }
         } catch (Exception e) {
-            LOGGER.warn("There something went wrong when create...");
+            LOGGER.warn("There something went wrong when create...: {}", e.getMessage());
+            e.printStackTrace();
         }
         if (newElement == null) {
             // No any CandidateElement
