@@ -1,6 +1,8 @@
 package ntut.edu.tw.irobot;
 
 import com.crawljax.browser.EmbeddedBrowser;
+import com.crawljax.condition.browserwaiter.WaitCondition;
+import com.crawljax.condition.browserwaiter.ExpectedPageStableCondition;
 import com.crawljax.core.CrawljaxRunner;
 import com.crawljax.core.configuration.BrowserConfiguration;
 import com.crawljax.core.configuration.CrawljaxConfiguration.CrawljaxConfigurationBuilder;
@@ -100,6 +102,14 @@ public class CrawlJaxRunnerFactory {
         // set Crawler Configuration
         builder.setDQNLearningMode(false);
         builder.setWrapUninteractiveElement(wrapElement);
+        // Wait for page to be stable
+        try {
+            builder.crawlRules().addWaitCondition(new WaitCondition("", Math.toIntExact(this.pageWaitingTime),
+                                                                    new ExpectedPageStableCondition(this.pageWaitingTime)));
+        } catch (ArithmeticException e) {
+            System.err.println("Fail to transfer long value (" + (this.pageWaitingTime) + ") into int: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
         // set CrawlOverView Plugin
         if (isRecord)
             builder.addPlugin(createCrawlOverViewPlugin());

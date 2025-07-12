@@ -480,6 +480,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 
 				try {
 					webElement.click();
+					this.waitForPageToBeStable(this.crawlWaitReload);
 				} catch (ElementNotVisibleException e) {
 					throw e;
 				} catch (ElementNotInteractableException e) {
@@ -527,7 +528,6 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 				return false;
 		}
 
-		this.waitForPageToBeStable();
 		return true;
 	}
 
@@ -1323,7 +1323,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
     }
 
 	public void waitForPageToBeStable() {
-		this.waitForPageToBeStable(this.crawlWaitReload, 150, 600);
+		this.waitForPageToBeStable(this.crawlWaitEvent, 150, 600);
 	}
 
 	@Override
