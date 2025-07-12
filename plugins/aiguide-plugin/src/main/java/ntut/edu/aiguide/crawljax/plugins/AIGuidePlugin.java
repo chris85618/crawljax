@@ -394,17 +394,10 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
         if (isDirectiveProcess || isCurrentStateIsDirective) {
             LOGGER.info("Current state {} is same as directive or is Processing State", currentState);
-            final boolean isToContinueCrawling = processingDirectiveManagement.isLastDirectiveToContinueCrawling();
-            final boolean isNotToContinueCrawling = !isToContinueCrawling;
-            if (isNotToContinueCrawling && isAllDirectiveProcessed()) {
-                // Skip the following crawling by clean the CandidateElement List.
-                isDirectiveProcess = false;
-                currentState.setElementsFound(new LinkedList<CandidateElement>());
-                return;
-            }
             isDirectiveProcess = true;
             processingDirectiveManagement.recordCurrentState(currentState);
             lastDirectiveStateVertex = currentState;
+
 
             final List<Action> actionSet = changeCandidateElementForCurrentState(candidateElements, currentState);
 
@@ -430,6 +423,10 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             submitResultRowBuilder.setUrl(currentState.getUrl());
             submitResultRowBuilder.setXpath(actionXpath);
             submitResultRowBuilder.setValue(actionValue);
+        } else if ((!processingDirectiveManagement.isNoDirectiveIsProcessed()) && (!processingDirectiveManagement.isLastDirectiveToExploring())) {
+            LOGGER.info("Stop exploring because it's duplicated.");
+            isDirectiveProcess = false;
+            currentState.setElementsFound(new LinkedList<CandidateElement>());
         } else if (isCurrentStateIsInputPage(candidateElements)) {
             LOGGER.info("Current page is input page, not going to crawled");
             if (isSimilarDomInInputPageList(currentState.getStrippedDom())) {
@@ -509,11 +506,8 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
             return actionSet;
         }
 
-        if ((processingDirectiveManagement.isAllDirectiveIsProcessed()) && (!processingDirectiveManagement.isProcessingStateHasNextActionSet())) {
-            // This is the last directive this run
-            if (processingDirectiveManagement.isLastDirectiveToContinueCrawling()) {
-                isDirectiveProcess = false;
-            }
+        if (!processingDirectiveManagement.isProcessingStateHasNextActionSet()) {
+            isDirectiveProcess = false;
             processingDirectiveManagement.removeLastStateInRecordList();
         }
 

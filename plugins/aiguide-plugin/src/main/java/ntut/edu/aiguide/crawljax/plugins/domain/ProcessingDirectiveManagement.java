@@ -42,6 +42,10 @@ public class ProcessingDirectiveManagement {
         return directiveStack.isEmpty() && targetDirectiveState == null;
     }
 
+    public boolean isNoDirectiveIsProcessed() {
+        return processedDirectiveStack.isEmpty() && lastTargetDirectiveState == null;
+    }
+
     public boolean isCurrentStateIsDirective(String dom) {
         if (targetDirectiveState == null)
             return false;
@@ -71,8 +75,8 @@ public class ProcessingDirectiveManagement {
         return null;
     }
 
-    public boolean isLastDirectiveToContinueCrawling() {
-        return this.lastTargetDirectiveState.isToCrawl();
+    public boolean isLastDirectiveToExploring() {
+        return (lastTargetDirectiveState != null) && this.lastTargetDirectiveState.isToCrawl();
     }
 
     public void recordCurrentState(StateVertex currentState) {
