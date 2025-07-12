@@ -106,14 +106,6 @@ public class CrawlJaxRunnerFactory {
         // Set page comparator
         builder.crawlRules().addOracleComparator(new OracleComparator("edit-distance-oracle",
                                                                       new EditDistanceComparator(0.95D)));
-        // Wait for page to be stable
-        try {
-            builder.crawlRules().addWaitCondition(new WaitCondition("", Math.toIntExact(this.pageWaitingTime),
-                                                                    new ExpectedPageStableCondition(this.pageWaitingTime)));
-        } catch (ArithmeticException e) {
-            System.err.println("Fail to transfer long value (" + (this.pageWaitingTime) + ") into int: " + e.getMessage());
-            throw new RuntimeException(e);
-        }
         // set CrawlOverView Plugin
         if (isRecord)
             builder.addPlugin(createCrawlOverViewPlugin());

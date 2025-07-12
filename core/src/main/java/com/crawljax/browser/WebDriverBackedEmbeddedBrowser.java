@@ -1329,7 +1329,7 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 	@Override
 	public void waitForPageToBeStable(final long totalWaitMiliseconds) {
 		// For external use. For example, page might changed during this, so it needs more requiredQuietMiliseconds to ensure stability.
-		this.waitForPageToBeStable(totalWaitMiliseconds, 250, 1000);
+		this.waitForPageToBeStable(totalWaitMiliseconds, 200, 800);
 	}
 
 	public void waitForPageToBeStable(final long totalWaitMiliseconds, final long waitMilisecondsPerTimes, final long requiredQuietMiliseconds) {
