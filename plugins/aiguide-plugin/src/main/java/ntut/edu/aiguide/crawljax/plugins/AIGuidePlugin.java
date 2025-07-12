@@ -521,7 +521,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         for (CandidateElement element : candidateElements) {
             if (isElementInActionSet(element.getIdentification().getValue(), actionSet)) {
                 newElement = createNewCandidateElementWithFormInput(element, actionSet);
-                LOGGER.error("Find submit button by createNewCandidateElementWithFormInput({}, {}): {}", element, actionSet, element);
+                LOGGER.debug("Find candidate button by createNewCandidateElementWithFormInput({}, {}): {}", element, actionSet, element);
                 break;
             }
         }
@@ -531,7 +531,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
                 Identification identification = new Identification(Identification.How.xpath, actionSet.get(0).getActionXpath());
                 Element element = findElementInCurrentState(identification, currentState);
                 if (element != null) {
-                    LOGGER.error("Find candidate button by findElementInCurrentState({}, {}}): {}", identification, currentState, element);
+                    LOGGER.debug("Find candidate button by findElementInCurrentState({}, {}}): {}", identification, currentState, element);
                     newElement = new CandidateElement(element, identification, "", new ArrayList<>(), actionSet.get(0).getValue());
                 }
                 else {
@@ -557,10 +557,10 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         }
         if (newElement == null) {
             // No any CandidateElement
-    LOGGER.error("Failed to find or create a CandidateElement for submission. The action set was: {}", actionSet);
+            LOGGER.debug("Failed to find or create a CandidateElement for submission. The action set was: {}", actionSet);
              currentState.setElementsFound(new LinkedList<CandidateElement>());
         } else {
-    LOGGER.error("CandidateElement button is: {}", newElement);
+            LOGGER.debug("CandidateElement button is: {}", newElement);
             currentState.setElementsFound(new LinkedList<CandidateElement>(Collections.singletonList(newElement)));
         }
         return actionSet;
