@@ -246,6 +246,11 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     public void postStateCrawling(CrawlerContext context, StateVertex currentState, ImmutableList<Eventable> events) {
         browser.waitForPageToBeStable(5000);
         this.collectSubmitResult();
+        try {
+            serverInstanceManagement.recordCoverage();
+        } catch (RuntimeException e) {
+            LOGGER.warn("Fail to record coverage. Just ignore...: {}", e.getMessage());
+        }
     }
 
     // add element value to dom
@@ -669,6 +674,11 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
     @Override
     public void postCrawling(CrawlSession session, ExitNotifier.ExitStatus exitReason) {
         stateFlowGraph = session.getStateFlowGraph();
+        try {
+            serverInstanceManagement.recordCoverage();
+        } catch (RuntimeException e) {
+            LOGGER.warn("Fail to record coverage. Just ignore...: {}", e.getMessage());
+        }
     }
 
     @Override
@@ -679,7 +689,11 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
         }
         browser.deleteAllCookies();
         LOGGER.debug("Now reset counter is {}", resetCounter);
-        serverInstanceManagement.recordCoverage();
+        try {
+            serverInstanceManagement.recordCoverage();
+        } catch (RuntimeException e) {
+            LOGGER.warn("Fail to record coverage. Just ignore...: {}", e.getMessage());
+        }
         LOGGER.debug("Resetting ServerInstance...");
         serverInstanceManagement.closeServerInstance();
         serverInstanceManagement.createServerInstance();
