@@ -182,6 +182,9 @@ public class WebDriverBrowserBuilder implements Provider<EmbeddedBrowser> {
 		optionsChrome.addArguments("--disable-popup-blocking");
         optionsChrome.addArguments("--disable-features=PasswordLeakDetection,PasswordCheck,AccountConsistency,SafeBrowsingEnhancedProtection");
 		optionsChrome.addArguments("--disable-default-apps");
+		optionsChrome.addArguments("--disable-gpu");
+		optionsChrome.addArguments("--disable-dev-shm-usage");
+		optionsChrome.addArguments("--window-size=1920,1080");
 		/**
 		 * Remove the external protocol handler
 		 *
