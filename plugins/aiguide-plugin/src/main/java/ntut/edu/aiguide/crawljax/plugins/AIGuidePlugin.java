@@ -244,6 +244,7 @@ public class AIGuidePlugin implements OnBrowserCreatedPlugin, OnNewFoundStatePlu
 
     @Override
     public void postStateCrawling(CrawlerContext context, StateVertex currentState, ImmutableList<Eventable> events) {
+        LOGGER.debug("In postStateCrawling");
         browser.waitForPageToBeStable(5000);
         this.collectSubmitResult();
         try {
