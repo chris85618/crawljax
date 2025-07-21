@@ -542,7 +542,8 @@ public final class WebDriverBackedEmbeddedBrowser implements EmbeddedBrowser {
 				LOGGER.warn("Attempted to close an already closed session. Ignoring. Message: {}", e.getMessage());
 			} catch (WebDriverException e) {
 				LOGGER.error("An exception occurred while closing the browser:", e);
-				throw wrapWebDriverExceptionIfConnectionException(e);
+				// Suppress the exception because it is not critical.
+				// throw wrapWebDriverExceptionIfConnectionException(e);
 			} catch (Exception e) {
 				LOGGER.error("An unexpected exception occurred during shutdown. Ignoring to ensure stability.", e);
 			}
